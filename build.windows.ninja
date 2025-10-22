@@ -1,0 +1,26 @@
+# Ninja build file generated from Makefile.windows
+
+# Variables
+cc = clang-cl
+cflags = /W4 /Zi
+ldflags = /DEBUG
+
+# Rule for compiling .c files to .obj
+rule cc
+  command = $cc $cflags /c /Fo$out $in
+  description = Compiling $in
+
+# Rule for linking .obj files to .exe
+rule link
+  command = lld-link $ldflags /OUT:$out $in
+  description = Linking $out
+
+# Build statements for object files
+build main.obj: cc main.c
+build func.obj: cc func.c
+
+# Build statement for the executable
+build main.exe: link main.obj func.obj
+
+# Default target
+default main.exe

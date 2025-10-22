@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "llvm-vs-code-extensions.vscode-clangd",
+        "llvm-vs-code-extensions.lldb-dap",
+        "google.geminicodeassist",
+        "daylerees.rainglow",
+        "batyan-soft.fast-tasks"
+    ]
+}

@@ -1,0 +1,26 @@
+# Ninja build file generated from Makefile.linux
+
+# Variables
+cc = clang
+cflags = -Wall -Wextra -std=c11 -g
+ldflags = -fuse-ld=lld
+
+# Rule for compiling .c files to .o
+rule cc
+  command = $cc $cflags -c -o $out $in
+  description = Compiling $in
+
+# Rule for linking .o files
+rule link
+  command = $cc $ldflags -o $out $in
+  description = Linking $out
+
+# Build statements for object files
+build main.o: cc main.c
+build func.o: cc func.c
+
+# Build statement for the executable
+build main: link main.o func.o
+
+# Default target
+default main

@@ -1,0 +1,8 @@
+.tools/
+**/*.o
+**/*.obj
+**/*.pdb
+main
+main.exe
+/.ninja_log
+
