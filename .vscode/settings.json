@@ -18,5 +18,8 @@
     "chat.editor.fontSize": 8,
     "chat.fontSize": 8,
     "errorLens.fontSize": "8",
-    "markdown.preview.fontSize": 8
+    "markdown.preview.fontSize": 8,
+    "scm.inputFontSize": 8,
+    "screencastMode.fontSize": 24,
+    "editor.minimap.sectionHeaderFontSize": 8
 }
