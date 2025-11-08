@@ -164,8 +164,8 @@ void test_json_parsing() {
 
     /* parse into internal json_value */
     json_value *v = json_parse(json);
-    print_value(v, 0, stdout);
     ASSERT_PTR_NOT_NULL(v);
+    print_value(v, 0, stdout);
 
     /* render json_value back to string */
     char *out = json_stringify(v);
