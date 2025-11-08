@@ -1,0 +1,129 @@
+{
+  "title": "Comprehensive JSON Test Suite",
+  "version": 1.0,
+  "description": "A gigantic, somewhat random JSON file designed to cover a wide variety of parsing scenarios.",
+  "stringTypes": {
+    "simple": "Hello, world!",
+    "withSpaces": "  leading and trailing spaces  ",
+    "withTabs": "\tA string with tabs.\t",
+    "withNewlines": "A string with\nnewlines.",
+    "withEscapes": "Backslash: \\, Slash: /, Double Quote: \", Unicode: \u1234",
+    "empty": "",
+    "longString": "This is a very long string designed to test buffer handling and memory allocation. It just keeps going and going, on and on, without any real purpose other than to be long. The quick brown fox jumps over the lazy dog. 1234567890. ABCDEFGHIJKLMNOPQRSTUVWXYZ. abcdefghijklmnopqrstuvwxyz.",
+    "specialChars": "`~!@#$%^&*()_+-=[]{}|;':,./<>?"
+  },
+  "numberTypes": {
+    "integer": 42,
+    "negativeInteger": -100,
+    "zero": 0,
+    "float": 3.14159,
+    "negativeFloat": -0.001,
+    "exponent": 1.23e+5,
+    "negativeExponent": 1.23e-5,
+    "largeInteger": 9007199254740991,
+    "largeNegativeInteger": -9007199254740991
+  },
+  "booleanTypes": {
+    "isTrue": true,
+    "isFalse": false
+  },
+  "nullType": null,
+  "arrayTypes": {
+    "emptyArray": [],
+    "simpleArray": [1, 2, 3, 4, 5],
+    "mixedTypeArray": ["string", 123, true, null, 3.14],
+    "nestedArrays": [
+      [1, 2],
+      [3, 4, [5, 6]],
+      [7, [8, [9]]]
+    ],
+    "arrayOfObjects": [
+      {"id": 1, "name": "Object 1"},
+      {"id": 2, "name": "Object 2"},
+      {"id": 3, "name": "Object 3"}
+    ],
+    "largeArray": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50]
+  },
+  "objectTypes": {
+    "emptyObject": {},
+    "simpleObject": {
+      "key1": "value1",
+      "key2": "value2"
+    },
+    "keysWithSpecialChars": {
+      "key-with-hyphen": "value",
+      "key_with_underscore": "value",
+      "key with spaces": "value",
+      "123key": "numeric start",
+      "": "empty key"
+    },
+    "nestedObjects": {
+      "level1": {
+        "level2": {
+          "level3": {
+            "message": "Deeply nested"
+          }
+        }
+      }
+    },
+    "mixedValues": {
+      "string": "a string",
+      "number": 123.45,
+      "boolean": true,
+      "null": null,
+      "array": [1, "two", false],
+      "object": {"nested": "object"}
+    }
+  },
+  "edgeCases": {
+    "jsonInString": "{\"key\":\"value\"}",
+    "arrayWithNulls": [1, null, 3, null, 5],
+    "objectWithNullValues": {"key1": "value1", "key2": null},
+    "trailingCommaInArray": [1, 2, 3],
+    "trailingCommaInObject": {"key1": "value1", "key2": "value2"}
+  },
+  "unicodeCharacters": {
+    "cyrillic": "Привет, мир!",
+    "japanese": "こんにちは、世界！",
+    "emoji": "👋🌎"
+  },
+  "structure": [
+    {
+      "_id": "636a5b5b8f6b8f2b8f6b8f2b",
+      "index": 0,
+      "guid": "f3b7b4b0-6b3b-4b3b-8b3b-6b3b8f6b8f2b",
+      "isActive": true,
+      "balance": "$1,536.82",
+      "picture": "http://placehold.it/32x32",
+      "age": 30,
+      "eyeColor": "brown",
+      "name": "John Doe",
+      "gender": "male",
+      "company": "Example Inc.",
+      "email": "john.doe@example.com",
+      "phone": "+1 (800) 555-1234",
+      "address": "123 Main St, Anytown, USA 12345",
+      "about": "A generic person.",
+      "registered": "2022-11-08T12:00:00Z",
+      "latitude": 34.0522,
+      "longitude": -118.2437,
+      "tags": [
+        "tag1",
+        "tag2",
+        "tag3"
+      ],
+      "friends": [
+        {
+          "id": 0,
+          "name": "Friend One"
+        },
+        {
+          "id": 1,
+          "name": "Friend Two"
+        }
+      ],
+      "greeting": "Hello, John Doe! You have 5 unread messages.",
+      "favoriteFruit": "apple"
+    }
+  ]
+}
