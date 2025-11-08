@@ -9,5 +9,14 @@
     },
     "[cpp]": {
         "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
-    }
+    },
+    "editor.fontSize": 8,
+    "editor.fontFamily": "'JetBrains Mono', 'Ubuntu Mono', 'ProggyVector', 'Monoid', 'Fira Code', monospace",
+    "window.zoomPerWindow": false,
+    "debug.console.fontSize": 8,
+    "terminal.integrated.fontSize": 8,
+    "chat.editor.fontSize": 8,
+    "chat.fontSize": 8,
+    "errorLens.fontSize": "8",
+    "markdown.preview.fontSize": 8
 }
