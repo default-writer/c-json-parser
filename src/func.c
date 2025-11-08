@@ -428,7 +428,141 @@ dict *func_parse_to_dict(const char *json) {
     }
 }
 
-/* Example small helper to free dict that may have been returned by func_parse_to_dict */
-/* (dict_free is already provided above) */
+/* --- pretty-print helpers --- */
+
+static void print_indent(FILE *out, int indent) {
+    for (int i = 0; i < indent; ++i) fputs("    ", out); /* 4 spaces */
+}
+
+static void print_string_escaped(FILE *out, const char *s) {
+    fputc('"', out);
+    for (const unsigned char *p = (const unsigned char *)s; *p; ++p) {
+        unsigned char c = *p;
+        switch (c) {
+        case '"': fputs("\\\"", out); break;
+        case '\\': fputs("\\\\", out); break;
+        case '\b': fputs("\\b", out); break;
+        case '\f': fputs("\\f", out); break;
+        case '\n': fputs("\\n", out); break;
+        case '\r': fputs("\\r", out); break;
+        case '\t': fputs("\\t", out); break;
+        default:
+            if (c < 0x20) {
+                fprintf(out, "\\u%04x", c);
+            } else {
+                fputc(c, out);
+            }
+        }
+    }
+    fputc('"', out);
+}
+
+/* compact printer: prints a value without newlines or indentation (used for single-line arrays
+   and when a compact representation is required inside arrays) */
+static void print_value_compact(const json_value *v, FILE *out);
+
+static void print_array_compact(const json_value *v, FILE *out) {
+    if (!v || v->type != J_ARRAY) { fputs("[]", out); return; }
+    fputc('[', out);
+    for (size_t i = 0; i < v->u.array.count; ++i) {
+        if (i) fputs(", ", out);
+        print_value_compact(v->u.array.items[i], out);
+    }
+    fputc(']', out);
+}
+
+static void print_object_compact(const json_value *v, FILE *out) {
+    if (!v || v->type != J_OBJECT) { fputs("{}", out); return; }
+    fputc('{', out);
+    bool first = true;
+    for (size_t b = 0; b < v->u.object->nbuckets; ++b) {
+        dict_entry *e = v->u.object->buckets[b];
+        while (e) {
+            if (!first) fputs(", ", out);
+            first = false;
+            print_string_escaped(out, e->key);
+            fputs(": ", out);
+            print_value_compact(e->value, out);
+            e = e->next;
+        }
+    }
+    fputc('}', out);
+}
+
+static void print_value_compact(const json_value *v, FILE *out) {
+    if (!v) { fputs("null", out); return; }
+    switch (v->type) {
+    case J_NULL: fputs("null", out); break;
+    case J_BOOL: fputs(v->u.b ? "true" : "false", out); break;
+    case J_NUMBER: fprintf(out, "%g", v->u.num); break;
+    case J_STRING: print_string_escaped(out, v->u.str ? v->u.str : ""); break;
+    case J_ARRAY: print_array_compact(v, out); break;
+    case J_OBJECT: print_object_compact(v, out); break;
+    }
+}
+
+/* pretty printer: prints values with indentation and newlines; arrays are always printed
+   as single line per request */
+static void print_value(const json_value *v, int indent, FILE *out) {
+    if (!v) { fputs("null", out); return; }
+    switch (v->type) {
+    case J_NULL: fputs("null", out); break;
+    case J_BOOL: fputs(v->u.b ? "true" : "false", out); break;
+    case J_NUMBER: fprintf(out, "%g", v->u.num); break;
+    case J_STRING: print_string_escaped(out, v->u.str ? v->u.str : ""); break;
+    case J_ARRAY:
+        /* arrays printed single-line */
+        print_array_compact(v, out);
+        break;
+    case J_OBJECT: {
+        fputs("{\n", out); /* keep object starting symbol on its own line with properties below */
+        bool first = true;
+        for (size_t b = 0; b < v->u.object->nbuckets; ++b) {
+            dict_entry *e = v->u.object->buckets[b];
+            while (e) {
+                if (!first) fputs(",\n", out);
+                first = false;
+                print_indent(out, indent + 1);
+                print_string_escaped(out, e->key);
+                fputs(": ", out);
+                /* If value is an object, recurse to pretty format; arrays remain single-line */
+                print_value(e->value, indent + 1, out);
+                e = e->next;
+            }
+        }
+        fputc('\n', out);
+        print_indent(out, indent);
+        fputc('}', out);
+        break;
+    }
+    }
+}
+
+/* Public helper: print dict returned by func_parse_to_dict in human readable form.
+   pass stdout or a FILE*; returns nothing */
+void func_print_dict(const dict *d, FILE *out) {
+    if (!out) out = stdout;
+    if (!d) {
+        fputs("null\n", out);
+        return;
+    }
+    /* print top-level as object */
+    fputs("{\n", out);
+    bool first = true;
+    for (size_t b = 0; b < d->nbuckets; ++b) {
+        dict_entry *e = d->buckets[b];
+        while (e) {
+            if (!first) fputs(",\n", out);
+            first = false;
+            print_indent(out, 1);
+            print_string_escaped(out, e->key);
+            fputs(": ", out);
+            print_value(e->value, 1, out);
+            e = e->next;
+        }
+    }
+    fputc('\n', out);
+    fputs("}\n", out);
+}
 
 /* End of file */

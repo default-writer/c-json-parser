@@ -16,11 +16,12 @@ rule link
   description = Linking $out
 
 # Build statements for object files
-build main.obj: cc main.c
-build func.obj: cc func.c
+build main.obj: cc src/main.c
+build func.obj: cc src/func.c
+build test.obj: cc test/test.c
 
 # Build statement for the executable
-build main.exe: link main.obj func.obj
+build main.exe: link main.obj func.obj test.obj
 
 # Default target
 default main.exe
