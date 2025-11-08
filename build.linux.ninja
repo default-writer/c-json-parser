@@ -17,11 +17,11 @@ rule link
 
 # Build statements for object files
 build main.o: cc src/main.c
-build func.o: cc src/func.c
+build json.o: cc src/json.c
 build test.o: cc test/test.c
 
 # Build statement for the executable
-build main: link main.o func.o test.o
+build main: link main.o json.o test.o
 
 # Default target
 default main
