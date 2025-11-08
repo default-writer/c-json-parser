@@ -1,0 +1,7 @@
+---
+Checks: '-*,llvm-*,-readability-function-cognitive-complexity'
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+AnalyzeTemporaryDtors: false
+FormatStyle: llvm
+User: {}

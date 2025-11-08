@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 
-extern void test_rc_gc_free_one_block(void);
+extern void test_func_parse_to_dict(void);
 extern void setup_console(void);
 extern int tests_run;
 extern int tests_passed;
@@ -13,10 +13,10 @@ extern char* RESET;
 int main(void) {
 
     setup_console();
-    printf("running unit tests for reference counting allocator\n");
+    printf("running unit tests\n");
     printf("==========================================\n\n");
 
-    test_rc_gc_free_one_block();
+    test_func_parse_to_dict();
 
     printf("\n==========================================\n");
     printf("tests run: %d\n", tests_run);

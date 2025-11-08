@@ -1,0 +1,14 @@
+---
+CompileFlags:
+  Add: [-Wall, -Wextra]
+
+Diagnostics:
+  ClangTidy:
+    Add:
+      - performance-unnecessary-value-param
+
+InlayHints:
+  Designators: false
+  Enabled: false
+  ParameterNames: false
+  DeducedTypes: false

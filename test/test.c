@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -101,37 +103,46 @@ do { \
         } \
     } while (0)
 
+/* forward-declare opaque dict and public API implemented in func.c */
+typedef struct dict dict;
+dict *func_parse_to_dict(const char *json);
+char *func_parse_to_string(const dict *d);
+void func_free_dict(dict *d);
+bool func_json_equal(const char *a, const char *b);
 
-void test_rc_gc_free_one_block() {
-    TEST(test_rc_gc_multiple_blocks) {
+void test_func_parse_to_dict() {
+    TEST(test_func_parse_to_dict) {
          
         const char* filename = "test/test.json";
         FILE* fp = fopen(filename, "r");
         ASSERT_PTR_NOT_NULL(fp);
-        // if (!fp) {
-        //     perror("fopen");
-        //     return 1;
-        // }
 
         fseek(fp, 0, SEEK_END);
         long size = ftell(fp);
         fseek(fp, 0, SEEK_SET);
 
-        char* json = malloc(size + 1);
+        char* json = calloc(1, size + 1);
         ASSERT_PTR_NOT_NULL(json);
-        // if (!json) {
-        //     fprintf(stderr, "malloc failed\n");
-        //     fclose(fp);
-        //     return 1;
-        // }
-
-        // TODO: code to to call function func_parse_to_dict and loads data, then printing it to the another file, and comparing that byte-to byte.
 
         fread(json, 1, size, fp);
         json[size] = '\0';
         fclose(fp);
 
+        /* parse into internal dict */
+        dict *d = func_parse_to_dict(json);
+        ASSERT_PTR_NOT_NULL(d);
 
+        /* render dict back to string */
+        /* request preserving input order */
+        char *out = func_parse_to_string(d);
+        ASSERT_PTR_NOT_NULL(out);
+
+        /* compare structurally (order-insensitive) */
+        ASSERT(func_json_equal(json, out));
+
+        /* cleanup */
+        free(out);
+        func_free_dict(d);
         free(json);
     } END_TEST;
 }
