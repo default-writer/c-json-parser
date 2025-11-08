@@ -120,6 +120,7 @@ json_value *json_parse(const char *json);
 char *json_stringify(const json_value *v);
 void json_free(json_value *v);
 bool func_json_equal(const char *a, const char *b);
+void print_value(const json_value *v, int indent, FILE *out);
 
 #ifdef WIN32
 /* Provide a safe wrapper around fopen on Windows to avoid deprecation warnings.
@@ -163,6 +164,7 @@ void test_json_parsing() {
 
     /* parse into internal json_value */
     json_value *v = json_parse(json);
+    print_value(v, 0, stdout);
     ASSERT_PTR_NOT_NULL(v);
 
     /* render json_value back to string */
