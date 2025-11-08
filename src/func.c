@@ -1,11 +1,11 @@
 #include <ctype.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 
 /* Simple JSON structures (a dictionary + value types) */
 
@@ -14,51 +14,51 @@ typedef struct json_value json_value;
 typedef struct dict dict;
 
 typedef enum {
-    J_NULL,
-    J_BOOLEAN,
-    J_NUMBER,
-    J_STRING,
-    J_ARRAY,
-    J_OBJECT
+  J_NULL,
+  J_BOOLEAN,
+  J_NUMBER,
+  J_STRING,
+  J_ARRAY,
+  J_OBJECT
 } json_type;
 
 /* JSON value with references back to original text */
 struct json_value {
-    json_type type;
-    union {
-        struct {
-          const char *ptr;  /* start of this value in source JSON */
-          size_t len; 
-        } string;
-        struct {
-            const char *ptr;  /* start of this value in source JSON */
-            size_t len; 
-        } boolean;
-        struct {
-            const char *ptr;  /* start of this value in source JSON */
-            size_t len; 
-        } number;
-        struct {
-            json_value **items;
-            size_t count;
-        } array;
-        dict *object;
-    } u;
+  json_type type;
+  union {
+    struct {
+      const char *ptr; /* start of this value in source JSON */
+      size_t len;
+    } string;
+    struct {
+      const char *ptr; /* start of this value in source JSON */
+      size_t len;
+    } boolean;
+    struct {
+      const char *ptr; /* start of this value in source JSON */
+      size_t len;
+    } number;
+    struct {
+      json_value **items;
+      size_t count;
+    } array;
+    dict *object;
+  } u;
 };
 
 /* Dictionary entry referencing original JSON */
 typedef struct dict_entry {
-    const char *key;    /* reference to key in original JSON */
-    size_t len;         /* length of entire value in source */
-    json_value *value;  /* owned value with refs to original JSON */
+  const char *key;   /* reference to key in original JSON */
+  size_t len;        /* length of entire value in source */
+  json_value *value; /* owned value with refs to original JSON */
 } dict_entry;
 
 /* Root dictionary owns the original JSON string */
 struct dict {
-    const char *json;    /* owned original JSON string */
-    dict_entry *entries; /* dynamic array of entries in insertion order */
-    size_t count;       /* number of used entries */
-    size_t cap;         /* capacity of entries array */
+  const char *json;    /* owned original JSON string */
+  dict_entry *entries; /* dynamic array of entries in insertion order */
+  size_t count;        /* number of used entries */
+  size_t cap;          /* capacity of entries array */
 };
 
 static const size_t DICT_GROW = 16;
@@ -87,69 +87,76 @@ static void dict_free(dict *d) {
   if (!d)
     return;
   for (size_t i = 0; i < d->count; ++i) {
-        /* free duplicated key buffer allocated in dict_set */
-        if (d->entries[i].key)
-            free((void*)d->entries[i].key);
-        free_json_value(d->entries[i].value);
-    }
-   free(d->entries);
-   free(d);
+    /* free duplicated key buffer allocated in dict_set */
+    if (d->entries[i].key)
+      free((void *)d->entries[i].key);
+    free_json_value(d->entries[i].value);
+  }
+  free(d->entries);
+  free(d);
 }
 
 /* set (insert or replace) — duplicates key, takes ownership of 'value' */
 static bool dict_set(dict *d, const char *key, int len, json_value *value) {
-    if (!d || !key) return false;
-    for (size_t i = 0; i < d->count; ++i) {
-        if (strcmp(d->entries[i].key, key) == 0) {
-            free_json_value(d->entries[i].value);
-            d->entries[i].value = value;
-            return true;
-        }
+  if (!d || !key)
+    return false;
+  for (size_t i = 0; i < d->count; ++i) {
+    if (strcmp(d->entries[i].key, key) == 0) {
+      free_json_value(d->entries[i].value);
+      d->entries[i].value = value;
+      return true;
     }
-    /* ensure capacity */
-    if (d->count == d->cap) {
-        size_t ncap = d->cap ? d->cap * 2 : DICT_GROW;
-        dict_entry *ne = realloc(d->entries, ncap * sizeof(dict_entry));
-        if (!ne) return false;
-        memset(ne + d->cap, 0, (ncap - d->cap) * sizeof(dict_entry));
-        d->entries = ne;
-        d->cap = ncap;
-    }
-    /* duplicate key (used for callers that pass literals) */
-    d->entries[d->count].key = key;
-    d->entries[d->count].len = len;
-    d->entries[d->count].value = value;
-    d->count++;
-    return true;
+  }
+  /* ensure capacity */
+  if (d->count == d->cap) {
+    size_t ncap = d->cap ? d->cap * 2 : DICT_GROW;
+    dict_entry *ne = realloc(d->entries, ncap * sizeof(dict_entry));
+    if (!ne)
+      return false;
+    memset(ne + d->cap, 0, (ncap - d->cap) * sizeof(dict_entry));
+    d->entries = ne;
+    d->cap = ncap;
+  }
+  /* duplicate key (used for callers that pass literals) */
+  d->entries[d->count].key = key;
+  d->entries[d->count].len = len;
+  d->entries[d->count].value = value;
+  d->count++;
+  return true;
 }
 
 /* set (insert) taking ownership of 'keyptr' (heap buffer) and of 'value' */
-static bool dict_set_take_key(dict *d, char *keyptr, size_t keylen, json_value *value) {
-    if (!d || !keyptr) return false;
-    /* check existing keys by comparing strings */
-    for (size_t i = 0; i < d->count; ++i) {
-        if (d->entries[i].key && strcmp(d->entries[i].key, keyptr) == 0) {
-            /* replace existing value, free incoming key */
-            free(keyptr);
-            free_json_value(d->entries[i].value);
-            d->entries[i].value = value;
-            return true;
-        }
+static bool dict_set_take_key(dict *d, char *keyptr, size_t keylen,
+                              json_value *value) {
+  if (!d || !keyptr)
+    return false;
+  /* check existing keys by comparing strings */
+  for (size_t i = 0; i < d->count; ++i) {
+    if (d->entries[i].key && strcmp(d->entries[i].key, keyptr) == 0) {
+      /* replace existing value, free incoming key */
+      free(keyptr);
+      free_json_value(d->entries[i].value);
+      d->entries[i].value = value;
+      return true;
     }
-    /* ensure capacity */
-    if (d->count == d->cap) {
-        size_t ncap = d->cap ? d->cap * 2 : DICT_GROW;
-        dict_entry *ne = realloc(d->entries, ncap * sizeof(dict_entry));
-        if (!ne) { free(keyptr); return false; }
-        memset(ne + d->cap, 0, (ncap - d->cap) * sizeof(dict_entry));
-        d->entries = ne;
-        d->cap = ncap;
+  }
+  /* ensure capacity */
+  if (d->count == d->cap) {
+    size_t ncap = d->cap ? d->cap * 2 : DICT_GROW;
+    dict_entry *ne = realloc(d->entries, ncap * sizeof(dict_entry));
+    if (!ne) {
+      free(keyptr);
+      return false;
     }
-    d->entries[d->count].key = keyptr;
-    d->entries[d->count].len = keylen;
-    d->entries[d->count].value = value;
-    d->count++;
-    return true;
+    memset(ne + d->cap, 0, (ncap - d->cap) * sizeof(dict_entry));
+    d->entries = ne;
+    d->cap = ncap;
+  }
+  d->entries[d->count].key = keyptr;
+  d->entries[d->count].len = keylen;
+  d->entries[d->count].value = value;
+  d->count++;
+  return true;
 }
 
 /* get by key (linear search) */
@@ -236,7 +243,7 @@ static void free_json_value(json_value *v) {
     return;
   switch (v->type) {
   case J_STRING:
-    free((void*)v->u.string.ptr);
+    free((void *)v->u.string.ptr);
     break;
   case J_ARRAY:
     for (size_t i = 0; i < v->u.array.count; ++i)
@@ -481,7 +488,8 @@ static json_value *parse_object_value(const char **s, int id) {
     }
 
     /* Take ownership of the parsed key buffer (no extra duplication). */
-    if (!dict_set_take_key(obj->u.object, (char*)k->u.string.ptr, k->u.string.len, val)) {
+    if (!dict_set_take_key(obj->u.object, (char *)k->u.string.ptr,
+                           k->u.string.len, val)) {
       /* insertion failed: free transferred resources */
       free_json_value(val);
       free(k);
@@ -611,7 +619,7 @@ dict *func_parse_to_dict(const char *json) {
     return NULL;
   }
 
-  if (!dict_set(d, json, 0,root)) {
+  if (!dict_set(d, json, 0, root)) {
     /* dict_set failed and will not take ownership of root */
     free_json_value(root);
     dict_free(d);
@@ -1087,22 +1095,19 @@ int func_print_dict(const dict *d, char *buf, int bufsize) {
 char *func_parse_to_string(const dict *d) {
   if (!d)
     return NULL;
-  int cap = 1024;
-  for (int attempts = 0; attempts < 10; ++attempts) {
-    char *buf = calloc(1, (size_t)cap);
-    if (!buf)
-      return NULL;
-    int rc = func_print_dict(d, buf, cap);
-    if (rc >= 0) {
-      /* rc is bytes written (excluding NUL) */
-      /* shrink to fit */
-      char *shr = realloc(buf, (size_t)rc + 1);
-      if (shr)
-        buf = shr;
-      return buf;
-    }
+  int cap = 65536;
+  char *buf = calloc(1, (size_t)cap);
+  if (!buf)
+    return NULL;
+  int rc = func_print_dict(d, buf, cap);
+  if (rc >= 0) {
+    /* rc is bytes written (excluding NUL) */
+    /* shrink to fit */
+    char *shr = realloc(buf, (size_t)rc + 1);
+    if (shr)
+      buf = shr;
+    return buf;
     free(buf);
-    cap *= 2;
   }
   return NULL;
 }

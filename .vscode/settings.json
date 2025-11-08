@@ -1,3 +1,13 @@
 {
-    "workbench.colorTheme": "Yitzchok (rainglow)"
+    "workbench.colorTheme": "Yitzchok (rainglow)",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.inlayHints.enabled": "off",
+    "[c]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    },
+    "[cpp]": {
+        "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+    }
 }
