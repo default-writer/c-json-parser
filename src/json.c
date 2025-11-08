@@ -11,7 +11,6 @@
 
 /* Forward declarations */
 typedef struct json_value json_value;
-typedef struct dict dict;
 
 typedef enum {
   J_NULL,
@@ -21,6 +20,12 @@ typedef enum {
   J_ARRAY,
   J_OBJECT
 } json_type;
+
+typedef struct json_object_entry {
+  const char *key;
+  size_t key_len;
+  json_value *value;
+} json_object_entry;
 
 /* JSON value with references back to original text */
 struct json_value {
@@ -41,131 +46,62 @@ struct json_value {
     struct {
       json_value **items;
       size_t count;
+      size_t cap;
     } array;
-    dict *object;
+    struct {
+      json_object_entry *entries;
+      size_t count;
+      size_t cap;
+    } object;
   } u;
-};
-
-/* Dictionary entry referencing original JSON */
-typedef struct dict_entry {
-  const char *key;   /* reference to key in original JSON */
-  size_t len;        /* length of entire value in source */
-  json_value *value; /* owned value with refs to original JSON */
-} dict_entry;
-
-/* Root dictionary owns the original JSON string */
-struct dict {
-  const char *json;    /* owned original JSON string */
-  dict_entry *entries; /* dynamic array of entries in insertion order */
-  size_t count;        /* number of used entries */
-  size_t cap;          /* capacity of entries array */
 };
 
 static const size_t DICT_GROW = 16;
 
-/* --- dict helpers --- */
-static dict *dict_new_size(size_t initial) {
-  (void)initial;
-  dict *d = calloc(1, sizeof(*d));
-  if (!d)
-    return NULL;
-  d->count = 0;
-  d->cap = DICT_GROW;
-  d->entries = calloc(d->cap, sizeof(dict_entry));
-  if (!d->entries) {
-    free(d);
-    return NULL;
-  }
-  return d;
-}
-
-static dict *dict_new(void) { return dict_new_size(0); }
-
 static void free_json_value(json_value *v); /* forward */
 
-static void dict_free(dict *d) {
-  if (!d)
-    return;
-  for (size_t i = 0; i < d->count; ++i) {
-    /* free duplicated key buffer allocated in dict_set */
-    if (d->entries[i].key)
-      free((void *)d->entries[i].key);
-    free_json_value(d->entries[i].value);
-  }
-  free(d->entries);
-  free(d);
-}
-
-/* set (insert or replace) — duplicates key, takes ownership of 'value' */
-static bool dict_set(dict *d, const char *key, int len, json_value *value) {
-  if (!d || !key)
-    return false;
-  for (size_t i = 0; i < d->count; ++i) {
-    if (strcmp(d->entries[i].key, key) == 0) {
-      free_json_value(d->entries[i].value);
-      d->entries[i].value = value;
-      return true;
-    }
-  }
-  /* ensure capacity */
-  if (d->count == d->cap) {
-    size_t ncap = d->cap ? d->cap * 2 : DICT_GROW;
-    dict_entry *ne = realloc(d->entries, ncap * sizeof(dict_entry));
-    if (!ne)
-      return false;
-    memset(ne + d->cap, 0, (ncap - d->cap) * sizeof(dict_entry));
-    d->entries = ne;
-    d->cap = ncap;
-  }
-  /* duplicate key (used for callers that pass literals) */
-  d->entries[d->count].key = key;
-  d->entries[d->count].len = len;
-  d->entries[d->count].value = value;
-  d->count++;
-  return true;
-}
-
 /* set (insert) taking ownership of 'keyptr' (heap buffer) and of 'value' */
-static bool dict_set_take_key(dict *d, char *keyptr, size_t keylen,
-                              json_value *value) {
-  if (!d || !keyptr)
+static bool json_object_set_take_key(json_value *obj, char *keyptr,
+                                     size_t keylen, json_value *value) {
+  if (!obj || obj->type != J_OBJECT || !keyptr)
     return false;
   /* check existing keys by comparing strings */
-  for (size_t i = 0; i < d->count; ++i) {
-    if (d->entries[i].key && strcmp(d->entries[i].key, keyptr) == 0) {
+  for (size_t i = 0; i < obj->u.object.count; ++i) {
+    if (obj->u.object.entries[i].key &&
+        strcmp(obj->u.object.entries[i].key, keyptr) == 0) {
       /* replace existing value, free incoming key */
       free(keyptr);
-      free_json_value(d->entries[i].value);
-      d->entries[i].value = value;
+      free_json_value(obj->u.object.entries[i].value);
+      obj->u.object.entries[i].value = value;
       return true;
     }
   }
   /* ensure capacity */
-  if (d->count == d->cap) {
-    size_t ncap = d->cap ? d->cap * 2 : DICT_GROW;
-    dict_entry *ne = realloc(d->entries, ncap * sizeof(dict_entry));
+  if (obj->u.object.count == obj->u.object.cap) {
+    size_t ncap = obj->u.object.cap ? obj->u.object.cap * 2 : DICT_GROW;
+    json_object_entry *ne =
+        realloc(obj->u.object.entries, ncap * sizeof(json_object_entry));
     if (!ne) {
       free(keyptr);
       return false;
     }
-    memset(ne + d->cap, 0, (ncap - d->cap) * sizeof(dict_entry));
-    d->entries = ne;
-    d->cap = ncap;
+    obj->u.object.entries = ne;
+    obj->u.object.cap = ncap;
   }
-  d->entries[d->count].key = keyptr;
-  d->entries[d->count].len = keylen;
-  d->entries[d->count].value = value;
-  d->count++;
+  obj->u.object.entries[obj->u.object.count].key = keyptr;
+  obj->u.object.entries[obj->u.object.count].key_len = keylen;
+  obj->u.object.entries[obj->u.object.count].value = value;
+  obj->u.object.count++;
   return true;
 }
 
 /* get by key (linear search) */
-json_value *dict_get(dict *d, const char *key) {
-  if (!d || !key)
+json_value *json_object_get(const json_value *obj, const char *key) {
+  if (!obj || obj->type != J_OBJECT || !key)
     return NULL;
-  for (size_t i = 0; i < d->count; ++i) {
-    if (strcmp(d->entries[i].key, key) == 0)
-      return d->entries[i].value;
+  for (size_t i = 0; i < obj->u.object.count; ++i) {
+    if (strcmp(obj->u.object.entries[i].key, key) == 0)
+      return obj->u.object.entries[i].value;
   }
   return NULL;
 }
@@ -217,25 +153,25 @@ static json_value *json_new_object(void) {
   if (!v)
     return NULL;
   v->type = J_OBJECT;
-  v->u.object = dict_new();
-  if (!v->u.object) {
-    free(v);
-    return NULL;
-  }
+  v->u.object.entries = NULL;
+  v->u.object.count = 0;
+  v->u.object.cap = 0;
   return v;
 }
 
 static void json_array_push(json_value *arr, json_value *item) {
   if (!arr || arr->type != J_ARRAY)
     return;
-  size_t n = arr->u.array.count;
-  json_value **newitems =
-      realloc(arr->u.array.items, (n + 1) * sizeof(json_value *));
-  if (!newitems)
-    return;
-  arr->u.array.items = newitems;
-  arr->u.array.items[n] = item;
-  arr->u.array.count = n + 1;
+  if (arr->u.array.count == arr->u.array.cap) {
+    size_t ncap = arr->u.array.cap ? arr->u.array.cap * 2 : DICT_GROW;
+    json_value **newitems =
+        realloc(arr->u.array.items, ncap * sizeof(json_value *));
+    if (!newitems)
+      return;
+    arr->u.array.items = newitems;
+    arr->u.array.cap = ncap;
+  }
+  arr->u.array.items[arr->u.array.count++] = item;
 }
 
 static void free_json_value(json_value *v) {
@@ -251,7 +187,11 @@ static void free_json_value(json_value *v) {
     free(v->u.array.items);
     break;
   case J_OBJECT:
-    dict_free(v->u.object);
+    for (size_t i = 0; i < v->u.object.count; ++i) {
+      free((void *)v->u.object.entries[i].key);
+      free_json_value(v->u.object.entries[i].value);
+    }
+    free(v->u.object.entries);
     break;
   default:
     break;
@@ -457,44 +397,37 @@ static json_value *parse_object_value(const char **s, int id) {
     /* parse key string - reuse parse_string_value but ensure we get raw string
      * (no escapes stored) */
     if (**s != '"') {
-      dict_free(obj->u.object);
-      free(obj);
+      free_json_value(obj);
       return NULL;
     }
     json_value *k = parse_string_value(s);
     if (!k || k->type != J_STRING) {
       free_json_value(k);
-      dict_free(obj->u.object);
-      free(obj);
+      free_json_value(obj);
       return NULL;
     }
     skip_ws(s);
     if (**s != ':') {
-      /* k contains an allocated key buffer in k->ptr; free wrapper only */
-      free(k);
-      dict_free(obj->u.object);
-      free(obj);
+      free_json_value(k);
+      free_json_value(obj);
       return NULL;
     }
     (*s)++;
     skip_ws(s);
     json_value *val = parse_value_build(s, ++id);
     if (!val) {
-      /* take care: k->ptr is an allocated buffer; free wrapper and value */
-      free(k);
-      dict_free(obj->u.object);
-      free(obj);
+      free_json_value(k);
+      free_json_value(obj);
       return NULL;
     }
 
     /* Take ownership of the parsed key buffer (no extra duplication). */
-    if (!dict_set_take_key(obj->u.object, (char *)k->u.string.ptr,
-                           k->u.string.len, val)) {
+    if (!json_object_set_take_key(obj, (char *)k->u.string.ptr, k->u.string.len,
+                                  val)) {
       /* insertion failed: free transferred resources */
       free_json_value(val);
       free(k);
-      dict_free(obj->u.object);
-      free(obj);
+      free_json_value(obj);
       return NULL;
     }
     /* free only the json_value wrapper for the key (do NOT free key.ptr) */
@@ -509,8 +442,7 @@ static json_value *parse_object_value(const char **s, int id) {
       (*s)++;
       return obj;
     }
-    dict_free(obj->u.object);
-    free(obj);
+    free_json_value(obj);
     return NULL;
   }
 }
@@ -580,7 +512,7 @@ bool func(const char *json) {
    new dictionary under the empty-string key (""). Caller is responsible for
    calling dict_free() on the returned pointer. Returns NULL on error.
 */
-dict *func_parse_to_dict(const char *json) {
+json_value *json_parse(const char *json) {
   if (!json)
     return NULL;
   const char *p = json;
@@ -591,11 +523,6 @@ dict *func_parse_to_dict(const char *json) {
   if (!root)
     return NULL;
 
-  // Debug print
-  printf("\n--- parsed tree ---\n");
-  print_value(root, 0, stdout);
-  printf("\n------------------------\n");
-
   /* ensure there is no trailing garbage */
   skip_ws(&p);
   if (*p != '\0') {
@@ -603,30 +530,7 @@ dict *func_parse_to_dict(const char *json) {
     return NULL;
   }
 
-  /* if top-level is an object use its dict directly (transfer ownership) */
-  if (root->type == J_OBJECT) {
-    dict *d = root->u.object;
-    /* free the wrapper json_value but not the dict */
-    free(root);
-    return d;
-  }
-
-  /* otherwise wrap the single value into a new dict under the empty-string key
-   */
-  dict *d = dict_new();
-  if (!d) {
-    free_json_value(root);
-    return NULL;
-  }
-
-  if (!dict_set(d, json, 0, root)) {
-    /* dict_set failed and will not take ownership of root */
-    free_json_value(root);
-    dict_free(d);
-    return NULL;
-  }
-
-  return d;
+  return root;
 }
 
 /* --- pretty-print helpers --- */
@@ -698,10 +602,10 @@ static void print_object_compact(const json_value *v, FILE *out) {
     return;
   }
   fputc('{', out);
-  for (size_t i = 0; i < v->u.object->count; ++i) {
+  for (size_t i = 0; i < v->u.object.count; ++i) {
     if (i)
       fputs(", ", out);
-    dict_entry *e = &v->u.object->entries[i];
+    json_object_entry *e = &v->u.object.entries[i];
     print_string_escaped(out, e->key);
     fputs(": ", out);
     print_value_compact(e->value, out);
@@ -763,11 +667,11 @@ void print_value(const json_value *v, int indent, FILE *out) {
   case J_OBJECT: {
     fputs("{\n", out); /* keep object starting symbol on its own line with
                           properties below */
-    for (size_t i = 0; i < v->u.object->count; ++i) {
+    for (size_t i = 0; i < v->u.object.count; ++i) {
       if (i)
         fputs(",\n", out);
       print_indent(out, indent + 1);
-      dict_entry *e = &v->u.object->entries[i];
+      json_object_entry *e = &v->u.object.entries[i];
       print_string_escaped(out, e->key);
       fputs(": ", out);
       /* If value is an object, recurse to pretty format; arrays remain
@@ -895,11 +799,9 @@ static int print_string_escaped_buf(bs *b, const char *s) {
 }
 
 /* forward declarations for functions/vars used before their definitions */
-static int print_object_entries_buf(const dict *obj, bs *b, int indent,
-                                    int compact);
+static int print_object_buf(const json_value *v, bs *b, int indent);
 static int print_value_compact_buf(const json_value *v, bs *b);
 static int print_value_buf(const json_value *v, int indent, bs *b);
-/* global toggle to request preserving insertion order during printing */
 
 static int print_array_compact_buf(const json_value *v, bs *b) {
   if (!v || v->type != J_ARRAY) {
@@ -919,22 +821,15 @@ static int print_array_compact_buf(const json_value *v, bs *b) {
     return -1;
   return 0;
 }
-static int print_object_entries_buf(const dict *obj, bs *b, int indent,
-                                    int compact);
 
-static int print_object_entries_buf(const dict *obj, bs *b, int indent,
-                                    int compact) {
-  if (!obj) {
-    return compact ? bs_write(b, "{}", 2) : bs_write(b, "{\n\n}", 4);
+static int print_object_buf(const json_value *v, bs *b, int indent) {
+  if (!v || v->type != J_OBJECT) {
+    return bs_write(b, "{\n}", 3);
   }
 
-  size_t n = obj->count;
+  size_t n = v->u.object.count;
   if (n == 0) {
-    if (compact)
-      return bs_write(b, "{}", 2);
     if (bs_write(b, "{\n", 2) < 0)
-      return -1;
-    if (bs_putc(b, '\n') < 0)
       return -1;
     if (print_indent_buf(b, indent) < 0)
       return -1;
@@ -943,58 +838,36 @@ static int print_object_entries_buf(const dict *obj, bs *b, int indent,
     return 0;
   }
 
-  int rc = 0;
-  if (compact) {
-    if (bs_putc(b, '{') < 0)
-      return -1;
-    for (size_t i = 0; i < n; ++i) {
-      if (i) {
-        if (bs_write(b, ", ", 2) < 0)
-          return -1;
-      }
-      dict_entry *ent = &obj->entries[i];
-      if (print_string_escaped_buf(b, ent->key) < 0)
-        return -1;
-      if (bs_write(b, ": ", 2) < 0)
-        return -1;
-      if (print_value_compact_buf(ent->value, b) < 0)
+  if (bs_write(b, "{\n", 2) < 0)
+    return -1;
+  for (size_t i = 0; i < n; ++i) {
+    if (i) {
+      if (bs_write(b, ",\n", 2) < 0)
         return -1;
     }
-    if (bs_putc(b, '}') < 0)
-      rc = -1;
-  } else {
-    if (bs_write(b, "{\n", 2) < 0)
+    if (print_indent_buf(b, indent + 1) < 0)
       return -1;
-    for (size_t i = 0; i < n; ++i) {
-      if (i) {
-        if (bs_write(b, ",\n", 2) < 0)
-          return -1;
-      }
-      if (print_indent_buf(b, indent + 1) < 0)
-        return -1;
-      dict_entry *ent = &obj->entries[i];
-      if (print_string_escaped_buf(b, ent->key) < 0)
-        return -1;
-      if (bs_write(b, ": ", 2) < 0)
-        return -1;
-      if (print_value_buf(ent->value, indent + 1, b) < 0)
-        return -1;
-    }
-    if (bs_putc(b, '\n') < 0)
+    json_object_entry *ent = &v->u.object.entries[i];
+    if (print_string_escaped_buf(b, ent->key) < 0)
       return -1;
-    if (print_indent_buf(b, indent) < 0)
+    if (bs_write(b, ": ", 2) < 0)
       return -1;
-    if (bs_putc(b, '}') < 0)
+    if (print_value_buf(ent->value, indent + 1, b) < 0)
       return -1;
   }
-  return rc;
+  if (bs_putc(b, '\n') < 0)
+    return -1;
+  if (print_indent_buf(b, indent) < 0)
+    return -1;
+  if (bs_putc(b, '}') < 0)
+    return -1;
+  return 0;
 }
 
 static int print_object_compact_buf(const json_value *v, bs *b) {
   if (!v || v->type != J_OBJECT)
     return bs_write(b, "{}", 2);
-  const dict *obj = v->u.object;
-  size_t n = obj->count;
+  size_t n = v->u.object.count;
   if (n == 0)
     return bs_write(b, "{}", 2);
   if (bs_putc(b, '{') < 0)
@@ -1004,7 +877,7 @@ static int print_object_compact_buf(const json_value *v, bs *b) {
       if (bs_write(b, ", ", 2) < 0)
         return -1;
     }
-    dict_entry *ent = &obj->entries[i];
+    json_object_entry *ent = &v->u.object.entries[i];
     if (print_string_escaped_buf(b, ent->key) < 0)
       return -1;
     if (bs_write(b, ": ", 2) < 0)
@@ -1055,7 +928,7 @@ static int print_value_buf(const json_value *v, int indent, bs *b) {
     /* arrays printed single-line */
     return print_array_compact_buf(v, b);
   case J_OBJECT:
-    return print_object_entries_buf(v->u.object, b, indent, 0);
+    return print_object_buf(v, b, indent);
   }
   return -1;
 }
@@ -1063,24 +936,16 @@ static int print_value_buf(const json_value *v, int indent, bs *b) {
 /* new func_print_dict: write into provided buffer, return bytes written or -1
   if insufficient preserve_order flag added (non-zero means preserve input
   insertion order) */
-int func_print_dict(const dict *d, char *buf, int bufsize) {
+int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize) {
   if (!buf || bufsize <= 0)
     return -1;
   bs bstate = {buf, bufsize, 0};
 
-  if (!d) {
-    if (bs_write(&bstate, "null\n", 5) < 0)
-      return -1;
-  } else {
-    json_value tmp;
-    memset(&tmp, 0, sizeof(tmp));
-    tmp.type = J_OBJECT;
-    tmp.u.object = (dict *)d; /* we don't modify it */
-    if (print_value_buf(&tmp, 0, &bstate) < 0)
-      return -1;
-    if (bs_putc(&bstate, '\n') < 0)
-      return -1;
-  }
+  if (print_value_buf(v, 0, &bstate) < 0)
+    return -1;
+
+  if (bs_putc(&bstate, '\n') < 0)
+    return -1;
 
   /* ensure NUL termination if space remains */
   if (bstate.pos < bstate.cap)
@@ -1090,16 +955,14 @@ int func_print_dict(const dict *d, char *buf, int bufsize) {
   return bstate.pos;
 }
 
-/* Update func_parse_to_string to accept preserve_order param and call new
- * func_print_dict */
-char *func_parse_to_string(const dict *d) {
-  if (!d)
+char *json_stringify(const json_value *v) {
+  if (!v)
     return NULL;
   int cap = 65536;
   char *buf = calloc(1, (size_t)cap);
   if (!buf)
     return NULL;
-  int rc = func_print_dict(d, buf, cap);
+  int rc = json_stringify_to_buffer(v, buf, cap);
   if (rc >= 0) {
     /* rc is bytes written (excluding NUL) */
     /* shrink to fit */
@@ -1107,18 +970,16 @@ char *func_parse_to_string(const dict *d) {
     if (shr)
       buf = shr;
     return buf;
-    free(buf);
   }
+  free(buf);
   return NULL;
 }
 
-/* new: public wrapper to free a dict returned by func_parse_to_dict */
-void func_free_dict(dict *d) { dict_free(d); }
+void json_free(json_value *v) { free_json_value(v); }
 
 /* --- structural equality helpers --- */
 
 /* forward declare dict_get if necessary (it's defined above in this file) */
-json_value *dict_get(dict *d, const char *key);
 
 static bool json_value_equal(const json_value *a, const json_value *b);
 
@@ -1142,13 +1003,13 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
   if (a->type != J_OBJECT || b->type != J_OBJECT)
     return false;
   /* quick check: number of items should match */
-  if (a->u.object->count != b->u.object->count)
+  if (a->u.object.count != b->u.object.count)
     return false;
   /* iterate entries in insertion order and ensure b has same key with equal
    * value */
-  for (size_t i = 0; i < a->u.object->count; ++i) {
-    dict_entry *e = &a->u.object->entries[i];
-    json_value *bv = dict_get(b->u.object, e->key);
+  for (size_t i = 0; i < a->u.object.count; ++i) {
+    json_object_entry *e = &a->u.object.entries[i];
+    json_value *bv = json_object_get(b, e->key);
     if (!bv)
       return false;
     if (!json_value_equal(e->value, bv))
