@@ -1,33 +1,17 @@
-#include <stdbool.h>
-#include <stdio.h>
+#include "../test/test.h"
 
-extern void test_json_parsing(void);
-extern void setup_console(void);
-extern int tests_run;
-extern int tests_passed;
-
-extern const char *GREEN;
-extern char *RED;
-extern char *RESET;
+TEST_SETUP();
+TEST_DEFINITION(test_json_parsing);
+TEST_DEFINITION(test_simple_json_parsing);
 
 int main(void) {
 
-  setup_console();
-  printf("running unit tests\n");
-  printf("==========================================\n\n");
+  TEST_INITIALIZE();
 
   test_json_parsing();
+  test_simple_json_parsing();
 
-  printf("\n==========================================\n");
-  printf("tests run: %d\n", tests_run);
-  printf("tests passed: %d\n", tests_passed);
-  if (tests_run == tests_passed) {
-    printf("all tests %sPASSED%s\n", GREEN, RESET);
-    return 0;
-  } else {
-    printf("some tests %sFAILED%s\n", RED, RESET);
-    return 1;
-  }
+  TEST_FINALIZE();
 
   return 0;
 }
