@@ -92,11 +92,11 @@ typedef struct json_object {
 } json_object;
 
 /**
- * @brief Validates a JSON string.
- * @param json The JSON string to validate.
- * @return true if the JSON is valid, false otherwise.
+ * @brief Returns a JSON string of json_value objects.
+ * @param json The JSON value oject.
+ * @return A pointer to the json_value origin, or NULL on error.
  */
-bool json_validate(const char *json);
+const char* json_source(const json_value *v);
 
 /**
  * @brief Parses a JSON string and returns a tree of json_value objects.
@@ -104,13 +104,15 @@ bool json_validate(const char *json);
  * @param json The JSON string to parse.
  * @return A pointer to the root json_value, or NULL on error.
  */
-json_value *json_parse(const char *json);
+const json_value *json_parse(const char *json);
 
 /**
- * @brief Frees a json_value and all its children.
- * @param v The json_value to free.
+ * @brief Compares two JSON strings for structural equality.
+ * @param a The first JSON string.
+ * @param b The second JSON string.
+ * @return true if the JSON structures are equivalent, false otherwise.
  */
-void json_free(json_value *v);
+bool json_equal(const json_value *a, const json_value *b);
 
 /**
  * @brief Converts a json_value tree to a pretty-printed JSON string.
@@ -121,29 +123,16 @@ void json_free(json_value *v);
 char *json_stringify(const json_value *v);
 
 /**
- * @brief Converts a json_value tree to a pretty-printed JSON string into a user-provided buffer.
- * @param v The json_value to stringify.
- * @param buf The buffer to write the JSON string to.
- * @param bufsize The size of the buffer.
- * @return The number of bytes written to the buffer (excluding the null terminator), or -1 on error.
+ * @brief Frees a json_value and all its children.
+ * @param v The json_value to free.
  */
-int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize);
+void json_free(const json_value *v);
 
 /**
- * @brief Compares two JSON strings for structural equality.
- * @param a The first JSON string.
- * @param b The second JSON string.
- * @return true if the JSON structures are equivalent, false otherwise.
+ * @brief Prints a json_value tree to a standard output.
+ * @param v The json_value to print.
+ * @param out The standatd output FILE handle.
  */
-bool json_equal(const char *a, const char *b);
-
-/**
- * @brief Gets a value from a JSON object by key.
- * @param obj The JSON object (must be of type J_OBJECT).
- * @param key The key to look for.
- * @param len The length of the key.
- * @return A pointer to the json_value if the key is found, otherwise NULL.
- */
-json_value *json_object_get(const json_value *obj, const char *key, size_t len);
+void json_print(const json_value *v, FILE *out);
 
 #endif /* JSON_H */

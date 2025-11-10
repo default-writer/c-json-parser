@@ -1,7 +1,7 @@
 #include "json.h"
 
-#define PREFIX_CHAR_OFFSET 10
-#define POSTFIX_CHAR_OFFSET 10
+#define DICTIONARY_SIZE 16
+
 #define STATE_INITIAL 1
 #define STATE_ESCAPE_START 2
 #define STATE_ESCAPE_UNICODE_BYTE1 3
@@ -10,10 +10,6 @@
 #define STATE_ESCAPE_UNICODE_BYTE4 6
 #define TEXT_SIZE(name) (sizeof((name)) - 1)
 
-/* JSON value with references back to original text */
-
-static const size_t DICT_GROW = 16;
-
 /* small buffer state (used by buffer-based printers) */
 typedef struct {
   char *buf;
@@ -21,9 +17,58 @@ typedef struct {
   int pos;
 } bs;
 
-static void free_json_value(json_value *v); /* forward */
+/* forward declarations */
 
-/* set (insert) taking ownership of 'keyptr' (heap buffer) and of 'value' */
+static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t len, json_value *value);
+static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
+static json_value *json_new_null(void);
+static json_value *json_new_boolean(const char *ptr, size_t len);
+static json_value *json_new_number(const char *ptr, size_t len);
+static json_value *json_new_array(void);
+static json_value *json_new_object(void);
+static void json_array_push(json_value *arr, json_value *item);
+
+static void free_json_value_contents(const json_value *v);
+static void free_json_value(const json_value *v);
+static void skip_ws(const char **s);
+
+/* --- parser helpers --- */
+static json_value *parse_string_value(const char **s);
+static bool parse_string_value_ptr(reference *ref, const char **s);
+static json_value *parse_number_value(const char **s);
+static json_value *parse_array_value(const char **s, int id);
+static json_value *parse_object_value(const char **s, int id);
+static bool match_literal_build(const char **s, const char *lit);
+static json_value *parse_value_build(const char **s, int id);
+
+/* --- pretty-print helpers --- */
+static void print_string_escaped(FILE *out, const char *s, size_t len);
+static void print_indent(FILE *out, int indent);
+static void print_array_compact(const json_value *v, FILE *out);
+static void print_object_compact(const json_value *v, FILE *out);
+static void print_value_compact(const json_value *v, FILE *out);
+static void print_value(const json_value *v, int indent, FILE *out);
+
+static int print_indent_buf(bs *b, int indent);
+static int print_string_escaped_buf(bs *b, const char *s, size_t len);
+static int print_array_compact_buf(const json_value *v, bs *b);
+static int print_object_buf(const json_value *v, bs *b, int indent);
+static int print_object_compact_buf(const json_value *v, bs *b);
+static int print_value_compact_buf(const json_value *v, bs *b);
+static int print_value_buf(const json_value *v, int indent, bs *b);
+
+/* --- buffer helpers --- */
+static int bs_write(bs *b, const char *data, int len);
+static int bs_putc(bs *b, char c);
+
+/* --- json helpers --- */
+static int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize);
+static bool json_array_equal(const json_value *a, const json_value *b);
+static bool json_object_equal(const json_value *a, const json_value *b);
+static void free_json_value(const json_value *v);
+
+/* implementation */
+
 static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t len, json_value *value) {
   if (!obj || obj->type != J_OBJECT || !ptr)
     return false;
@@ -37,7 +82,7 @@ static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t le
   }
   /* ensure capacity */
   if (obj->u.object.count == obj->u.object.capacity) {
-    size_t ncap = obj->u.object.capacity ? obj->u.object.capacity * 2 : DICT_GROW;
+    size_t ncap = obj->u.object.capacity ? obj->u.object.capacity * 2 : DICTIONARY_SIZE;
     json_object *ne = realloc(obj->u.object.items, ncap * sizeof(json_object));
     if (!ne) {
       return false;
@@ -52,8 +97,7 @@ static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t le
   return true;
 }
 
-/* get by key (linear search) */
-json_value *json_object_get(const json_value *obj, const char *key, size_t len) {
+static json_value *json_object_get(const json_value *obj, const char *key, size_t len) {
   if (!obj || obj->type != J_OBJECT || !key)
     return NULL;
   for (size_t i = 0; i < obj->u.object.count; ++i) {
@@ -63,7 +107,6 @@ json_value *json_object_get(const json_value *obj, const char *key, size_t len) 
   return NULL;
 }
 
-/* --- json_value helpers --- */
 static json_value *json_new_null(void) {
   json_value *v = calloc(1, sizeof(*v));
   if (!v)
@@ -92,8 +135,6 @@ static json_value *json_new_number(const char *ptr, size_t len) {
   return v;
 }
 
-/* json_new_string-like logic where needed */
-
 static json_value *json_new_array(void) {
   json_value *v = calloc(1, sizeof(*v));
   if (!v)
@@ -119,7 +160,7 @@ static void json_array_push(json_value *arr, json_value *item) {
   if (!arr || arr->type != J_ARRAY || !item)
     return;
   if (arr->u.array.count == arr->u.array.capacity) {
-    size_t ncap = arr->u.array.capacity ? arr->u.array.capacity * 2 : DICT_GROW;
+    size_t ncap = arr->u.array.capacity ? arr->u.array.capacity * 2 : DICTIONARY_SIZE;
     json_value *newitems = realloc(arr->u.array.items, ncap * sizeof(json_value));
     if (!newitems)
       return;
@@ -129,7 +170,7 @@ static void json_array_push(json_value *arr, json_value *item) {
   arr->u.array.items[arr->u.array.count++] = *item;
 }
 
-static void free_json_value_contents(json_value *v) {
+static void free_json_value_contents(const json_value *v) {
   if (!v)
     return;
   switch (v->type) {
@@ -150,21 +191,20 @@ static void free_json_value_contents(json_value *v) {
   }
 }
 
-static void free_json_value(json_value *v) {
+static void free_json_value(const json_value *v) {
   if (!v)
     return;
   free_json_value_contents(v);
-  free(v);
+  free((void*)v);
 }
-
-/* --- parsing that builds the structure --- */
 
 static void skip_ws(const char **s) {
   while (isspace((unsigned char)**s))
     (*s)++;
 }
 
-/* parse string and return allocated json_value (string) */
+/* --- parser helpers --- */
+
 static json_value *parse_string_value(const char **s) {
   if (**s != '"')
     return NULL;
@@ -245,7 +285,7 @@ static json_value *parse_string_value(const char **s) {
   v->u.string.len = len;
   return v;
 }
-/* parse string and return allocated json_value (string) */
+
 static bool parse_string_value_ptr(reference *ref, const char **s) {
   if (**s != '"')
     return false;
@@ -322,7 +362,6 @@ static bool parse_string_value_ptr(reference *ref, const char **s) {
   return true;
 }
 
-/* parse number and return json_value */
 static json_value *parse_number_value(const char **s) {
   const char *p = *s;
   char *end = NULL;
@@ -332,12 +371,6 @@ static json_value *parse_number_value(const char **s) {
   *s = end;
   return json_new_number(p, (size_t)(end - p));
 }
-
-/* forward */
-static json_value *parse_value_build(const char **s, int id);
-
-/* forward declare print_value so it can be used before its definition */
-void print_value(const json_value *v, int indent, FILE *out);
 
 static json_value *parse_array_value(const char **s, int id) {
   if (**s != '[')
@@ -471,61 +504,7 @@ static json_value *parse_value_build(const char **s, int id) {
   return NULL;
 }
 
-/* --- public API --- */
-
-/* original validator function retained for compatibility */
-bool func(const char *json) {
-  if (!json)
-    return false;
-  const char *p = json;
-  skip_ws(&p);
-  /* use build parser only for validation here */
-  const char *chk = p;
-  json_value *v = parse_value_build(&chk, 0);
-  if (!v)
-    return false;
-  skip_ws(&chk);
-  if (*chk != '\0') {
-    free_json_value(v);
-    return false;
-  }
-  free_json_value(v);
-  return true;
-}
-
-/* New function:
-   parse JSON string and return a dict* (object) representing the top-level
-   object. If the top-level JSON is not an object, it will be returned inside a
-   new dictionary under the empty-string key ("" ). Caller is responsible for
-   calling dict_free() on the returned pointer. Returns NULL on error.
-*/
-json_value *json_parse(const char *json) {
-  if (!json)
-    return NULL;
-  const char *p = json;
-  skip_ws(&p);
-
-  /* parse entire JSON into an in-memory json_value tree */
-  json_value *root = parse_value_build(&p, 0);
-  if (!root)
-    return NULL;
-
-  /* ensure there is no trailing garbage */
-  skip_ws(&p);
-  if (*p != '\0') {
-    free_json_value(root);
-    return NULL;
-  }
-
-  return root;
-}
-
 /* --- pretty-print helpers --- */
-
-static void print_indent(FILE *out, int indent) {
-  for (int i = 0; i < indent; ++i)
-    fputs("    ", out); /* 4 spaces */
-}
 
 static void print_string_escaped(FILE *out, const char *s, size_t len) {
   fputc('"', out);
@@ -537,10 +516,10 @@ static void print_string_escaped(FILE *out, const char *s, size_t len) {
   fputc('"', out);
 }
 
-/* compact printer: prints a value without newlines or indentation (used for
-   single-line arrays and when a compact representation is required inside
-   arrays) */
-static void print_value_compact(const json_value *v, FILE *out);
+static void print_indent(FILE *out, int indent) {
+  for (int i = 0; i < indent; ++i)
+    fputs("    ", out); /* 4 spaces */
+}
 
 static void print_array_compact(const json_value *v, FILE *out) {
   if (!v || v->type != J_ARRAY) {
@@ -600,9 +579,7 @@ static void print_value_compact(const json_value *v, FILE *out) {
   }
 }
 
-/* pretty printer: prints values with indentation and newlines; arrays are
-   always printed as single line per request */
-void print_value(const json_value *v, int indent, FILE *out) {
+static void print_value(const json_value *v, int indent, FILE *out) {
   if (!v) {
     fputs("null", out);
     return;
@@ -646,28 +623,6 @@ void print_value(const json_value *v, int indent, FILE *out) {
   }
 }
 
-/* --- buffer helpers --- */
-static int bs_write(bs *b, const char *data, int len) {
-  if (len <= 0)
-    return 0;
-  if (b->pos + len >= b->cap)
-    return -1;
-  char *buf = &b->buf[b->pos];
-  for (int i = 0; i < len; i++) {
-    *buf++ = *data++;
-    b->pos++;
-  }
-  return 0;
-}
-
-static int bs_putc(bs *b, char c) {
-  if (b->pos + 1 >= b->cap)
-    return -1;
-  b->buf[b->pos++] = c;
-  return 0;
-}
-
-/* buffer-based printers (mirror of FILE-based ones) */
 static int print_indent_buf(bs *b, int indent) {
   for (int i = 0; i < indent; ++i) {
     if (bs_write(b, "    ", 4) < 0)
@@ -689,11 +644,6 @@ static int print_string_escaped_buf(bs *b, const char *s, size_t len) {
     return -1;
   return 0;
 }
-
-/* forward declarations for functions/vars used before their definitions */
-static int print_object_buf(const json_value *v, bs *b, int indent);
-static int print_value_compact_buf(const json_value *v, bs *b);
-static int print_value_buf(const json_value *v, int indent, bs *b);
 
 static int print_array_compact_buf(const json_value *v, bs *b) {
   if (!v || v->type != J_ARRAY) {
@@ -784,10 +734,10 @@ static int print_object_compact_buf(const json_value *v, bs *b) {
 
 static int print_value_compact_buf(const json_value *v, bs *b) {
   if (!v)
-    return bs_write(b, "null", 4);
+    return bs_write(b, "null", TEXT_SIZE("null"));
   switch (v->type) {
   case J_NULL:
-    return bs_write(b, "null", 4);
+    return bs_write(b, "null", TEXT_SIZE("null"));
   case J_BOOLEAN:
     return bs_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
   case J_NUMBER:
@@ -805,10 +755,10 @@ static int print_value_compact_buf(const json_value *v, bs *b) {
 
 static int print_value_buf(const json_value *v, int indent, bs *b) {
   if (!v)
-    return bs_write(b, "null", 4);
+    return bs_write(b, "null", TEXT_SIZE("null"));
   switch (v->type) {
   case J_NULL:
-    return bs_write(b, "null", 4);
+    return bs_write(b, "null", TEXT_SIZE("null"));
   case J_BOOLEAN:
     return bs_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
   case J_NUMBER:
@@ -824,10 +774,31 @@ static int print_value_buf(const json_value *v, int indent, bs *b) {
   return -1;
 }
 
-/* new func_print_dict: write into provided buffer, return bytes written or -1
-  if insufficient preserve_order flag added (non-zero means preserve input
-  insertion order) */
-int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize) {
+/* --- buffer helpers --- */
+
+static int bs_write(bs *b, const char *data, int len) {
+  if (len <= 0)
+    return 0;
+  if (b->pos + len >= b->cap)
+    return -1;
+  char *buf = &b->buf[b->pos];
+  for (int i = 0; i < len; i++) {
+    *buf++ = *data++;
+    b->pos++;
+  }
+  return 0;
+}
+
+static int bs_putc(bs *b, char c) {
+  if (b->pos + 1 >= b->cap)
+    return -1;
+  b->buf[b->pos++] = c;
+  return 0;
+}
+
+/* --- json helpers --- */
+
+static int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize) {
   if (!buf || bufsize <= 0)
     return -1;
   bs bstate = {buf, bufsize, 0};
@@ -844,6 +815,82 @@ int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize) {
   else
     return -1;
   return bstate.pos;
+}
+
+static bool json_array_equal(const json_value *a, const json_value *b) {
+  if (!a || !b)
+    return a == b;
+  if (a->type != J_ARRAY || b->type != J_ARRAY)
+    return false;
+  if (a->u.array.count != b->u.array.count)
+    return false;
+  for (size_t i = 0; i < a->u.array.count; ++i) {
+    if (!json_equal(&(a->u.array.items[i]), &(b->u.array.items[i])))
+      return false;
+  }
+  return true;
+}
+
+static bool json_object_equal(const json_value *a, const json_value *b) {
+  if (!a || !b)
+    return a == b;
+  if (a->type != J_OBJECT || b->type != J_OBJECT)
+    return false;
+  if (a->u.object.count != b->u.object.count)
+    return false;
+  for (size_t i = 0; i < a->u.object.count; ++i) {
+    json_object *e = &a->u.object.items[i];
+    json_value *bv = json_object_get(b, e->ptr, e->len);
+    if (!bv)
+      return false;
+    if (!json_equal(e->value, bv))
+      return false;
+  }
+  return true;
+}
+
+/* --- public API --- */
+
+const char* json_source(const json_value *v) {
+  if (!v)
+    return NULL;
+  switch(v->type) {
+  case J_NULL:
+    return v->u.number.ptr;
+    case J_BOOLEAN:
+    return v->u.boolean.ptr;
+  case J_NUMBER:
+    return v->u.number.ptr;
+  case J_STRING:
+    return v->u.string.ptr;
+  case J_ARRAY:
+    return "array";
+  case J_OBJECT:
+    return "object";
+  default:
+    return NULL;
+  }
+}
+
+const json_value *json_parse(const char *json) {
+  if (!json)
+    return NULL;
+  const char *p = json;
+  skip_ws(&p);
+
+  /* parse entire JSON into an in-memory json_value tree */
+  json_value *root = parse_value_build(&p, 0);
+  if (!root)
+    return NULL;
+
+  /* ensure there is no trailing garbage */
+  skip_ws(&p);
+  if (*p != '\0') {
+    free_json_value(root);
+    return NULL;
+  }
+
+  return root;
 }
 
 char *json_stringify(const json_value *v) {
@@ -865,50 +912,7 @@ char *json_stringify(const json_value *v) {
   return NULL;
 }
 
-void json_free(json_value *v) { free_json_value(v); }
-
-/* --- structural equality helpers --- */
-
-/* forward declare dict_get if necessary (it's defined above in this file) */
-
-static bool json_value_equal(const json_value *a, const json_value *b);
-
-static bool json_array_equal(const json_value *a, const json_value *b) {
-  if (!a || !b)
-    return a == b;
-  if (a->type != J_ARRAY || b->type != J_ARRAY)
-    return false;
-  if (a->u.array.count != b->u.array.count)
-    return false;
-  for (size_t i = 0; i < a->u.array.count; ++i) {
-    if (!json_value_equal(&(a->u.array.items[i]), &(b->u.array.items[i])))
-      return false;
-  }
-  return true;
-}
-
-static bool json_object_equal(const json_value *a, const json_value *b) {
-  if (!a || !b)
-    return a == b;
-  if (a->type != J_OBJECT || b->type != J_OBJECT)
-    return false;
-  /* quick check: number of items should match */
-  if (a->u.object.count != b->u.object.count)
-    return false;
-  /* iterate entries in insertion order and ensure b has same key with equal
-   * value */
-  for (size_t i = 0; i < a->u.object.count; ++i) {
-    json_object *e = &a->u.object.items[i];
-    json_value *bv = json_object_get(b, e->ptr, e->len);
-    if (!bv)
-      return false;
-    if (!json_value_equal(e->value, bv))
-      return false;
-  }
-  return true;
-}
-
-static bool json_value_equal(const json_value *a, const json_value *b) {
+bool json_equal(const json_value *a, const json_value *b) {
   if (a == b)
     return true;
   if (!a || !b)
@@ -921,17 +925,7 @@ static bool json_value_equal(const json_value *a, const json_value *b) {
   case J_BOOLEAN:
     return a->u.boolean.len == b->u.boolean.len && strncmp(a->u.boolean.ptr, b->u.boolean.ptr, a->u.boolean.len) == 0;
   case J_NUMBER: {
-    /* For numbers, compare floating point values, not text. */
-    char *end_a;
-    char *end_b;
-    double val_a = strtod(a->u.number.ptr, &end_a);
-    double val_b = strtod(b->u.number.ptr, &end_b);
-    if ((size_t)(end_a - a->u.number.ptr) != a->u.number.len || (size_t)(end_b - b->u.number.ptr) != b->u.number.len) {
-      /* if strtod did not consume the entire string, it's not a valid float
-       * or is a very large integer. Fall back to string comparison. */
-      return a->u.number.len == b->u.number.len && strncmp(a->u.number.ptr, b->u.number.ptr, a->u.number.len) == 0;
-    }
-    return val_a == val_b;
+    return a->u.number.len == b->u.number.len && strncmp(a->u.number.ptr, b->u.number.ptr, a->u.number.len) == 0;
   }
   case J_STRING:
     if (a->u.string.ptr == NULL && b->u.string.ptr == NULL)
@@ -949,72 +943,14 @@ static bool json_value_equal(const json_value *a, const json_value *b) {
     return false;
   }
 }
-/* public API: compare two JSON texts for structural equality */
-bool func_json_equal(const char *a, const char *b) {
-  if (!a || !b)
-    return false;
-  const char *pa = a;
-  const char *pb = b;
-  skip_ws(&pa);
-  skip_ws(&pb);
-  json_value *va = parse_value_build(&pa, 0);
-  if (!va)
-    return false;
-  json_value *vb = parse_value_build(&pb, 0);
-  if (!vb) {
-    free_json_value(va);
-    return false;
-  }
-  skip_ws(&pa);
-  skip_ws(&pb);
-  if (*pa != '\0' || *pb != '\0') {
-    free_json_value(va);
-    free_json_value(vb);
-    return false;
-  }
-  bool eq = json_value_equal(va, vb);
 
-  if (!eq) {
-    /* find first differing position in the original inputs (skip whitespace) */
-    const char *xa = a;
-    const char *xb = b;
-    while (*xa || *xb) {
-      while (isspace((unsigned char)*xa))
-        xa++;
-      while (isspace((unsigned char)*xb))
-        xb++;
-      if (*xa != *xb)
-        break;
-      xa++;
-      xb++;
-    }
-    size_t off_a = (size_t)(xa - a);
-    size_t off_b = (size_t)(xb - b);
-    /* print brief context */
-    size_t ctx_before = PREFIX_CHAR_OFFSET;
-    size_t ctx_after = POSTFIX_CHAR_OFFSET;
-    size_t start_a = (off_a > ctx_before) ? off_a - ctx_before : 0;
-    size_t start_b = (off_b > ctx_before) ? off_b - ctx_before : 0;
-    fprintf(stderr, "JSON mismatch: first differing byte offsets a=%zu b=%zu\n", off_a, off_b);
-    fprintf(stderr, "a context: \"");
-    for (size_t i = start_a; i < off_a + ctx_after && a[i] != '\0'; ++i) {
-      char c = a[i];
-      printf("a:%x\n", c);
-      fputc(c, stderr);
-    }
-    fprintf(stderr, "\"\n");
-    fprintf(stderr, "b context: \"");
-    for (size_t i = start_b; i < off_b + ctx_after && b[i] != '\0'; ++i) {
-      char c = b[i];
-      printf("b:%x\n", c);
-      fputc(c, stderr);
-    }
-    fprintf(stderr, "\"\n");
-  }
-
-  free_json_value(va);
-  free_json_value(vb);
-  return eq;
+void json_free(const json_value *v) {
+  free_json_value(v);
 }
+
+void json_print(const json_value *v, FILE *out) {
+   print_value(v, 0, out);
+}
+
 
 /* End of file */
