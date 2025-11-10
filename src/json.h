@@ -14,6 +14,20 @@
 
 #ifdef _WIN32
 #include <windows.h>
+/* Provide a safe wrapper around fopen on Windows to avoid deprecation warnings.
+ * The wrapper uses fopen_s internally and returns the FILE* pointer.
+ * Existing code using fopen stays unchanged.
+ */
+static inline FILE *safe_fopen(const char *filename, const char *mode) {
+    FILE *fp = NULL;
+    errno_t err = fopen_s(&fp, filename, mode);
+    if (err != 0) {
+        return NULL;
+    }
+    return fp;
+}
+/* Redirect calls to fopen to the safe wrapper. */
+#define fopen(filename, mode) safe_fopen(filename, mode)
 #define fprintf(stream, format, ...)                                           \
   do {                                                                         \
     fprintf_s((stream), (format), __VA_ARGS__);                                \
