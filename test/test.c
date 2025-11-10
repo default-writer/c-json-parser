@@ -1,17 +1,4 @@
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#ifdef _WIN32
-#include <windows.h>
-#define strncpy_s(dest, dest_size, src, count)                                 \
-  strncpy_s(dest, dest_size, src, count)
-#else
-#define strncpy_s(dest, dest_size, src, count)                                 \
-  strncpy(dest, src, count);                                                   \
-  (dest)[(dest_size) - 1] = '\0';
-#endif
+#include "../src/json.h"
 
 int tests_run = 0;
 int tests_passed = 0;
@@ -114,11 +101,10 @@ void setup_console() {
     }                                                                          \
   } while (0)
 
-/* forward-declare opaque json_value and public API implemented in json.c */
-typedef struct json_value json_value;
-json_value *json_parse(const char *json);
-char *json_stringify(const json_value *v);
-void json_free(json_value *v);
+bool func(const char *json);
+json_value_ptr json_parse(const char *json);
+char *json_stringify(const json_value_ptr v);
+void json_free(json_value_ptr v);
 bool func_json_equal(const char *a, const char *b);
 
 void test_json_parsing() {
@@ -139,8 +125,8 @@ void test_json_parsing() {
     json[size] = '\0';
     fclose(fp);
 
-    /* parse into internal json_value */
-    json_value *v = json_parse(json);
+    /* parse into internal json_value_ptr */
+    json_value_ptr v = json_parse(json);
     ASSERT_PTR_NOT_NULL(v);
 
     /* render json_value back to string */

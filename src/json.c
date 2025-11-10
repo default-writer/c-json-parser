@@ -1,107 +1,50 @@
-#include <ctype.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-/* Simple JSON structures (a dictionary + value types) */
-
-/* Forward declarations */
-typedef struct json_value json_value;
-
-typedef enum {
-  J_NULL,
-  J_BOOLEAN,
-  J_NUMBER,
-  J_STRING,
-  J_ARRAY,
-  J_OBJECT
-} json_type;
-
-typedef struct json_object_entry {
-  const char *key;
-  size_t key_len;
-  json_value *value;
-} json_object_entry;
+#include "json.h"
 
 /* JSON value with references back to original text */
-struct json_value {
-  json_type type;
-  union {
-    struct {
-      const char *ptr; /* start of this value in source JSON */
-      size_t len;
-    } string;
-    struct {
-      const char *ptr; /* start of this value in source JSON */
-      size_t len;
-    } boolean;
-    struct {
-      const char *ptr; /* start of this value in source JSON */
-      size_t len;
-    } number;
-    struct {
-      json_value **items;
-      size_t count;
-      size_t cap;
-    } array;
-    struct {
-      json_object_entry *entries;
-      size_t count;
-      size_t cap;
-    } object;
-  } u;
-};
 
 static const size_t DICT_GROW = 16;
 
 static void free_json_value(json_value *v); /* forward */
 
 /* set (insert) taking ownership of 'keyptr' (heap buffer) and of 'value' */
-static bool json_object_set_take_key(json_value *obj, char *keyptr,
-                                     size_t keylen, json_value *value) {
-  if (!obj || obj->type != J_OBJECT || !keyptr)
+static bool json_object_set_take_key(json_value *obj, char *ptr, size_t len,
+                                     json_value *value) {
+  if (!obj || obj->type != J_OBJECT || !ptr)
     return false;
   /* check existing keys by comparing strings */
   for (size_t i = 0; i < obj->u.object.count; ++i) {
-    if (obj->u.object.entries[i].key &&
-        strcmp(obj->u.object.entries[i].key, keyptr) == 0) {
-      /* replace existing value, free incoming key */
-      free(keyptr);
-      free_json_value(obj->u.object.entries[i].value);
-      obj->u.object.entries[i].value = value;
+    if (obj->u.object.items[i].ptr &&
+        strncmp(obj->u.object.items[i].ptr, ptr, len) == 0) {
+      free_json_value(obj->u.object.items[i].value);
+      obj->u.object.items[i].value = value;
       return true;
     }
   }
   /* ensure capacity */
   if (obj->u.object.count == obj->u.object.cap) {
     size_t ncap = obj->u.object.cap ? obj->u.object.cap * 2 : DICT_GROW;
-    json_object_entry *ne =
-        realloc(obj->u.object.entries, ncap * sizeof(json_object_entry));
+    json_object *ne = realloc(obj->u.object.items, ncap * sizeof(json_object));
     if (!ne) {
-      free(keyptr);
       return false;
     }
-    obj->u.object.entries = ne;
+    obj->u.object.items = ne;
     obj->u.object.cap = ncap;
   }
-  obj->u.object.entries[obj->u.object.count].key = keyptr;
-  obj->u.object.entries[obj->u.object.count].key_len = keylen;
-  obj->u.object.entries[obj->u.object.count].value = value;
+  obj->u.object.items[obj->u.object.count].ptr = ptr;
+  obj->u.object.items[obj->u.object.count].len = len;
+  obj->u.object.items[obj->u.object.count].value = value;
   obj->u.object.count++;
   return true;
 }
 
 /* get by key (linear search) */
-json_value *json_object_get(const json_value *obj, const char *key) {
+json_value *json_object_get(const json_value *obj, const char *key,
+                            size_t len) {
   if (!obj || obj->type != J_OBJECT || !key)
     return NULL;
   for (size_t i = 0; i < obj->u.object.count; ++i) {
-    if (strcmp(obj->u.object.entries[i].key, key) == 0)
-      return obj->u.object.entries[i].value;
+    if (strncmp(obj->u.object.items[i].ptr, key, len) == 0)
+      return obj->u.object.items[i].value;
   }
   return NULL;
 }
@@ -153,49 +96,53 @@ static json_value *json_new_object(void) {
   if (!v)
     return NULL;
   v->type = J_OBJECT;
-  v->u.object.entries = NULL;
+  v->u.object.items = NULL;
   v->u.object.count = 0;
   v->u.object.cap = 0;
   return v;
 }
 
 static void json_array_push(json_value *arr, json_value *item) {
-  if (!arr || arr->type != J_ARRAY)
+  if (!arr || arr->type != J_ARRAY || !item)
     return;
   if (arr->u.array.count == arr->u.array.cap) {
     size_t ncap = arr->u.array.cap ? arr->u.array.cap * 2 : DICT_GROW;
-    json_value **newitems =
-        realloc(arr->u.array.items, ncap * sizeof(json_value *));
+    json_value *newitems =
+        realloc(arr->u.array.items, ncap * sizeof(json_value));
     if (!newitems)
       return;
     arr->u.array.items = newitems;
     arr->u.array.cap = ncap;
   }
-  arr->u.array.items[arr->u.array.count++] = item;
+  arr->u.array.items[arr->u.array.count++] = *item;
+}
+
+static void free_json_value_contents(json_value *v) {
+  if (!v)
+    return;
+  switch (v->type) {
+  case J_STRING:
+    break;
+  case J_ARRAY:
+    for (size_t i = 0; i < v->u.array.count; ++i)
+      free_json_value_contents(&(v->u.array.items[i]));
+    free(v->u.array.items);
+    break;
+  case J_OBJECT:
+    for (size_t i = 0; i < v->u.object.count; ++i) {
+      free_json_value(v->u.object.items[i].value);
+    }
+    free(v->u.object.items);
+    break;
+  default:
+    break;
+  }
 }
 
 static void free_json_value(json_value *v) {
   if (!v)
     return;
-  switch (v->type) {
-  case J_STRING:
-    free((void *)v->u.string.ptr);
-    break;
-  case J_ARRAY:
-    for (size_t i = 0; i < v->u.array.count; ++i)
-      free_json_value(v->u.array.items[i]);
-    free(v->u.array.items);
-    break;
-  case J_OBJECT:
-    for (size_t i = 0; i < v->u.object.count; ++i) {
-      free((void *)v->u.object.entries[i].key);
-      free_json_value(v->u.object.entries[i].value);
-    }
-    free(v->u.object.entries);
-    break;
-  default:
-    break;
-  }
+  free_json_value_contents(v);
   free(v);
 }
 
@@ -211,121 +158,80 @@ static json_value *parse_string_value(const char **s) {
   if (**s != '"')
     return NULL;
   const char *p = *s + 1;
-  (void)p; /* keep compiler quiet if p temporarily unused in some builds */
+  const char *ptr = *s + 1;
   /* we need to process escapes, we'll build a dynamic buffer */
-  char *buf = calloc(1, 1);
-  size_t blen = 0;
-  if (!buf)
-    return NULL;
+  size_t len = 0;
   /* ensure empty buffer is a valid C string */
-  buf[0] = '\0';
-  while (*p && *p != '"') {
-    if ((unsigned char)*p < 0x20) {
-      free(buf);
-      return NULL;
-    }
-    if (*p == '\\') {
-      p++;
-      if (!*p) {
-        free(buf);
+  int state = 1;
+  while (*p && state) {
+    switch (state) {
+    case 1:
+      if (*p == '"') {
+        state = 0;
+        continue;
+      } else if (*p == '\\')
+        state = 2;
+      break;
+    case 2:
+      if (*p == '\\')
+        state = 1;
+      else if (*p == '"')
+        state = 1;
+      else if (*p == 'b')
+        state = 1;
+      else if (*p == 'f')
+        state = 1;
+      else if (*p == 'n')
+        state = 1;
+      else if (*p == 'r')
+        state = 1;
+      else if (*p == 't')
+        state = 1;
+      else if (*p == 'u')
+        state = 3;
+      else
+        return NULL;
+      break;
+    case 3:
+      if (!isxdigit((unsigned char)*p)) {
         return NULL;
       }
-      char out = 0;
-      if (*p == 'u') {
-        /* simplistic: keep \uXXXX as-is (no unicode decode) */
-        p++; /* move past 'u' */
-        char *nb = realloc(buf, blen + 6 + 1);
-        if (!nb) {
-          free(buf);
-          return NULL;
-        }
-        buf = nb;
-        buf[blen++] = '\\';
-        buf[blen++] = 'u';
-        for (int i = 0; i < 4; ++i) {
-          if (!isxdigit((unsigned char)*p)) {
-            free(buf);
-            return NULL;
-          }
-          buf[blen++] = *p++;
-        }
-        buf[blen] = '\0';
-        continue;
-      } else {
-        switch (*p) {
-        case '"':
-          out = '"';
-          break;
-        case '\\':
-          out = '\\';
-          break;
-        case '/':
-          out = '/';
-          break;
-        case 'b':
-          out = '\b';
-          break;
-        case 'f':
-          out = '\f';
-          break;
-        case 'n':
-          out = '\n';
-          break;
-        case 'r':
-          out = '\r';
-          break;
-        case 't':
-          out = '\t';
-          break;
-        default:
-          free(buf);
-          return NULL;
-        }
-        /* append out */
-        char *nb = realloc(buf, blen + 1 + 1);
-        if (!nb) {
-          free(buf);
-          return NULL;
-        }
-        buf = nb;
-        buf[blen++] = out;
-        buf[blen] = '\0';
-        p++;
-        continue;
-      }
-    } else {
-      char *nb = realloc(buf, blen + 1 + 1);
-      if (!nb) {
-        free(buf);
+      state = 4;
+      break;
+    case 4:
+      if (!isxdigit((unsigned char)*p)) {
         return NULL;
       }
-      buf = nb;
-      buf[blen++] = *p++;
-      buf[blen] = '\0';
+      state = 5;
+      break;
+    case 5:
+      if (!isxdigit((unsigned char)*p)) {
+        return NULL;
+      }
+      state = 6;
+      break;
+    case 6:
+      if (!isxdigit((unsigned char)*p)) {
+        return NULL;
+      }
+      state = 1;
+      break;
     }
+    len++;
+    p++;
   }
   if (*p != '"') {
-    free(buf);
     return NULL;
   }
-  p++; /* skip closing quote */
+  p++;
   *s = p;
   json_value *v = calloc(1, sizeof(*v));
   if (!v) {
-    free(buf);
     return NULL;
   }
   v->type = J_STRING;
-  /* shrink to fit */
-  char *shr = realloc(buf, blen + 1);
-  if (!shr) {
-    free(buf);
-    free(v);
-    return NULL;
-  }
-  shr[blen] = '\0';
-  v->u.string.ptr = shr;
-  v->u.string.len = blen;
+  v->u.string.ptr = ptr;
+  v->u.string.len = len;
   return v;
 }
 
@@ -366,6 +272,7 @@ static json_value *parse_array_value(const char **s, int id) {
       return NULL;
     }
     json_array_push(arr, elem);
+    free(elem);
     skip_ws(s);
     if (**s == ',') {
       (*s)++;
@@ -426,12 +333,12 @@ static json_value *parse_object_value(const char **s, int id) {
                                   val)) {
       /* insertion failed: free transferred resources */
       free_json_value(val);
-      free(k);
+      free_json_value(k);
       free_json_value(obj);
       return NULL;
     }
     /* free only the json_value wrapper for the key (do NOT free key.ptr) */
-    free(k);
+    free_json_value(k);
 
     skip_ws(s);
     if (**s == ',') {
@@ -540,39 +447,13 @@ static void print_indent(FILE *out, int indent) {
     fputs("    ", out); /* 4 spaces */
 }
 
-static void print_string_escaped(FILE *out, const char *s) {
+static void print_string_escaped(FILE *out, const char *s, size_t len) {
   fputc('"', out);
-  for (const unsigned char *p = (const unsigned char *)s; *p; ++p) {
+  size_t i = 0;
+  for (const unsigned char *p = (const unsigned char *)s; *p && i < len;
+       ++i, ++p) {
     unsigned char c = *p;
-    switch (c) {
-    case '"':
-      fputs("\\\"", out);
-      break;
-    case '\\':
-      fputs("\\\\", out);
-      break;
-    case '\b':
-      fputs("\\b", out);
-      break;
-    case '\f':
-      fputs("\\f", out);
-      break;
-    case '\n':
-      fputs("\\n", out);
-      break;
-    case '\r':
-      fputs("\\r", out);
-      break;
-    case '\t':
-      fputs("\\t", out);
-      break;
-    default:
-      if (c < 0x20) {
-        fprintf(out, "\\u%04x", c);
-      } else {
-        fputc(c, out);
-      }
-    }
+    fputc(c, out);
   }
   fputc('"', out);
 }
@@ -591,7 +472,7 @@ static void print_array_compact(const json_value *v, FILE *out) {
   for (size_t i = 0; i < v->u.array.count; ++i) {
     if (i)
       fputs(", ", out);
-    print_value_compact(v->u.array.items[i], out);
+    print_value_compact(&(v->u.array.items[i]), out);
   }
   fputc(']', out);
 }
@@ -605,8 +486,8 @@ static void print_object_compact(const json_value *v, FILE *out) {
   for (size_t i = 0; i < v->u.object.count; ++i) {
     if (i)
       fputs(", ", out);
-    json_object_entry *e = &v->u.object.entries[i];
-    print_string_escaped(out, e->key);
+    json_object *e = &v->u.object.items[i];
+    print_string_escaped(out, e->ptr, e->len);
     fputs(": ", out);
     print_value_compact(e->value, out);
   }
@@ -629,7 +510,7 @@ static void print_value_compact(const json_value *v, FILE *out) {
     fprintf(out, "%.*s", (int)v->u.number.len, v->u.number.ptr);
     break;
   case J_STRING:
-    print_string_escaped(out, v->u.string.ptr ? v->u.string.ptr : "");
+    print_string_escaped(out, v->u.string.ptr, v->u.string.len);
     break;
   case J_ARRAY:
     print_array_compact(v, out);
@@ -658,7 +539,7 @@ void print_value(const json_value *v, int indent, FILE *out) {
     fprintf(out, "%.*s", (int)v->u.number.len, v->u.number.ptr);
     break;
   case J_STRING:
-    print_string_escaped(out, v->u.string.ptr ? v->u.string.ptr : "");
+    print_string_escaped(out, v->u.string.ptr, v->u.string.len);
     break;
   case J_ARRAY:
     /* arrays printed single-line */
@@ -671,8 +552,8 @@ void print_value(const json_value *v, int indent, FILE *out) {
       if (i)
         fputs(",\n", out);
       print_indent(out, indent + 1);
-      json_object_entry *e = &v->u.object.entries[i];
-      print_string_escaped(out, e->key);
+      json_object *e = &v->u.object.items[i];
+      print_string_escaped(out, e->ptr, e->len);
       fputs(": ", out);
       /* If value is an object, recurse to pretty format; arrays remain
        * single-line */
@@ -705,8 +586,11 @@ static int bs_write(bs *b, const char *data, int len) {
     return 0;
   if (b->pos + len >= b->cap)
     return -1;
-  memcpy(b->buf + b->pos, data, (size_t)len);
-  b->pos += len;
+  char * buf = &b->buf[b->pos];
+  for (int i = 0; i < len; i++) {
+   *buf++ = *data++;
+   b->pos++;
+  }
   return 0;
 }
 
@@ -714,29 +598,6 @@ static int bs_putc(bs *b, char c) {
   if (b->pos + 1 >= b->cap)
     return -1;
   b->buf[b->pos++] = c;
-  return 0;
-}
-
-static int bs_printf(bs *b, const char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-  va_list ap2;
-  va_copy(ap2, ap);
-  int needed = vsnprintf(NULL, 0, fmt, ap);
-  va_end(ap);
-  if (needed < 0) {
-    va_end(ap2);
-    return -1;
-  }
-  if (b->pos + needed >= b->cap) {
-    va_end(ap2);
-    return -1;
-  }
-  int wrote = vsnprintf(b->buf + b->pos, (size_t)(b->cap - b->pos), fmt, ap2);
-  va_end(ap2);
-  if (wrote < 0)
-    return -1;
-  b->pos += wrote;
   return 0;
 }
 
@@ -749,49 +610,15 @@ static int print_indent_buf(bs *b, int indent) {
   return 0;
 }
 
-static int print_string_escaped_buf(bs *b, const char *s) {
+static int print_string_escaped_buf(bs *b, const char *s, size_t len) {
   if (bs_putc(b, '"') < 0)
     return -1;
-  for (const unsigned char *p = (const unsigned char *)s; *p; ++p) {
+  size_t i = 0;
+  for (const unsigned char *p = (const unsigned char *)s; *p && i < len;
+       ++i, ++p) {
     unsigned char c = *p;
-    switch (c) {
-    case '"':
-      if (bs_write(b, "\\\"", 2) < 0)
-        return -1;
-      break;
-    case '\\':
-      if (bs_write(b, "\\\\", 2) < 0)
-        return -1;
-      break;
-    case '\b':
-      if (bs_write(b, "\\b", 2) < 0)
-        return -1;
-      break;
-    case '\f':
-      if (bs_write(b, "\\f", 2) < 0)
-        return -1;
-      break;
-    case '\n':
-      if (bs_write(b, "\\n", 2) < 0)
-        return -1;
-      break;
-    case '\r':
-      if (bs_write(b, "\\r", 2) < 0)
-        return -1;
-      break;
-    case '\t':
-      if (bs_write(b, "\\t", 2) < 0)
-        return -1;
-      break;
-    default:
-      if (c < 0x20) {
-        if (bs_printf(b, "\\u%04x", c) < 0)
-          return -1;
-      } else {
-        if (bs_putc(b, c) < 0)
-          return -1;
-      }
-    }
+    if (bs_putc(b, c) < 0)
+      return -1;
   }
   if (bs_putc(b, '"') < 0)
     return -1;
@@ -814,7 +641,7 @@ static int print_array_compact_buf(const json_value *v, bs *b) {
       if (bs_write(b, ", ", 2) < 0)
         return -1;
     }
-    if (print_value_compact_buf(v->u.array.items[i], b) < 0)
+    if (print_value_compact_buf(&(v->u.array.items[i]), b) < 0)
       return -1;
   }
   if (bs_putc(b, ']') < 0)
@@ -847,8 +674,8 @@ static int print_object_buf(const json_value *v, bs *b, int indent) {
     }
     if (print_indent_buf(b, indent + 1) < 0)
       return -1;
-    json_object_entry *ent = &v->u.object.entries[i];
-    if (print_string_escaped_buf(b, ent->key) < 0)
+    json_object *ent = &v->u.object.items[i];
+    if (print_string_escaped_buf(b, ent->ptr, ent->len) < 0)
       return -1;
     if (bs_write(b, ": ", 2) < 0)
       return -1;
@@ -877,8 +704,8 @@ static int print_object_compact_buf(const json_value *v, bs *b) {
       if (bs_write(b, ", ", 2) < 0)
         return -1;
     }
-    json_object_entry *ent = &v->u.object.entries[i];
-    if (print_string_escaped_buf(b, ent->key) < 0)
+    json_object *ent = &v->u.object.items[i];
+    if (print_string_escaped_buf(b, ent->ptr, ent->len) < 0)
       return -1;
     if (bs_write(b, ": ", 2) < 0)
       return -1;
@@ -903,7 +730,7 @@ static int print_value_compact_buf(const json_value *v, bs *b) {
     return bs_write(b, v->u.number.ptr, (int)v->u.number.len);
   }
   case J_STRING:
-    return print_string_escaped_buf(b, v->u.string.ptr ? v->u.string.ptr : "");
+    return print_string_escaped_buf(b, v->u.string.ptr, v->u.string.len);
   case J_ARRAY:
     return print_array_compact_buf(v, b);
   case J_OBJECT:
@@ -923,7 +750,7 @@ static int print_value_buf(const json_value *v, int indent, bs *b) {
   case J_NUMBER:
     return bs_write(b, v->u.number.ptr, (int)v->u.number.len);
   case J_STRING:
-    return print_string_escaped_buf(b, v->u.string.ptr ? v->u.string.ptr : "");
+    return print_string_escaped_buf(b, v->u.string.ptr, v->u.string.len);
   case J_ARRAY:
     /* arrays printed single-line */
     return print_array_compact_buf(v, b);
@@ -958,11 +785,10 @@ int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize) {
 char *json_stringify(const json_value *v) {
   if (!v)
     return NULL;
-  int cap = 65536;
-  char *buf = calloc(1, (size_t)cap);
+  char *buf = calloc(1, (size_t)MAX_BUFFER_SIZE);
   if (!buf)
     return NULL;
-  int rc = json_stringify_to_buffer(v, buf, cap);
+  int rc = json_stringify_to_buffer(v, buf, MAX_BUFFER_SIZE);
   if (rc >= 0) {
     /* rc is bytes written (excluding NUL) */
     /* shrink to fit */
@@ -991,7 +817,7 @@ static bool json_array_equal(const json_value *a, const json_value *b) {
   if (a->u.array.count != b->u.array.count)
     return false;
   for (size_t i = 0; i < a->u.array.count; ++i) {
-    if (!json_value_equal(a->u.array.items[i], b->u.array.items[i]))
+    if (!json_value_equal(&(a->u.array.items[i]), &(b->u.array.items[i])))
       return false;
   }
   return true;
@@ -1008,8 +834,8 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
   /* iterate entries in insertion order and ensure b has same key with equal
    * value */
   for (size_t i = 0; i < a->u.object.count; ++i) {
-    json_object_entry *e = &a->u.object.entries[i];
-    json_value *bv = json_object_get(b, e->key);
+    json_object *e = &a->u.object.items[i];
+    json_value *bv = json_object_get(b, e->ptr, e->len);
     if (!bv)
       return false;
     if (!json_value_equal(e->value, bv))
@@ -1051,7 +877,9 @@ static bool json_value_equal(const json_value *a, const json_value *b) {
       return true;
     if (a->u.string.ptr == NULL || b->u.string.ptr == NULL)
       return false;
-    return strcmp(a->u.string.ptr, b->u.string.ptr) == 0;
+    if (a->u.string.len != b->u.string.len)
+      return false;
+    return strncmp(a->u.string.ptr, b->u.string.ptr, a->u.string.len) == 0;
   case J_ARRAY:
     return json_array_equal(a, b);
   case J_OBJECT:
@@ -1096,8 +924,6 @@ bool func_json_equal(const char *a, const char *b) {
         xb++;
       if (*xa != *xb)
         break;
-      if (*xa == '\0')
-        break;
       xa++;
       xb++;
     }
@@ -1113,19 +939,15 @@ bool func_json_equal(const char *a, const char *b) {
     fprintf(stderr, "a context: \"");
     for (size_t i = start_a; i < off_a + ctx_after && a[i] != '\0'; ++i) {
       char c = a[i];
-      if ((unsigned char)c < 0x20)
-        fputc('.', stderr);
-      else
-        fputc(c, stderr);
+      printf("a:%x\n", c);
+      fputc(c, stderr);
     }
     fprintf(stderr, "\"\n");
     fprintf(stderr, "b context: \"");
     for (size_t i = start_b; i < off_b + ctx_after && b[i] != '\0'; ++i) {
       char c = b[i];
-      if ((unsigned char)c < 0x20)
-        fputc('.', stderr);
-      else
-        fputc(c, stderr);
+      printf("b:%x\n", c);
+      fputc(c, stderr);
     }
     fprintf(stderr, "\"\n");
   }
