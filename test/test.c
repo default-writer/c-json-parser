@@ -136,14 +136,14 @@ TEST(test_simple_json_parsing) {
   /* render json_value back to string */
   char *out = json_stringify(v);
   ASSERT_PTR_NOT_NULL(out);
+  json_free(v);
 
   /* compare structurally (order-insensitive) */
   ASSERT(test_json_equal(json, out));
 
   /* cleanup */
-  free(out);
-  json_free(v);
   free(json);
+  free(out);
 
   END_TEST;
 }
@@ -176,14 +176,14 @@ TEST(test_json_parsing) {
   /* render json_value back to string */
   char *out = json_stringify(v);
   ASSERT_PTR_NOT_NULL(out);
+  json_free(v);
 
   /* compare structurally (order-insensitive) */
   ASSERT(test_json_equal(json, out));
 
   /* cleanup */
-  free(out);
-  json_free(v);
   free(json);
+  free(out);
 
   END_TEST;
 }
