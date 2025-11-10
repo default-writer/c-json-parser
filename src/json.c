@@ -14,10 +14,17 @@
 
 static const size_t DICT_GROW = 16;
 
+/* small buffer state (used by buffer-based printers) */
+typedef struct {
+  char *buf;
+  int cap;
+  int pos;
+} bs;
+
 static void free_json_value(json_value *v); /* forward */
 
 /* set (insert) taking ownership of 'keyptr' (heap buffer) and of 'value' */
-static bool json_object_set_take_key(json_value *obj, char *ptr, size_t len,
+static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t len,
                                      json_value *value) {
   if (!obj || obj->type != J_OBJECT || !ptr)
     return false;
@@ -89,8 +96,7 @@ static json_value *json_new_number(const char *ptr, size_t len) {
   return v;
 }
 
-/* json_new_string removed (unused) — use parse_string_value or
- * json_new_string-like logic where needed */
+/* json_new_string-like logic where needed */
 
 static json_value *json_new_array(void) {
   json_value *v = calloc(1, sizeof(*v));
@@ -245,6 +251,82 @@ static json_value *parse_string_value(const char **s) {
   v->u.string.len = len;
   return v;
 }
+/* parse string and return allocated json_value (string) */
+static bool parse_string_value_ptr(reference *ref, const char **s) {
+  if (**s != '"')
+    return false;
+  const char *p = *s + 1;
+  const char *ptr = *s + 1;
+  /* we need to process escapes, we'll build a dynamic buffer */
+  size_t len = 0;
+  /* ensure empty buffer is a valid C string */
+  int state = STATE_INITIAL;
+  while (*p && state) {
+    switch (state) {
+    case STATE_INITIAL:
+      if (*p == '"') {
+        state = 0;
+        continue;
+      } else if (*p == '\\')
+        state = STATE_ESCAPE_START;
+      break;
+    case STATE_ESCAPE_START:
+      if (*p == '\\')
+        state = STATE_INITIAL;
+      else if (*p == '"')
+        state = STATE_INITIAL;
+      else if (*p == 'b')
+        state = STATE_INITIAL;
+      else if (*p == 'f')
+        state = STATE_INITIAL;
+      else if (*p == 'n')
+        state = STATE_INITIAL;
+      else if (*p == 'r')
+        state = STATE_INITIAL;
+      else if (*p == 't')
+        state = STATE_INITIAL;
+      else if (*p == 'u')
+        state = STATE_ESCAPE_UNICODE_BYTE1;
+      else
+        return false;
+      break;
+    case STATE_ESCAPE_UNICODE_BYTE1:
+      if (!isxdigit((unsigned char)*p)) {
+        return false;
+      }
+      state = STATE_ESCAPE_UNICODE_BYTE2;
+      break;
+    case STATE_ESCAPE_UNICODE_BYTE2:
+      if (!isxdigit((unsigned char)*p)) {
+        return false;
+      }
+      state = STATE_ESCAPE_UNICODE_BYTE3;
+      break;
+    case STATE_ESCAPE_UNICODE_BYTE3:
+      if (!isxdigit((unsigned char)*p)) {
+        return false;
+      }
+      state = STATE_ESCAPE_UNICODE_BYTE4;
+      break;
+    case STATE_ESCAPE_UNICODE_BYTE4:
+      if (!isxdigit((unsigned char)*p)) {
+        return false;
+      }
+      state = STATE_INITIAL;
+      break;
+    }
+    len++;
+    p++;
+  }
+  if (*p != '"') {
+    return false;
+  }
+  p++;
+  *s = p;
+  ref->ptr = ptr;
+  ref->len = len;
+  return true;
+}
 
 /* parse number and return json_value */
 static json_value *parse_number_value(const char **s) {
@@ -312,21 +394,17 @@ static json_value *parse_object_value(const char **s, int id) {
   }
   while (1) {
     skip_ws(s);
-    /* parse key string - reuse parse_string_value but ensure we get raw string
-     * (no escapes stored) */
     if (**s != '"') {
       free_json_value(obj);
       return NULL;
     }
-    json_value *k = parse_string_value(s);
-    if (!k || k->type != J_STRING) {
-      free_json_value(k);
+    reference ref = {*s, 0};
+    if (!parse_string_value_ptr(&ref, s)) {
       free_json_value(obj);
       return NULL;
     }
     skip_ws(s);
     if (**s != ':') {
-      free_json_value(k);
       free_json_value(obj);
       return NULL;
     }
@@ -334,23 +412,18 @@ static json_value *parse_object_value(const char **s, int id) {
     skip_ws(s);
     json_value *val = parse_value_build(s, ++id);
     if (!val) {
-      free_json_value(k);
       free_json_value(obj);
       return NULL;
     }
 
     /* Take ownership of the parsed key buffer (no extra duplication). */
-    if (!json_object_set_take_key(obj, (char *)k->u.string.ptr, k->u.string.len,
-                                  val)) {
+    if (!json_object_set_take_key(obj, ref.ptr, ref.len, val)) {
       /* insertion failed: free transferred resources */
       free_json_value(val);
-      free_json_value(k);
       free_json_value(obj);
       return NULL;
     }
     /* free only the json_value wrapper for the key (do NOT free key.ptr) */
-    free_json_value(k);
-
     skip_ws(s);
     if (**s == ',') {
       (*s)++;
@@ -579,19 +652,6 @@ void print_value(const json_value *v, int indent, FILE *out) {
   }
   }
 }
-
-/* Replace func_print_dict(FILE*) with buffer-based implementation.
-   New signature: int func_print_dict(const dict *d, char *buf, int bufsize);
-   Returns number of bytes written (excluding trailing NUL) or -1 if buffer is
-   too small.
-*/
-
-/* small buffer state (used by buffer-based printers) */
-typedef struct {
-  char *buf;
-  int cap;
-  int pos;
-} bs;
 
 /* --- buffer helpers --- */
 static int bs_write(bs *b, const char *data, int len) {
