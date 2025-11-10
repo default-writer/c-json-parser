@@ -108,23 +108,6 @@ void json_free(json_value_ptr v);
 bool func_json_equal(const char *a, const char *b);
 void print_value(const json_value *v, int indent, FILE *out);
 
-#ifdef WIN32
-/* Provide a safe wrapper around fopen on Windows to avoid deprecation warnings.
- * The wrapper uses fopen_s internally and returns the FILE* pointer.
- * Existing code using fopen stays unchanged.
- */
-static inline FILE *safe_fopen(const char *filename, const char *mode) {
-    FILE *fp = NULL;
-    errno_t err = fopen_s(&fp, filename, mode);
-    if (err != 0) {
-        return NULL;
-    }
-    return fp;
-}
-/* Redirect calls to fopen to the safe wrapper. */
-#define fopen(filename, mode) safe_fopen(filename, mode)
-#endif
-
 void test_json_parsing() {
   TEST(test_json_parsing) {
 
