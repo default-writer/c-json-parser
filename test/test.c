@@ -102,9 +102,9 @@ void setup_console() {
   } while (0)
 
 bool func(const char *json);
-json_value_ptr json_parse(const char *json);
-char *json_stringify(const json_value_ptr v);
-void json_free(json_value_ptr v);
+json_value* json_parse(const char *json);
+char *json_stringify(const json_value* v);
+void json_free(json_value* v);
 bool func_json_equal(const char *a, const char *b);
 void print_value(const json_value *v, int indent, FILE *out);
 
@@ -131,8 +131,8 @@ void test_json_parsing() {
     json[size] = '\0';
     fclose(fp);
 
-    /* parse into internal json_value_ptr */
-    json_value_ptr v = json_parse(json);
+    /* parse into internal json_value* */
+    json_value* v = json_parse(json);
     ASSERT_PTR_NOT_NULL(v);
     print_value(v, 0, stdout);
 

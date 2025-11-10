@@ -1,5 +1,5 @@
-#ifndef JSON
-#define JSON
+#ifndef JSON_H
+#define JSON_H
 
 #include <ctype.h>
 #include <limits.h>
@@ -32,60 +32,118 @@ static inline FILE *safe_fopen(const char *filename, const char *mode) {
   do {                                                                         \
     fprintf_s((stream), (format), __VA_ARGS__);                                \
   } while (0)
-#define strncpy_s(dest, dest_size, src, count)                                 \
-  strncpy_s(dest, dest_size, src, count)
-#else
-#define strncpy_s(dest, dest_size, src, count)                                 \
-  strncpy(dest, src, count);                                                   \
-  (dest)[(dest_size) - 1] = '\0';
 #endif
 
-/* Simple JSON structures (a dictionary + value types) */
+/**
+ * @brief Enumeration of JSON value types.
+ */
+typedef enum {
+  J_NULL,    /**< null value */
+  J_BOOLEAN, /**< boolean value (true or false) */
+  J_NUMBER,  /**< number value (integer or floating-point) */
+  J_STRING,  /**< string value */
+  J_ARRAY,   /**< array value */
+  J_OBJECT   /**< object value */
+} json_type;
+
+/**
+ * @brief Represents a reference to a part of the original JSON string.
+ * This is used to avoid allocating new memory for strings, numbers, and booleans.
+ */
+typedef struct {
+  const char *ptr; /**< Pointer to the start of the value in the source JSON string. */
+  size_t len;      /**< Length of the value. */
+} reference;
 
 /* Forward declarations */
 typedef struct json_value json_value;
+typedef struct json_object json_object;
 
-typedef enum {
-  J_NULL,
-  J_BOOLEAN,
-  J_NUMBER,
-  J_STRING,
-  J_ARRAY,
-  J_OBJECT
-} json_type;
-
-typedef struct {
-  const char *ptr; /* start of this value in source JSON */
-  size_t len;
-} reference;
-
-typedef struct json_object *json_object_ptr;
-typedef struct json_value *json_value_ptr;
-
+/**
+ * @brief Represents a JSON value.
+ * The type of the value is determined by the `type` field.
+ */
 typedef struct json_value {
-  json_type type;
+  json_type type; /**< The type of the JSON value. */
   union {
-    reference string;
-    reference boolean;
-    reference number;
+    reference string;  /**< Used when type is J_STRING. */
+    reference boolean; /**< Used when type is J_BOOLEAN. */
+    reference number;  /**< Used when type is J_NUMBER. */
     struct {
-      json_value_ptr items;
-      size_t count;
-      size_t capacity;
-    } array;
+      json_value *items; /**< Array of JSON values. */
+      size_t count;      /**< Number of items in the array. */
+      size_t capacity;   /**< Allocated capacity of the array. */
+    } array;             /**< Used when type is J_ARRAY. */
     struct {
-      json_object_ptr items;
-      size_t count;
-      size_t capacity;
-    } object;
+      json_object *items; /**< Array of key-value pairs. */
+      size_t count;       /**< Number of items in the object. */
+      size_t capacity;    /**< Allocated capacity of the object. */
+    } object;             /**< Used when type is J_OBJECT. */
   } u;
-} *json_value_ptr;
+} json_value;
 
+/**
+ * @brief Represents a key-value pair in a JSON object.
+ */
 typedef struct json_object {
-  const char *ptr;
-  size_t len;
-  json_value_ptr value;
+  const char *ptr;    /**< Pointer to the key in the source JSON string. */
+  size_t len;         /**< Length of the key. */
+  json_value *value; /**< Pointer to the JSON value. */
 } json_object;
 
+/**
+ * @brief Validates a JSON string.
+ * @param json The JSON string to validate.
+ * @return true if the JSON is valid, false otherwise.
+ */
+bool json_validate(const char *json);
 
-#endif 
+/**
+ * @brief Parses a JSON string and returns a tree of json_value objects.
+ * The caller is responsible for freeing the returned structure by calling json_free().
+ * @param json The JSON string to parse.
+ * @return A pointer to the root json_value, or NULL on error.
+ */
+json_value *json_parse(const char *json);
+
+/**
+ * @brief Frees a json_value and all its children.
+ * @param v The json_value to free.
+ */
+void json_free(json_value *v);
+
+/**
+ * @brief Converts a json_value tree to a pretty-printed JSON string.
+ * The caller is responsible for freeing the returned string.
+ * @param v The json_value to stringify.
+ * @return A newly allocated string containing the JSON, or NULL on error.
+ */
+char *json_stringify(const json_value *v);
+
+/**
+ * @brief Converts a json_value tree to a pretty-printed JSON string into a user-provided buffer.
+ * @param v The json_value to stringify.
+ * @param buf The buffer to write the JSON string to.
+ * @param bufsize The size of the buffer.
+ * @return The number of bytes written to the buffer (excluding the null terminator), or -1 on error.
+ */
+int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize);
+
+/**
+ * @brief Compares two JSON strings for structural equality.
+ * @param a The first JSON string.
+ * @param b The second JSON string.
+ * @return true if the JSON structures are equivalent, false otherwise.
+ */
+bool json_equal(const char *a, const char *b);
+
+/**
+ * @brief Gets a value from a JSON object by key.
+ * @param obj The JSON object (must be of type J_OBJECT).
+ * @param key The key to look for.
+ * @param len The length of the key.
+ * @return A pointer to the json_value if the key is found, otherwise NULL.
+ */
+json_value *json_object_get(const json_value *obj, const char *key, size_t len);
+
+#endif /* JSON_H */

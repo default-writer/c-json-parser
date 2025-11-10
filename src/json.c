@@ -24,14 +24,12 @@ typedef struct {
 static void free_json_value(json_value *v); /* forward */
 
 /* set (insert) taking ownership of 'keyptr' (heap buffer) and of 'value' */
-static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t len,
-                                     json_value *value) {
+static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t len, json_value *value) {
   if (!obj || obj->type != J_OBJECT || !ptr)
     return false;
   /* check existing keys by comparing strings */
   for (size_t i = 0; i < obj->u.object.count; ++i) {
-    if (obj->u.object.items[i].ptr &&
-        strncmp(obj->u.object.items[i].ptr, ptr, len) == 0) {
+    if (obj->u.object.items[i].ptr && strncmp(obj->u.object.items[i].ptr, ptr, len) == 0) {
       free_json_value(obj->u.object.items[i].value);
       obj->u.object.items[i].value = value;
       return true;
@@ -39,8 +37,7 @@ static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t le
   }
   /* ensure capacity */
   if (obj->u.object.count == obj->u.object.capacity) {
-    size_t ncap =
-        obj->u.object.capacity ? obj->u.object.capacity * 2 : DICT_GROW;
+    size_t ncap = obj->u.object.capacity ? obj->u.object.capacity * 2 : DICT_GROW;
     json_object *ne = realloc(obj->u.object.items, ncap * sizeof(json_object));
     if (!ne) {
       return false;
@@ -56,8 +53,7 @@ static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t le
 }
 
 /* get by key (linear search) */
-json_value *json_object_get(const json_value *obj, const char *key,
-                            size_t len) {
+json_value *json_object_get(const json_value *obj, const char *key, size_t len) {
   if (!obj || obj->type != J_OBJECT || !key)
     return NULL;
   for (size_t i = 0; i < obj->u.object.count; ++i) {
@@ -124,8 +120,7 @@ static void json_array_push(json_value *arr, json_value *item) {
     return;
   if (arr->u.array.count == arr->u.array.capacity) {
     size_t ncap = arr->u.array.capacity ? arr->u.array.capacity * 2 : DICT_GROW;
-    json_value *newitems =
-        realloc(arr->u.array.items, ncap * sizeof(json_value));
+    json_value *newitems = realloc(arr->u.array.items, ncap * sizeof(json_value));
     if (!newitems)
       return;
     arr->u.array.items = newitems;
@@ -146,9 +141,8 @@ static void free_json_value_contents(json_value *v) {
     free(v->u.array.items);
     break;
   case J_OBJECT:
-    for (size_t i = 0; i < v->u.object.count; ++i) {
+    for (size_t i = 0; i < v->u.object.count; ++i)
       free_json_value(v->u.object.items[i].value);
-    }
     free(v->u.object.items);
     break;
   default:
@@ -502,7 +496,7 @@ bool func(const char *json) {
 /* New function:
    parse JSON string and return a dict* (object) representing the top-level
    object. If the top-level JSON is not an object, it will be returned inside a
-   new dictionary under the empty-string key (""). Caller is responsible for
+   new dictionary under the empty-string key ("" ). Caller is responsible for
    calling dict_free() on the returned pointer. Returns NULL on error.
 */
 json_value *json_parse(const char *json) {
@@ -536,8 +530,7 @@ static void print_indent(FILE *out, int indent) {
 static void print_string_escaped(FILE *out, const char *s, size_t len) {
   fputc('"', out);
   size_t i = 0;
-  for (const unsigned char *p = (const unsigned char *)s; *p && i < len;
-       ++i, ++p) {
+  for (const unsigned char *p = (const unsigned char *)s; *p && i < len; ++i, ++p) {
     unsigned char c = *p;
     fputc(c, out);
   }
@@ -687,8 +680,7 @@ static int print_string_escaped_buf(bs *b, const char *s, size_t len) {
   if (bs_putc(b, '"') < 0)
     return -1;
   size_t i = 0;
-  for (const unsigned char *p = (const unsigned char *)s; *p && i < len;
-       ++i, ++p) {
+  for (const unsigned char *p = (const unsigned char *)s; *p && i < len; ++i, ++p) {
     unsigned char c = *p;
     if (bs_putc(b, c) < 0)
       return -1;
@@ -798,10 +790,9 @@ static int print_value_compact_buf(const json_value *v, bs *b) {
     return bs_write(b, "null", 4);
   case J_BOOLEAN:
     return bs_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
-  case J_NUMBER: {
+  case J_NUMBER:
     /* write number into buffer using printf */
     return bs_write(b, v->u.number.ptr, (int)v->u.number.len);
-  }
   case J_STRING:
     return print_string_escaped_buf(b, v->u.string.ptr, v->u.string.len);
   case J_ARRAY:
@@ -928,20 +919,17 @@ static bool json_value_equal(const json_value *a, const json_value *b) {
   case J_NULL:
     return true;
   case J_BOOLEAN:
-    return a->u.boolean.len == b->u.boolean.len &&
-           strncmp(a->u.boolean.ptr, b->u.boolean.ptr, a->u.boolean.len) == 0;
+    return a->u.boolean.len == b->u.boolean.len && strncmp(a->u.boolean.ptr, b->u.boolean.ptr, a->u.boolean.len) == 0;
   case J_NUMBER: {
     /* For numbers, compare floating point values, not text. */
     char *end_a;
     char *end_b;
     double val_a = strtod(a->u.number.ptr, &end_a);
     double val_b = strtod(b->u.number.ptr, &end_b);
-    if ((size_t)(end_a - a->u.number.ptr) != a->u.number.len ||
-        (size_t)(end_b - b->u.number.ptr) != b->u.number.len) {
+    if ((size_t)(end_a - a->u.number.ptr) != a->u.number.len || (size_t)(end_b - b->u.number.ptr) != b->u.number.len) {
       /* if strtod did not consume the entire string, it's not a valid float
        * or is a very large integer. Fall back to string comparison. */
-      return a->u.number.len == b->u.number.len &&
-             strncmp(a->u.number.ptr, b->u.number.ptr, a->u.number.len) == 0;
+      return a->u.number.len == b->u.number.len && strncmp(a->u.number.ptr, b->u.number.ptr, a->u.number.len) == 0;
     }
     return val_a == val_b;
   }
@@ -1007,8 +995,7 @@ bool func_json_equal(const char *a, const char *b) {
     size_t ctx_after = POSTFIX_CHAR_OFFSET;
     size_t start_a = (off_a > ctx_before) ? off_a - ctx_before : 0;
     size_t start_b = (off_b > ctx_before) ? off_b - ctx_before : 0;
-    fprintf(stderr, "JSON mismatch: first differing byte offsets a=%zu b=%zu\n",
-            off_a, off_b);
+    fprintf(stderr, "JSON mismatch: first differing byte offsets a=%zu b=%zu\n", off_a, off_b);
     fprintf(stderr, "a context: \"");
     for (size_t i = start_a; i < off_a + ctx_after && a[i] != '\0'; ++i) {
       char c = a[i];
