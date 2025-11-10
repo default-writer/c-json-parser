@@ -71,12 +71,12 @@ typedef struct json_value {
     struct {
       json_value_ptr items;
       size_t count;
-      size_t cap;
+      size_t capacity;
     } array;
     struct {
       json_object_ptr items;
       size_t count;
-      size_t cap;
+      size_t capacity;
     } object;
   } u;
 } *json_value_ptr;

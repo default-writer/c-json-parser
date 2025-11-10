@@ -21,14 +21,14 @@ static bool json_object_set_take_key(json_value *obj, char *ptr, size_t len,
     }
   }
   /* ensure capacity */
-  if (obj->u.object.count == obj->u.object.cap) {
-    size_t ncap = obj->u.object.cap ? obj->u.object.cap * 2 : DICT_GROW;
+  if (obj->u.object.count == obj->u.object.capacity) {
+    size_t ncap = obj->u.object.capacity ? obj->u.object.capacity * 2 : DICT_GROW;
     json_object *ne = realloc(obj->u.object.items, ncap * sizeof(json_object));
     if (!ne) {
       return false;
     }
     obj->u.object.items = ne;
-    obj->u.object.cap = ncap;
+    obj->u.object.capacity = ncap;
   }
   obj->u.object.items[obj->u.object.count].ptr = ptr;
   obj->u.object.items[obj->u.object.count].len = len;
@@ -98,21 +98,21 @@ static json_value *json_new_object(void) {
   v->type = J_OBJECT;
   v->u.object.items = NULL;
   v->u.object.count = 0;
-  v->u.object.cap = 0;
+  v->u.object.capacity = 0;
   return v;
 }
 
 static void json_array_push(json_value *arr, json_value *item) {
   if (!arr || arr->type != J_ARRAY || !item)
     return;
-  if (arr->u.array.count == arr->u.array.cap) {
-    size_t ncap = arr->u.array.cap ? arr->u.array.cap * 2 : DICT_GROW;
+  if (arr->u.array.count == arr->u.array.capacity) {
+    size_t ncap = arr->u.array.capacity ? arr->u.array.capacity * 2 : DICT_GROW;
     json_value *newitems =
         realloc(arr->u.array.items, ncap * sizeof(json_value));
     if (!newitems)
       return;
     arr->u.array.items = newitems;
-    arr->u.array.cap = ncap;
+    arr->u.array.capacity = ncap;
   }
   arr->u.array.items[arr->u.array.count++] = *item;
 }
@@ -586,10 +586,10 @@ static int bs_write(bs *b, const char *data, int len) {
     return 0;
   if (b->pos + len >= b->cap)
     return -1;
-  char * buf = &b->buf[b->pos];
+  char *buf = &b->buf[b->pos];
   for (int i = 0; i < len; i++) {
-   *buf++ = *data++;
-   b->pos++;
+    *buf++ = *data++;
+    b->pos++;
   }
   return 0;
 }

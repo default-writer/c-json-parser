@@ -1,0 +1,14 @@
+---
+BasedOnStyle: llvm
+ColumnLimit: 0
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowAllParametersOfDeclarationOnNextLine: false
+AlwaysBreakAfterDefinitionReturnType: None
+BreakBeforeBraces: Attach
+
+# Additional options to control line breaking behavior
+BinPackParameters: true
+BreakBeforeBinaryOperators: NonAssignment
+PenaltyBreakBeforeFirstCallParameter: 1000
+PenaltyBreakFunctionDeclaration: 1000
+PenaltyExcessCharacter: 1000000

@@ -6,6 +6,7 @@ Diagnostics:
   ClangTidy:
     Add:
       - performance-unnecessary-value-param
+      - readability-magic-numbers
 
 InlayHints:
   Designators: false
