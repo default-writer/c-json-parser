@@ -1,5 +1,15 @@
 #include "json.h"
 
+#define PREFIX_CHAR_OFFSET 10
+#define POSTFIX_CHAR_OFFSET 10
+#define STATE_INITIAL 1
+#define STATE_ESCAPE_START 2
+#define STATE_ESCAPE_UNICODE_BYTE1 3
+#define STATE_ESCAPE_UNICODE_BYTE2 4
+#define STATE_ESCAPE_UNICODE_BYTE3 5
+#define STATE_ESCAPE_UNICODE_BYTE4 6
+#define TEXT_SIZE(name) (sizeof((name)) - 1)
+
 /* JSON value with references back to original text */
 
 static const size_t DICT_GROW = 16;
@@ -22,7 +32,8 @@ static bool json_object_set_take_key(json_value *obj, char *ptr, size_t len,
   }
   /* ensure capacity */
   if (obj->u.object.count == obj->u.object.capacity) {
-    size_t ncap = obj->u.object.capacity ? obj->u.object.capacity * 2 : DICT_GROW;
+    size_t ncap =
+        obj->u.object.capacity ? obj->u.object.capacity * 2 : DICT_GROW;
     json_object *ne = realloc(obj->u.object.items, ncap * sizeof(json_object));
     if (!ne) {
       return false;
@@ -162,59 +173,59 @@ static json_value *parse_string_value(const char **s) {
   /* we need to process escapes, we'll build a dynamic buffer */
   size_t len = 0;
   /* ensure empty buffer is a valid C string */
-  int state = 1;
+  int state = STATE_INITIAL;
   while (*p && state) {
     switch (state) {
-    case 1:
+    case STATE_INITIAL:
       if (*p == '"') {
         state = 0;
         continue;
       } else if (*p == '\\')
-        state = 2;
+        state = STATE_ESCAPE_START;
       break;
-    case 2:
+    case STATE_ESCAPE_START:
       if (*p == '\\')
-        state = 1;
+        state = STATE_INITIAL;
       else if (*p == '"')
-        state = 1;
+        state = STATE_INITIAL;
       else if (*p == 'b')
-        state = 1;
+        state = STATE_INITIAL;
       else if (*p == 'f')
-        state = 1;
+        state = STATE_INITIAL;
       else if (*p == 'n')
-        state = 1;
+        state = STATE_INITIAL;
       else if (*p == 'r')
-        state = 1;
+        state = STATE_INITIAL;
       else if (*p == 't')
-        state = 1;
+        state = STATE_INITIAL;
       else if (*p == 'u')
-        state = 3;
+        state = STATE_ESCAPE_UNICODE_BYTE1;
       else
         return NULL;
       break;
-    case 3:
+    case STATE_ESCAPE_UNICODE_BYTE1:
       if (!isxdigit((unsigned char)*p)) {
         return NULL;
       }
-      state = 4;
+      state = STATE_ESCAPE_UNICODE_BYTE2;
       break;
-    case 4:
+    case STATE_ESCAPE_UNICODE_BYTE2:
       if (!isxdigit((unsigned char)*p)) {
         return NULL;
       }
-      state = 5;
+      state = STATE_ESCAPE_UNICODE_BYTE3;
       break;
-    case 5:
+    case STATE_ESCAPE_UNICODE_BYTE3:
       if (!isxdigit((unsigned char)*p)) {
         return NULL;
       }
-      state = 6;
+      state = STATE_ESCAPE_UNICODE_BYTE4;
       break;
-    case 6:
+    case STATE_ESCAPE_UNICODE_BYTE4:
       if (!isxdigit((unsigned char)*p)) {
         return NULL;
       }
-      state = 1;
+      state = STATE_INITIAL;
       break;
     }
     len++;
@@ -377,13 +388,15 @@ static json_value *parse_value_build(const char **s, int id) {
     return NULL;
   }
   if (**s == 't') {
+    const char *ptr = *s;
     if (match_literal_build(s, "true"))
-      return json_new_boolean(*s - 4, 4);
+      return json_new_boolean(ptr, TEXT_SIZE("true"));
     return NULL;
   }
   if (**s == 'f') {
+    const char *ptr = *s;
     if (match_literal_build(s, "false"))
-      return json_new_boolean(*s - 5, 5);
+      return json_new_boolean(ptr, TEXT_SIZE("false"));
     return NULL;
   }
   if (**s == '-' || isdigit((unsigned char)**s))
@@ -930,8 +943,8 @@ bool func_json_equal(const char *a, const char *b) {
     size_t off_a = (size_t)(xa - a);
     size_t off_b = (size_t)(xb - b);
     /* print brief context */
-    size_t ctx_before = 2;
-    size_t ctx_after = 40;
+    size_t ctx_before = PREFIX_CHAR_OFFSET;
+    size_t ctx_after = POSTFIX_CHAR_OFFSET;
     size_t start_a = (off_a > ctx_before) ? off_a - ctx_before : 0;
     size_t start_b = (off_b > ctx_before) ? off_b - ctx_before : 0;
     fprintf(stderr, "JSON mismatch: first differing byte offsets a=%zu b=%zu\n",
