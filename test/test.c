@@ -1,5 +1,5 @@
-#include "../src/json.h"
 #include "../test/test.h"
+#include "../src/json.h"
 
 #define PREFIX_CHAR_OFFSET 10
 #define POSTFIX_CHAR_OFFSET 10
@@ -108,84 +108,82 @@ static bool test_json_equal(const char *a, const char *b) {
   return eq;
 }
 
-void test_json_parsing() {
-  TEST(test_json_parsing) {
-    const char *filename = "test/test.json";
-    FILE *fp = fopen(filename, "r");
-    ASSERT_PTR_NOT_NULL(fp);
+TEST(test_simple_json_parsing) {
+  const char *filename = "test/test-simple.json";
+  FILE *fp = fopen(filename, "r");
+  ASSERT_PTR_NOT_NULL(fp);
 
-    fseek(fp, 0, SEEK_END);
-    long size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
+  fseek(fp, 0, SEEK_END);
+  long size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
 
-    if (size == -1) {
-      fclose(fp);
-      return;
-    }
-
-    char *json = calloc(1, size + 1);
-    ASSERT_PTR_NOT_NULL(json);
-
-    fread(json, 1, size, fp);
-    json[size] = '\0';
+  if (size == -1) {
     fclose(fp);
-
-    /* parse into internal json_value* */
-    const json_value *v = json_parse(json);
-    ASSERT_PTR_NOT_NULL(v);
-
-    /* render json_value back to string */
-    char *out = json_stringify(v);
-    ASSERT_PTR_NOT_NULL(out);
-
-    /* compare structurally (order-insensitive) */
-    ASSERT(test_json_equal(json, out));
-
-    /* cleanup */
-    free(out);
-    json_free(v);
-    free(json);
+    return;
   }
+
+  char *json = calloc(1, size + 1);
+  ASSERT_PTR_NOT_NULL(json);
+
+  fread(json, 1, size, fp);
+  json[size] = '\0';
+  fclose(fp);
+
+  /* parse into internal json_value* */
+  const json_value *v = json_parse(json);
+  ASSERT_PTR_NOT_NULL(v);
+
+  /* render json_value back to string */
+  char *out = json_stringify(v);
+  ASSERT_PTR_NOT_NULL(out);
+
+  /* compare structurally (order-insensitive) */
+  ASSERT(test_json_equal(json, out));
+
+  /* cleanup */
+  free(out);
+  json_free(v);
+  free(json);
+
   END_TEST;
 }
 
-void test_simple_json_parsing() {
-  TEST(test_simple_json_parsing) {
-    const char *filename = "test/test-simple.json";
-    FILE *fp = fopen(filename, "r");
-    ASSERT_PTR_NOT_NULL(fp);
+TEST(test_json_parsing) {
+  const char *filename = "test/test.json";
+  FILE *fp = fopen(filename, "r");
+  ASSERT_PTR_NOT_NULL(fp);
 
-    fseek(fp, 0, SEEK_END);
-    long size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
+  fseek(fp, 0, SEEK_END);
+  long size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
 
-    if (size == -1) {
-      fclose(fp);
-      return;
-    }
-
-    char *json = calloc(1, size + 1);
-    ASSERT_PTR_NOT_NULL(json);
-
-    fread(json, 1, size, fp);
-    json[size] = '\0';
+  if (size == -1) {
     fclose(fp);
-
-    /* parse into internal json_value* */
-    const json_value *v = json_parse(json);
-    ASSERT_PTR_NOT_NULL(v);
-
-    /* render json_value back to string */
-    char *out = json_stringify(v);
-    ASSERT_PTR_NOT_NULL(out);
-
-    /* compare structurally (order-insensitive) */
-    ASSERT(test_json_equal(json, out));
-
-    /* cleanup */
-    free(out);
-    json_free(v);
-    free(json);
+    return;
   }
+
+  char *json = calloc(1, size + 1);
+  ASSERT_PTR_NOT_NULL(json);
+
+  fread(json, 1, size, fp);
+  json[size] = '\0';
+  fclose(fp);
+
+  /* parse into internal json_value* */
+  const json_value *v = json_parse(json);
+  ASSERT_PTR_NOT_NULL(v);
+
+  /* render json_value back to string */
+  char *out = json_stringify(v);
+  ASSERT_PTR_NOT_NULL(out);
+
+  /* compare structurally (order-insensitive) */
+  ASSERT(test_json_equal(json, out));
+
+  /* cleanup */
+  free(out);
+  json_free(v);
+  free(json);
+
   END_TEST;
 }

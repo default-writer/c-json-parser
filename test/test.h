@@ -19,8 +19,6 @@
   extern const char *RESET;                                                                                            \
   extern void test_initialize(void);
 
-#define TEST_DEFINITION_ARGS(name, ...) extern void(name)(__VA_ARGS__)
-#define TEST_DEFINITION(name) extern void(name)(void)
 #define TEST_INITIALIZE()                                                                                              \
   test_initialize();                                                                                                   \
   printf("===============================================================================\n");                         \
@@ -47,22 +45,24 @@
   } while (0)
 
 #define TEST(name)                                                                                                     \
-  do {                                                                                                                 \
-    tests_run++;                                                                                                       \
-    int passed = 1;                                                                                                    \
-    char *test_name = #name;                                                                                           \
-    do
+  void name() {                                                                                                        \
+    do {                                                                                                               \
+      tests_run++;                                                                                                     \
+      int passed = 1;                                                                                                  \
+      char *test_name = #name;                                                                                         \
+      do
 
 #define END_TEST                                                                                                       \
+  }                                                                                                                    \
   while (0)                                                                                                            \
     ;                                                                                                                  \
   if (passed) {                                                                                                        \
     tests_passed++;                                                                                                    \
-    printf("running test: %55s", test_name);                                                                       \
-    printf(" ...%sPASSED%s\n", GREEN, RESET);                                                                            \
-  } else {                                                                                                            \
-    printf("running test: %55s", test_name);                                                                        \
-    printf(" ...%sFAILED%s\n", RED, RESET);                                                                              \
+    printf("running test: %55s", test_name);                                                                           \
+    printf(" ...%sPASSED%s\n", GREEN, RESET);                                                                          \
+  } else {                                                                                                             \
+    printf("running test: %55s", test_name);                                                                           \
+    printf(" ...%sFAILED%s\n", RED, RESET);                                                                            \
   }                                                                                                                    \
   }                                                                                                                    \
   while (0)
