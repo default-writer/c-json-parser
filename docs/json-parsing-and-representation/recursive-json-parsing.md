@@ -75,31 +75,6 @@ Thus, recursive parsing acts as the entry point converting raw JSON text into th
 
 ```mermaid
 flowchart TD
-Start[Start Parsing] --> SkipWS[Skip Whitespace]
-SkipWS --> CheckToken{Next Char}
-CheckToken -->|'"'| ParseString[Parse String]
-CheckToken -->|'{'| ParseObject[Parse Object]
-CheckToken -->|'["'| ParseArray[Parse Array"]
-CheckToken -->|'n'| MatchNull[Match "null"]
-CheckToken -->|'t'| MatchTrue[Match "true"]
-CheckToken -->|'f'| MatchFalse[Match "false"]
-CheckToken -->|'-' or digit| ParseNumber[Parse Number]
-CheckToken -->|Other| Fail[Parse Fail]
-ParseString --> ReturnValue[Return json_value]
-ParseObject --> ParseObjectLoop[Parse Key-Value Pairs Recursively]
-ParseObjectLoop --> ReturnValue
-ParseArray --> ParseArrayLoop[Parse Elements Recursively]
-ParseArrayLoop --> ReturnValue
-MatchNull --> ReturnNull[Return Null Value]
-MatchTrue --> ReturnTrue[Return Boolean True]
-MatchFalse --> ReturnFalse[Return Boolean False]
-ParseNumber --> ReturnNumber[Return Number Value]
-ReturnNull --> End[End Parsing]
-ReturnTrue --> End
-ReturnFalse --> End
-ReturnNumber --> End
-ReturnValue --> End
-Fail --> End
 ```
 
 This flowchart illustrates the recursive descent decision process and recursive calls that build the JSON value tree from the input string.
