@@ -82,13 +82,13 @@ static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t le
   }
   /* ensure capacity */
   if (obj->u.object.count == obj->u.object.capacity) {
-    size_t ncap = obj->u.object.capacity ? obj->u.object.capacity * 2 : DICTIONARY_SIZE;
-    json_object *ne = realloc(obj->u.object.items, ncap * sizeof(json_object));
-    if (!ne) {
+    size_t capacity = obj->u.object.capacity ? obj->u.object.capacity * 2 : DICTIONARY_SIZE;
+    json_object *items = realloc(obj->u.object.items, capacity * sizeof(json_object));
+    if (!items) {
       return false;
     }
-    obj->u.object.items = ne;
-    obj->u.object.capacity = ncap;
+    obj->u.object.items = items;
+    obj->u.object.capacity = capacity;
   }
   obj->u.object.items[obj->u.object.count].ptr = ptr;
   obj->u.object.items[obj->u.object.count].len = len;

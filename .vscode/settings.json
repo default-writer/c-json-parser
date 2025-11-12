@@ -10,7 +10,7 @@
     "[cpp]": {
         "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
     },
-    "editor.fontSize": 8,
+    "editor.fontSize": 14,
     "editor.fontFamily": "'JetBrains Mono', 'Ubuntu Mono', 'ProggyVector', 'Monoid', 'Fira Code', monospace",
     "window.zoomPerWindow": false,
     "debug.console.fontSize": 8,
