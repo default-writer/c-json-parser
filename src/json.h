@@ -19,18 +19,18 @@
  * Existing code using fopen stays unchanged.
  */
 static inline FILE *safe_fopen(const char *filename, const char *mode) {
-    FILE *fp = NULL;
-    errno_t err = fopen_s(&fp, filename, mode);
-    if (err != 0) {
-        return NULL;
-    }
-    return fp;
+  FILE *fp = NULL;
+  errno_t err = fopen_s(&fp, filename, mode);
+  if (err != 0) {
+    return NULL;
+  }
+  return fp;
 }
 /* Redirect calls to fopen to the safe wrapper. */
 #define fopen(filename, mode) safe_fopen(filename, mode)
-#define fprintf(stream, format, ...)                                           \
-  do {                                                                         \
-    fprintf_s((stream), (format), __VA_ARGS__);                                \
+#define fprintf(stream, format, ...)            \
+  do {                                          \
+    fprintf_s((stream), (format), __VA_ARGS__); \
   } while (0)
 #endif
 
@@ -86,8 +86,8 @@ typedef struct json_value {
  * @brief Represents a key-value pair in a JSON object.
  */
 typedef struct json_object {
-  const char *ptr;    /**< Pointer to the key in the source JSON string. */
-  size_t len;         /**< Length of the key. */
+  const char *ptr;   /**< Pointer to the key in the source JSON string. */
+  size_t len;        /**< Length of the key. */
   json_value *value; /**< Pointer to the JSON value. */
 } json_object;
 
@@ -96,7 +96,7 @@ typedef struct json_object {
  * @param json The JSON value oject.
  * @return A pointer to the json_value origin, or NULL on error.
  */
-const char* json_source(const json_value *v);
+const char *json_source(const json_value *v);
 
 /**
  * @brief Parses a JSON string and returns a tree of json_value objects.
