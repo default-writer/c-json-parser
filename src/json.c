@@ -23,7 +23,7 @@ static json_value json_value_pool[JSON_VALUE_POOL_SIZE];
 static size_t json_value_pool_index = 0;
 
 /* forward declarations */
-static void* new_json_value(int count);
+static void* new_json_value(void);
 static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t len, json_value *value);
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
 static json_value *json_new_null(void);
@@ -71,13 +71,13 @@ static bool json_array_equal(const json_value *a, const json_value *b);
 static bool json_object_equal(const json_value *a, const json_value *b); 
 
 /* implementation */
-static void* new_json_value(int count) {
-  if (json_value_pool_index + count > JSON_VALUE_POOL_SIZE) {
+static void* new_json_value(void) {
+  if (json_value_pool_index + 1 > JSON_VALUE_POOL_SIZE) {
     return NULL;
   }
   void* ptr = &json_value_pool[json_value_pool_index];
-  json_value_pool_index += count;
-  memset(ptr, 0, count*sizeof(json_value));
+  json_value_pool_index++;
+  memset(ptr, 0, sizeof(json_value));
   return ptr;
 }
 
@@ -120,7 +120,7 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
 }
 
 static json_value *json_new_null(void) {
-  json_value *v = (json_value *)new_json_value(1);
+  json_value *v = (json_value *)new_json_value();
   if (!v)
     return NULL;
   v->type = J_NULL;
@@ -128,7 +128,7 @@ static json_value *json_new_null(void) {
 }
 
 static json_value *json_new_boolean(const char *ptr, size_t len) {
-  json_value *v = new_json_value(1);
+  json_value *v = new_json_value();
   if (!v)
     return NULL;
   v->type = J_BOOLEAN;
@@ -138,7 +138,7 @@ static json_value *json_new_boolean(const char *ptr, size_t len) {
 }
 
 static json_value *json_new_number(const char *ptr, size_t len) {
-  json_value *v = new_json_value(1);
+  json_value *v = new_json_value();
   if (!v)
     return NULL;
   v->type = J_NUMBER;
@@ -148,7 +148,7 @@ static json_value *json_new_number(const char *ptr, size_t len) {
 }
 
 static json_value *json_new_array(void) {
-  json_value *v = new_json_value(1);
+  json_value *v = new_json_value();
   if (!v)
     return NULL;
   v->type = J_ARRAY;
@@ -159,7 +159,7 @@ static json_value *json_new_array(void) {
 }
 
 static json_value *json_new_object(void) {
-  json_value *v = new_json_value(1);
+  json_value *v = new_json_value();
   if (!v)
     return NULL;
   v->type = J_OBJECT;
@@ -286,7 +286,7 @@ static json_value *parse_string_value(const char **s) {
   }
   p++;
   *s = p;
-  json_value *v = new_json_value(1);
+  json_value *v = new_json_value();
   if (!v) {
     return NULL;
   }
