@@ -1,6 +1,7 @@
 #include "json.h"
 
 #define DICTIONARY_SIZE 16
+#define JSON_VALUE_POOL_SIZE 0x10000
 
 #define STATE_INITIAL 1
 #define STATE_ESCAPE_START 2
@@ -17,8 +18,12 @@ typedef struct {
   int pos;
 } bs;
 
-/* forward declarations */
+/* json_value pool */
+static json_value json_value_pool[JSON_VALUE_POOL_SIZE];
+static size_t json_value_pool_index = 0;
 
+/* forward declarations */
+static void* new_json_value(int count);
 static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t len, json_value *value);
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
 static json_value *json_new_null(void);
@@ -28,8 +33,7 @@ static json_value *json_new_array(void);
 static json_value *json_new_object(void);
 static void json_array_push(json_value *arr, json_value *item);
 
-static void free_json_value_contents(const json_value *v);
-static void free_json_value(const json_value *v);
+static void free_json_value_contents(json_value *v);
 static void skip_ws(const char **s);
 
 /* --- parser helpers --- */
@@ -64,10 +68,18 @@ static int bs_putc(bs *b, char c);
 /* --- json helpers --- */
 static int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize);
 static bool json_array_equal(const json_value *a, const json_value *b);
-static bool json_object_equal(const json_value *a, const json_value *b);
-static void free_json_value(const json_value *v);
+static bool json_object_equal(const json_value *a, const json_value *b); 
 
 /* implementation */
+static void* new_json_value(int count) {
+  if (json_value_pool_index + count > JSON_VALUE_POOL_SIZE) {
+    return NULL;
+  }
+  void* ptr = &json_value_pool[json_value_pool_index];
+  json_value_pool_index += count;
+  memset(ptr, 0, count*sizeof(json_value));
+  return ptr;
+}
 
 static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t len, json_value *value) {
   if (!obj || obj->type != J_OBJECT || !ptr)
@@ -75,7 +87,7 @@ static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t le
   /* check existing keys by comparing strings */
   for (size_t i = 0; i < obj->u.object.count; ++i) {
     if (obj->u.object.items[i].ptr && strncmp(obj->u.object.items[i].ptr, ptr, len) == 0) {
-      free_json_value(obj->u.object.items[i].value);
+      free_json_value_contents(obj->u.object.items[i].value);
       obj->u.object.items[i].value = value;
       return true;
     }
@@ -108,7 +120,7 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
 }
 
 static json_value *json_new_null(void) {
-  json_value *v = calloc(1, sizeof(*v));
+  json_value *v = (json_value *)new_json_value(1);
   if (!v)
     return NULL;
   v->type = J_NULL;
@@ -116,7 +128,7 @@ static json_value *json_new_null(void) {
 }
 
 static json_value *json_new_boolean(const char *ptr, size_t len) {
-  json_value *v = calloc(1, sizeof(*v));
+  json_value *v = new_json_value(1);
   if (!v)
     return NULL;
   v->type = J_BOOLEAN;
@@ -126,7 +138,7 @@ static json_value *json_new_boolean(const char *ptr, size_t len) {
 }
 
 static json_value *json_new_number(const char *ptr, size_t len) {
-  json_value *v = calloc(1, sizeof(*v));
+  json_value *v = new_json_value(1);
   if (!v)
     return NULL;
   v->type = J_NUMBER;
@@ -136,17 +148,18 @@ static json_value *json_new_number(const char *ptr, size_t len) {
 }
 
 static json_value *json_new_array(void) {
-  json_value *v = calloc(1, sizeof(*v));
+  json_value *v = new_json_value(1);
   if (!v)
     return NULL;
   v->type = J_ARRAY;
   v->u.array.items = NULL;
   v->u.array.count = 0;
+  v->u.array.capacity = 0;
   return v;
 }
 
 static json_value *json_new_object(void) {
-  json_value *v = calloc(1, sizeof(*v));
+  json_value *v = new_json_value(1);
   if (!v)
     return NULL;
   v->type = J_OBJECT;
@@ -161,16 +174,16 @@ static void json_array_push(json_value *arr, json_value *item) {
     return;
   if (arr->u.array.count == arr->u.array.capacity) {
     size_t ncap = arr->u.array.capacity ? arr->u.array.capacity * 2 : DICTIONARY_SIZE;
-    json_value *newitems = realloc(arr->u.array.items, ncap * sizeof(json_value));
+    json_value **newitems = realloc(arr->u.array.items, ncap * sizeof(json_value *));
     if (!newitems)
       return;
     arr->u.array.items = newitems;
     arr->u.array.capacity = ncap;
   }
-  arr->u.array.items[arr->u.array.count++] = *item;
+  arr->u.array.items[arr->u.array.count++] = item;
 }
 
-static void free_json_value_contents(const json_value *v) {
+static void free_json_value_contents(json_value *v) {
   if (!v)
     return;
   switch (v->type) {
@@ -178,24 +191,21 @@ static void free_json_value_contents(const json_value *v) {
     break;
   case J_ARRAY:
     for (size_t i = 0; i < v->u.array.count; ++i)
-      free_json_value_contents(&(v->u.array.items[i]));
+      free_json_value_contents(v->u.array.items[i]);
     free(v->u.array.items);
+    v->u.array.count = 0;
+    v->u.array.capacity = 0;
     break;
   case J_OBJECT:
     for (size_t i = 0; i < v->u.object.count; ++i)
-      free_json_value(v->u.object.items[i].value);
+      free_json_value_contents(v->u.object.items[i].value);
     free(v->u.object.items);
+    v->u.object.count = 0;
+    v->u.object.capacity = 0;
     break;
   default:
     break;
   }
-}
-
-static void free_json_value(const json_value *v) {
-  if (!v)
-    return;
-  free_json_value_contents(v);
-  free((void*)v);
 }
 
 static void skip_ws(const char **s) {
@@ -276,7 +286,7 @@ static json_value *parse_string_value(const char **s) {
   }
   p++;
   *s = p;
-  json_value *v = calloc(1, sizeof(*v));
+  json_value *v = new_json_value(1);
   if (!v) {
     return NULL;
   }
@@ -388,11 +398,10 @@ static json_value *parse_array_value(const char **s, int id) {
     skip_ws(s);
     json_value *elem = parse_value_build(s, ++id);
     if (!elem) {
-      free_json_value(arr);
+      free_json_value_contents(arr);
       return NULL;
     }
     json_array_push(arr, elem);
-    free(elem);
     skip_ws(s);
     if (**s == ',') {
       (*s)++;
@@ -402,7 +411,7 @@ static json_value *parse_array_value(const char **s, int id) {
       (*s)++;
       return arr;
     }
-    free_json_value(arr);
+    free_json_value_contents(arr);
     return NULL;
   }
 }
@@ -422,32 +431,32 @@ static json_value *parse_object_value(const char **s, int id) {
   while (1) {
     skip_ws(s);
     if (**s != '"') {
-      free_json_value(obj);
+      free_json_value_contents(obj);
       return NULL;
     }
     reference ref = {*s, 0};
     if (!parse_string_value_ptr(&ref, s)) {
-      free_json_value(obj);
+      free_json_value_contents(obj);
       return NULL;
     }
     skip_ws(s);
     if (**s != ':') {
-      free_json_value(obj);
+      free_json_value_contents(obj);
       return NULL;
     }
     (*s)++;
     skip_ws(s);
     json_value *val = parse_value_build(s, ++id);
     if (!val) {
-      free_json_value(obj);
+      free_json_value_contents(obj);
       return NULL;
     }
 
     /* Take ownership of the parsed key buffer (no extra duplication). */
     if (!json_object_set_take_key(obj, ref.ptr, ref.len, val)) {
       /* insertion failed: free transferred resources */
-      free_json_value(val);
-      free_json_value(obj);
+      free_json_value_contents(val);
+      free_json_value_contents(obj);
       return NULL;
     }
     /* free only the json_value wrapper for the key (do NOT free key.ptr) */
@@ -460,7 +469,7 @@ static json_value *parse_object_value(const char **s, int id) {
       (*s)++;
       return obj;
     }
-    free_json_value(obj);
+    free_json_value_contents(obj);
     return NULL;
   }
 }
@@ -530,7 +539,7 @@ static void print_array_compact(const json_value *v, FILE *out) {
   for (size_t i = 0; i < v->u.array.count; ++i) {
     if (i)
       fputs(", ", out);
-    print_value_compact(&(v->u.array.items[i]), out);
+    print_value_compact(v->u.array.items[i], out);
   }
   fputc(']', out);
 }
@@ -656,7 +665,7 @@ static int print_array_compact_buf(const json_value *v, bs *b) {
       if (bs_write(b, ", ", 2) < 0)
         return -1;
     }
-    if (print_value_compact_buf(&(v->u.array.items[i]), b) < 0)
+    if (print_value_compact_buf(v->u.array.items[i], b) < 0)
       return -1;
   }
   if (bs_putc(b, ']') < 0)
@@ -825,7 +834,7 @@ static bool json_array_equal(const json_value *a, const json_value *b) {
   if (a->u.array.count != b->u.array.count)
     return false;
   for (size_t i = 0; i < a->u.array.count; ++i) {
-    if (!json_equal(&(a->u.array.items[i]), &(b->u.array.items[i])))
+    if (!json_equal(a->u.array.items[i], b->u.array.items[i]))
       return false;
   }
   return true;
@@ -872,7 +881,7 @@ const char* json_source(const json_value *v) {
   }
 }
 
-const json_value *json_parse(const char *json) {
+json_value *json_parse(const char *json) {
   if (!json)
     return NULL;
   const char *p = json;
@@ -886,7 +895,7 @@ const json_value *json_parse(const char *json) {
   /* ensure there is no trailing garbage */
   skip_ws(&p);
   if (*p != '\0') {
-    free_json_value(root);
+    free_json_value_contents(root);
     return NULL;
   }
 
@@ -944,8 +953,12 @@ bool json_equal(const json_value *a, const json_value *b) {
   }
 }
 
-void json_free(const json_value *v) {
-  free_json_value(v);
+void json_free(json_value *v) {
+  free_json_value_contents(v);
+}
+
+void json_pool_reset(void) {
+  json_value_pool_index = 0;
 }
 
 void json_print(const json_value *v, FILE *out) {

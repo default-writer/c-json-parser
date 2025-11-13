@@ -51,8 +51,9 @@ static bool test_json_equal(const char *a, const char *b) {
   skip_ws(&pa);
   skip_ws(&pb);
 
-  const json_value *va = json_parse(pa);
-  const json_value *vb = json_parse(pb);
+  json_pool_reset();
+  json_value *va = json_parse(pa);
+  json_value *vb = json_parse(pb);
 
   if (!va || !vb) {
     return false;
@@ -61,6 +62,7 @@ static bool test_json_equal(const char *a, const char *b) {
   if (va->type != vb->type) {
     json_free(va);
     json_free(vb);
+    return false;
   }
 
   bool eq = json_equal(va, vb);
@@ -103,12 +105,13 @@ static bool test_json_equal(const char *a, const char *b) {
     fprintf(stderr, "\"\n");
   }
 
-  json_free(va);
-  json_free(vb);
+  json_free((json_value*)va);
+  json_free((json_value*)vb);
   return eq;
 }
 
 TEST(test_simple_json_parsing) {
+  json_pool_reset();
   const char *filename = "test/test-simple.json";
   FILE *fp = fopen(filename, "r");
   ASSERT_PTR_NOT_NULL(fp);
@@ -130,13 +133,13 @@ TEST(test_simple_json_parsing) {
   fclose(fp);
 
   /* parse into internal json_value* */
-  const json_value *v = json_parse(json);
+  json_value *v = json_parse(json);
   ASSERT_PTR_NOT_NULL(v);
 
   /* render json_value back to string */
   char *out = json_stringify(v);
   ASSERT_PTR_NOT_NULL(out);
-  json_free(v);
+  json_free((json_value*)v);
 
   /* compare structurally (order-insensitive) */
   ASSERT(test_json_equal(json, out));
@@ -149,6 +152,7 @@ TEST(test_simple_json_parsing) {
 }
 
 TEST(test_json_parsing) {
+  json_pool_reset();
   const char *filename = "test/test.json";
   FILE *fp = fopen(filename, "r");
   ASSERT_PTR_NOT_NULL(fp);
@@ -170,13 +174,13 @@ TEST(test_json_parsing) {
   fclose(fp);
 
   /* parse into internal json_value* */
-  const json_value *v = json_parse(json);
+  json_value *v = json_parse(json);
   ASSERT_PTR_NOT_NULL(v);
 
   /* render json_value back to string */
   char *out = json_stringify(v);
   ASSERT_PTR_NOT_NULL(out);
-  json_free(v);
+  json_free((json_value*)v);
 
   /* compare structurally (order-insensitive) */
   ASSERT(test_json_equal(json, out));

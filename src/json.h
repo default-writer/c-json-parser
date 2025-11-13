@@ -70,7 +70,7 @@ typedef struct json_value {
     reference boolean; /**< Used when type is J_BOOLEAN. */
     reference number;  /**< Used when type is J_NUMBER. */
     struct {
-      json_value *items; /**< Array of JSON values. */
+      json_value **items; /**< Array of JSON values. */
       size_t count;      /**< Number of items in the array. */
       size_t capacity;   /**< Allocated capacity of the array. */
     } array;             /**< Used when type is J_ARRAY. */
@@ -104,7 +104,7 @@ const char *json_source(const json_value *v);
  * @param json The JSON string to parse.
  * @return A pointer to the root json_value, or NULL on error.
  */
-const json_value *json_parse(const char *json);
+json_value *json_parse(const char *json);
 
 /**
  * @brief Compares two JSON strings for structural equality.
@@ -126,7 +126,7 @@ char *json_stringify(const json_value *v);
  * @brief Frees a json_value and all its children.
  * @param v The json_value to free.
  */
-void json_free(const json_value *v);
+void json_free(json_value *v);
 
 /**
  * @brief Prints a json_value tree to a standard output.
@@ -134,5 +134,11 @@ void json_free(const json_value *v);
  * @param out The standatd output FILE handle.
  */
 void json_print(const json_value *v, FILE *out);
+
+/**
+ * @brief Resets the internal memory pool used for JSON value allocation.
+ * This should be called before a series of parsing operations to ensure a clean state.
+ */
+void json_pool_reset(void);
 
 #endif /* JSON_H */
