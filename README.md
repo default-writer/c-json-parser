@@ -14,8 +14,8 @@ A simple JSON parser in C
 
 ## screenshots
 
-![logo_c_json_parser](![alt text](images/image-1.png))
-![logo_c_json_parser](![alt text](images/image-2.png))
+![logo_c_json_parser](images/image-1.png)
+![logo_c_json_parser](images/image-2.png)
 
 ## tools
 
