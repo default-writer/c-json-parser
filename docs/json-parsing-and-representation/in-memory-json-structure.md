@@ -25,6 +25,9 @@ The core data structure is the `json_value` struct, which represents any JSON va
 - **Minimal Allocation:**  
   By referencing original JSON text for primitive values, allocations are only needed for array and object containers and their children, reducing heap fragmentation and memory overhead.
 
+- **Fixed-Size Memory Pool:**  
+  To further reduce allocation overhead, `json_value` structures are allocated from a fixed-size memory pool (`JSON_VALUE_POOL_SIZE` of 0x200 items). This pool is managed by two static arrays: one holding the `json_value` objects themselves, and another holding pointers to free objects. This approach avoids frequent calls to `malloc` for small `json_value` allocations, improving performance and reducing memory fragmentation.
+
 - **Safe Manipulation:**  
   The design uses explicit count and capacity fields to safely manage dynamic growth of arrays and objects, preventing buffer overruns and enabling controlled reallocation.
 

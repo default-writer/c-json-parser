@@ -20,7 +20,7 @@ Each parsing function maintains its own state and position pointer within the in
 Key aspects of the implementation include:
 
 - **State Machine for Strings**: The parsing of strings uses explicit states (`STATE_INITIAL`, `STATE_ESCAPE_START`, `STATE_ESCAPE_UNICODE_BYTE1`, etc.) to correctly interpret escape sequences and validate Unicode hex digits.
-- **Memory Management**: Each parsed element allocates a `json_value` struct, often using `calloc()`. Ownership of parsed keys and values is carefully managed to avoid leaks or double-frees, especially in objects.
+- **Memory Management**: `json_value` structures are allocated from a fixed-size memory pool to avoid frequent `malloc` calls. Dynamic arrays for array elements and object properties are managed with `realloc`. Ownership of parsed keys and values is carefully managed to avoid leaks or double-frees, especially in objects.
 - **Error Handling**: If any parsing step fails (e.g., invalid escape, unexpected token, memory allocation failure), the recursive calls unwind by freeing allocated memory and returning `NULL` to signal failure.
 - **Recursion Depth Tracking**: The `id` parameter passed through recursive calls can be used for debugging or limiting recursion depth, though it is incremented without explicit limits in this code.
 

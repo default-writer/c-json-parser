@@ -33,7 +33,7 @@ The major functionalities are implemented primarily in `src/json.c` and declared
    `json_stringify()` converts a `json_value` tree back into a pretty-printed JSON string for storage or transmission.
 
 6. **Memory Management**  
-   After usage, `json_free()` releases all allocated memory related to the JSON value tree.
+   The library employs a memory pool for `json_value` structures to minimize `malloc` calls. Dynamic arrays and objects are managed with `realloc`. After processing, `json_free()` recursively frees the entire JSON tree, returning `json_value` structures to the pool.
 
 ### Test Execution Workflow
 

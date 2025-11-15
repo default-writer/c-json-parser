@@ -32,7 +32,7 @@ Parsing is implemented as a recursive descent parser operating directly on the i
 - Numbers are parsed using the standard `strtod` function, ensuring compliance with JSON number formats.
 - Literal values (`null`, `true`, `false`) are matched explicitly with helper functions.
 
-The parser builds an in-memory tree of `json_value` objects, allocating new nodes dynamically and linking nested structures appropriately.
+The parser builds an in-memory tree of `json_value` objects, allocating new nodes from a memory pool and linking nested structures appropriately.
 
 If the parser encounters invalid syntax or unexpected characters at any point, it aborts and frees allocated memory, ensuring no partial or corrupt data remains.
 
@@ -41,7 +41,7 @@ If the parser encounters invalid syntax or unexpected characters at any point, i
 - The parser reuses slices of the original JSON string for strings, booleans, and numbers to avoid copying.
 - Arrays and objects dynamically resize their internal buffers as elements are added.
 - When setting object keys with [json_object_set_take_key](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075), the module takes ownership of the key slice and the associated value, managing duplicate keys by replacing existing entries.
-- The [json_free](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075) function recursively frees all allocated memory, including nested arrays, objects, and the `json_value` wrappers themselves.
+- The `json_free` function recursively frees all allocated memory for nested arrays and objects, and returns the `json_value` structures to a memory pool.
 
 ## Key Functionalities and Workflow
 
