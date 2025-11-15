@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The **Pretty-Printing JSON** subtopic addresses the need to convert in-memory JSON structures into readable, well-formatted JSON text. While the parent topic [JSON Serialization and Testing](80083) covers the broader capability of serializing JSON data and verifying parser correctness, this subtopic focuses specifically on formatting output with indentation, line breaks, and proper escaping. This enhances human readability for debugging, logging, or configuration files, where compact representations are insufficient.
+The **Pretty-Printing JSON** subtopic addresses the need to convert in-memory JSON structures into readable, well-formatted JSON text. While the parent topic [JSON Serialization and Testing](https://nextdocs.ai/github/default-writer/c-json-parser/80083) covers the broader capability of serializing JSON data and verifying parser correctness, this subtopic focuses specifically on formatting output with indentation, line breaks, and proper escaping. This enhances human readability for debugging, logging, or configuration files, where compact representations are insufficient.
 
 ## Functionality
 
@@ -82,12 +82,12 @@ This function clearly illustrates the recursive structure, indentation, and form
 
 ## Integration
 
-The pretty-printing functionality is a crucial component of the parent topic [JSON Serialization and Testing](80083). It complements the parsing capabilities from [JSON Parsing and Representation](80084) by enabling the reverse operation: transforming parsed in-memory JSON values back into human-readable text.
+The pretty-printing functionality is a crucial component of the parent topic [JSON Serialization and Testing](https://nextdocs.ai/github/default-writer/c-json-parser/80083). It complements the parsing capabilities from [JSON Parsing and Representation](https://nextdocs.ai/github/default-writer/c-json-parser/80084) by enabling the reverse operation: transforming parsed in-memory JSON values back into human-readable text.
 
 - The `json_stringify()` API exposed by this subtopic is used to serialize the entire `json_value` tree with pretty-printing, returning a formatted string buffer.
 - The `json_print()` function allows direct printing to standard output or file streams, useful for debugging or logging.
 - It integrates with the test suite discussed in the [Automated Test Suite](/80083), which validates that the serialization output matches expected pretty-printed JSON formats, ensuring parser and printer correctness.
-- The recursive pretty-print logic relies on the structural representation of JSON values managed and manipulated via [JSON Manipulation and Comparison](80082).
+- The recursive pretty-print logic relies on the structural representation of JSON values managed and manipulated via [JSON Manipulation and Comparison](https://nextdocs.ai/github/default-writer/c-json-parser/80082).
 
 Thus, pretty-printing acts as the presentation layer that translates the structured JSON data back into a clean textual form, bridging in-memory representation and external representation.
 

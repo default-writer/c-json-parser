@@ -2,9 +2,9 @@
 
 ## Purpose
 
-The **In-Memory JSON Structure** subtopic addresses the challenge of representing parsed JSON data within a program’s memory efficiently and safely. While the parent topic [`JSON Parsing and Representation`](80084) focuses on converting JSON text into a structured format, this subtopic zeroes in on the concrete data structures used to store JSON values such as strings, numbers, booleans, arrays, and objects. The goal is to minimize memory allocation overhead while enabling safe, flexible, and performant manipulation of JSON content once parsed.
+This document describes how parsed JSON data is represented in memory. It details the data structures for storing JSON values like strings, numbers, booleans, arrays, and objects. The design prioritizes minimal memory overhead and safe, efficient manipulation of parsed JSON.
 
-This subtopic exists to provide a foundational representation that supports all JSON types, preserves references to the original JSON text to avoid unnecessary copying, and manages dynamic collections (arrays and objects) with capacity management. It enables the rest of the system—such as manipulation, comparison, and serialization—to operate on a consistent, memory-optimized model.
+The in-memory representation supports all JSON types, references the original JSON text to avoid copying, and manages dynamic arrays and objects. This provides a consistent and memory-efficient model for other parts of the system, like manipulation, comparison, and serialization.
 
 ## Functionality
 
@@ -12,35 +12,27 @@ This subtopic exists to provide a foundational representation that supports all 
 
 The core data structure is the `json_value` struct, which represents any JSON value. It includes a `json_type` enum indicating the value type and a union holding data specific to that type:
 
-- **Primitive Types (String, Number, Boolean):**  
-  Instead of copying the actual string or numeric value, these are stored as `reference` structs. Each `reference` holds a pointer and length referring back to the original JSON input text. This avoids memory duplication and allocation costs, ensuring zero-copy access to primitive data.
+- **Primitive Types (String, Number, Boolean):** Primitives are stored as `reference` structs, which point to the original JSON text. This avoids memory duplication and allows for zero-copy access.
 
-- **Complex Types (Array, Object):**  
-  Arrays and objects store their children dynamically using pointers:
-  - Arrays hold a pointer to a contiguous block of `json_value` items, with fields tracking the count and capacity to allow efficient resizing.
-  - Objects hold an array of `json_object` key-value pairs, where each key is a reference into the source JSON string and the value is a pointer to a `json_value`. Capacity and count fields similarly manage resizing.
+- **Complex Types (Array, Object):** Arrays and objects store their children dynamically. Arrays use a contiguous block of `json_value` items, with count and capacity for resizing. Objects store key-value pairs, where keys reference the source string. Capacity and count fields manage resizing for both.
 
 ### Memory Optimization and Safety
 
-- **Minimal Allocation:**  
-  By referencing original JSON text for primitive values, allocations are only needed for array and object containers and their children, reducing heap fragmentation and memory overhead.
+- **Minimal Allocation:** Referencing the original JSON for primitives minimizes allocations to only what's needed for array and object containers, reducing memory overhead.
 
-- **Fixed-Size Memory Pool:**  
-  To further reduce allocation overhead, `json_value` structures are allocated from a fixed-size memory pool (`JSON_VALUE_POOL_SIZE` of 0x200 items). This pool is managed by two static arrays: one holding the `json_value` objects themselves, and another holding pointers to free objects. This approach avoids frequent calls to `malloc` for small `json_value` allocations, improving performance and reducing memory fragmentation.
+- **Fixed-Size Memory Pool:** To further reduce allocation overhead, `json_value` structures are allocated from a fixed-size memory pool (`JSON_VALUE_POOL_SIZE` of 0x200 items). This pool is managed by two static arrays: one holding the `json_value` objects themselves, and another holding pointers to free objects. This approach avoids frequent calls to `malloc` for small `json_value` allocations, improving performance and reducing memory fragmentation.
 
-- **Safe Manipulation:**  
-  The design uses explicit count and capacity fields to safely manage dynamic growth of arrays and objects, preventing buffer overruns and enabling controlled reallocation.
+- **Safe Manipulation:** Explicit count and capacity fields in arrays and objects ensure safe dynamic growth and prevent buffer overruns.
 
-- **Pointer-Based Navigation:**  
-  Objects store keys as raw pointers into the original string rather than duplicated strings, enabling fast key comparisons and minimal memory usage.
+- **Pointer-Based Navigation:** Object keys are pointers to the original string, allowing for fast comparisons and minimal memory use.
 
 ### Interaction with Parsing and Other Subtopics
 
-- The parser implemented in the [`Recursive JSON Parsing`](/80084) subtopic populates these structures as it processes JSON text, assigning references and building nested arrays and objects.
+- The parser, detailed in [`Recursive JSON Parsing`](/80084), populates these structures, building nested arrays and objects.
 
-- Manipulation APIs like [json_array_push()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075) or [json_object_set_take_key()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075) (covered in [`JSON Manipulation and Comparison`](80082)) operate on these in-memory structures to modify JSON data safely.
+- Manipulation APIs like [json_array_push()](https://nextdocs.ai/github/default-writer/c-json-parser/80075) or [json_object_set_take_key()](https://nextdocs.ai/github/default-writer/c-json-parser/80075) (covered in [`JSON Manipulation and Comparison`](80082)) operate on these structures to safely modify JSON data.
 
-- Serialization ([json_stringify()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075)) and printing ([json_print()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075)) routines traverse these structures to output JSON text.
+- Serialization ([json_stringify()](https://nextdocs.ai/github/default-writer/c-json-parser/80075)) and printing ([json_print()](https://nextdocs.ai/github/default-writer/c-json-parser/80075)) routines traverse these structures to generate JSON text.
 
 ### Illustrative Code Snippet
 
@@ -65,18 +57,18 @@ typedef struct json_value {
 } json_value;
 ```
 
-This union structure allows a single `json_value` to embody any JSON type while sharing the same memory footprint for type and data pointers.
+This `json_value` struct can represent any JSON type.
 
 ## Integration
 
-The **In-Memory JSON Structure** subtopic is the backbone of the broader [`JSON Parsing and Representation`](80084) topic. The parser builds and populates these structures recursively, as detailed in the [`Recursive JSON Parsing`] subtopic, linking parsed tokens to their memory references and constructing arrays and objects with dynamic capacity management.
+The in-memory JSON structure is central to parsing and representation. The parser recursively builds these structures, as detailed in the [`Recursive JSON Parsing`](/80084) subtopic.
 
 Other subtopics depend on these structures:
 
 - [`JSON Manipulation and Comparison`](80082) uses these data models for safe mutation and equality checks.
 - [`JSON Serialization and Testing`](80083) relies on them to traverse and convert JSON data back to text and validate correctness.
 
-Thus, this subtopic provides a clean, extensible, and memory-conscious representation that interlocks with parsing, manipulation, and serialization components of the system.
+This provides a clean and memory-efficient representation for parsing, manipulation, and serialization.
 
 ```mermaid
 ```

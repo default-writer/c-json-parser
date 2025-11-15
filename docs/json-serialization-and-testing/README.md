@@ -26,7 +26,7 @@ Key goals include:
 
 ### Core Concepts and Structure
 
-The serialization logic is implemented primarily in `src/json.c` with corresponding declarations in [src/json.h](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075). It operates on the internal `json_value` structure, which represents JSON values recursively.
+The serialization logic is implemented primarily in `src/json.c` with corresponding declarations in [src/json.h](https://nextdocs.ai/github/default-writer/c-json-parser/80075). It operates on the internal `json_value` structure, which represents JSON values recursively.
 
 Key functions include:
 

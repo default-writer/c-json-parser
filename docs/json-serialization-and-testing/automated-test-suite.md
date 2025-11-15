@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The Automated Test Suite addresses the need for rigorous validation of JSON parsing, structural integrity, and serialization within the broader scope of the [JSON Serialization and Testing](80083) topic. While the parent topic outlines capabilities to serialize JSON and ensure parser correctness, this subtopic focuses specifically on the systematic verification of those capabilities through automated tests. It ensures that the JSON processing library correctly interprets diverse JSON input formats, maintains structural equality, and produces consistent, pretty-printed output. Additionally, the suite enhances developer experience by providing clear, colored terminal feedback indicating pass/fail status and detailed mismatch context when tests fail.
+The Automated Test Suite addresses the need for rigorous validation of JSON parsing, structural integrity, and serialization within the broader scope of the [JSON Serialization and Testing](https://nextdocs.ai/github/default-writer/c-json-parser/80083) topic. While the parent topic outlines capabilities to serialize JSON and ensure parser correctness, this subtopic focuses specifically on the systematic verification of those capabilities through automated tests. It ensures that the JSON processing library correctly interprets diverse JSON input formats, maintains structural equality, and produces consistent, pretty-printed output. Additionally, the suite enhances developer experience by providing clear, colored terminal feedback indicating pass/fail status and detailed mismatch context when tests fail.
 
 ## Functionality
 
@@ -10,11 +10,11 @@ The Automated Test Suite operates by executing defined test cases that:
 
 1. **Load JSON Inputs:** Reads JSON text files containing a variety of test cases, from simple arrays to complex nested objects with multiple data types.
 
-2. **Parse JSON Data:** Uses the core parsing function (`json_parse()`) to convert input JSON strings into the internal `json_value` tree representation, as defined in [JSON Parsing and Representation](80084).
+2. **Parse JSON Data:** Uses the core parsing function (`json_parse()`) to convert input JSON strings into the internal `json_value` tree representation, as defined in [JSON Parsing and Representation](https://nextdocs.ai/github/default-writer/c-json-parser/80084).
 
 3. **Serialize Parsed Data:** Converts the in-memory JSON structure back into formatted JSON text using the serialization function (`json_stringify()`), aligning with the pretty-printing utilities under [Pretty-Printing JSON](/80083).
 
-4. **Compare Structures:** Validates that the original JSON input and the serialized output represent the same JSON structure, regardless of formatting or key order. This structural equality check uses the deep comparison function (`json_equal()`), part of the [JSON Manipulation and Comparison](80082) topic.
+4. **Compare Structures:** Validates that the original JSON input and the serialized output represent the same JSON structure, regardless of formatting or key order. This structural equality check uses the deep comparison function (`json_equal()`), part of the [JSON Manipulation and Comparison](https://nextdocs.ai/github/default-writer/c-json-parser/80082) topic.
 
 5. **Report Results:** Provides colored terminal feedback using ANSI escape codes to indicate success (green) or failure (red). On failure, it outputs the precise location and textual context of the mismatch to aid debugging.
 
@@ -125,13 +125,13 @@ They manage counting tests, reporting status, and handling assertions with minim
 
 The Automated Test Suite is tightly integrated with the core JSON processing components and other subtopics:
 
-- **With JSON Parsing and Representation (80084):** Invokes `json_parse()` to build the internal JSON tree from input text.
+- **With JSON Parsing and Representation (https://nextdocs.ai/github/default-writer/c-json-parser/80084):** Invokes `json_parse()` to build the internal JSON tree from input text.
 
 - **With Pretty-Printing JSON subtopic:** Uses `json_stringify()` to serialize the JSON tree back to formatted text, testing the serialization fidelity.
 
-- **With JSON Manipulation and Comparison (80082):** Employs `json_equal()` for deep equality checks to confirm structural consistency between original and serialized JSON.
+- **With JSON Manipulation and Comparison (https://nextdocs.ai/github/default-writer/c-json-parser/80082):** Employs `json_equal()` for deep equality checks to confirm structural consistency between original and serialized JSON.
 
-- **With the Parent Topic (80083):** Implements the testing portion that verifies the serialization and overall parser correctness, fulfilling the parent topic's promise of a comprehensive test suite.
+- **With the Parent Topic (https://nextdocs.ai/github/default-writer/c-json-parser/80083):** Implements the testing portion that verifies the serialization and overall parser correctness, fulfilling the parent topic's promise of a comprehensive test suite.
 
 - **Build and Execution:** The `src/main.c` file serves as the test runner, invoking all test cases and managing initialization and finalization phases.
 

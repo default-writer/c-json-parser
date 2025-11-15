@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Within the broader scope of [JSON Manipulation and Comparison](80082), the subtopic *Deep Equality Checks* addresses the need to verify whether two JSON data structures are semantically identical. This capability is crucial for testing JSON parsers, validating synchronization states between JSON documents, and ensuring the integrity of JSON transformations. Unlike shallow comparisons that might only check references or surface-level data, deep equality recursively inspects every element and property, confirming that two JSON trees represent the same data regardless of memory layout or object ordering.
+Within the broader scope of [JSON Manipulation and Comparison](https://nextdocs.ai/github/default-writer/c-json-parser/80082), the subtopic *Deep Equality Checks* addresses the need to verify whether two JSON data structures are semantically identical. This capability is crucial for testing JSON parsers, validating synchronization states between JSON documents, and ensuring the integrity of JSON transformations. Unlike shallow comparisons that might only check references or surface-level data, deep equality recursively inspects every element and property, confirming that two JSON trees represent the same data regardless of memory layout or object ordering.
 
 ## Functionality
 
@@ -17,7 +17,7 @@ Deep equality comparison operates by recursively traversing two JSON value trees
 - **Objects**:  
   Two JSON objects are equal if they have the same number of key-value pairs and each key in one object exists in the other with a deeply equal value. The order of keys is not significant; keys are matched by string content.
 
-The core function implementing this logic is `json_equal()`, which performs type checks and delegates to specialized helpers for arrays (`json_array_equal()`) and objects ([json_object_equal()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075)).
+The core function implementing this logic is `json_equal()`, which performs type checks and delegates to specialized helpers for arrays (`json_array_equal()`) and objects ([json_object_equal()](https://nextdocs.ai/github/default-writer/c-json-parser/80075)).
 
 ### Key Workflows
 
@@ -75,7 +75,7 @@ This recursive approach ensures complete semantic equivalence of JSON data.
 
 *Deep Equality Checks* supplements the [JSON Data Modification](/80082) subtopic by providing validation after modifications to verify the intended effects. For example, after using APIs to update objects or arrays, `json_equal()` can confirm that the modified structure matches an expected JSON value.
 
-It also plays a critical role in the overarching testing framework described in [JSON Serialization and Testing](80083), where JSON outputs from parsing and serialization steps are compared against known reference values to assert correctness.
+It also plays a critical role in the overarching testing framework described in [JSON Serialization and Testing](https://nextdocs.ai/github/default-writer/c-json-parser/80083), where JSON outputs from parsing and serialization steps are compared against known reference values to assert correctness.
 
 Memory management functions in the parent topic ensure that no leaks or dangling pointers occur during or after equality checks, especially when temporary JSON values are created for comparison purposes.
 
