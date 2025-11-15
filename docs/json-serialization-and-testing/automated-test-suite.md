@@ -125,13 +125,13 @@ They manage counting tests, reporting status, and handling assertions with minim
 
 The Automated Test Suite is tightly integrated with the core JSON processing components and other subtopics:
 
-- **With JSON Parsing and Representation (https://nextdocs.ai/github/default-writer/c-json-parser/80084):** Invokes `json_parse()` to build the internal JSON tree from input text.
+- **[JSON Parsing and Representation](https://nextdocs.ai/github/default-writer/c-json-parser/80084):** Invokes `json_parse()` to build the internal JSON tree from input text.
 
-- **With Pretty-Printing JSON subtopic:** Uses `json_stringify()` to serialize the JSON tree back to formatted text, testing the serialization fidelity.
+- **[Pretty-Printing JSON](https://nextdocs.ai/github/default-writer/c-json-parser/80086) subtopic:** Uses `json_stringify()` to serialize the JSON tree back to formatted text, testing the serialization fidelity.
 
-- **With JSON Manipulation and Comparison (https://nextdocs.ai/github/default-writer/c-json-parser/80082):** Employs `json_equal()` for deep equality checks to confirm structural consistency between original and serialized JSON.
+- **[JSON Manipulation and Comparison](https://nextdocs.ai/github/default-writer/c-json-parser/80082):** Employs `json_equal()` for deep equality checks to confirm structural consistency between original and serialized JSON.
 
-- **With the Parent Topic (https://nextdocs.ai/github/default-writer/c-json-parser/80083):** Implements the testing portion that verifies the serialization and overall parser correctness, fulfilling the parent topic's promise of a comprehensive test suite.
+- **[JSON Serialization and Testing](https://nextdocs.ai/github/default-writer/c-json-parser/80083):** Implements the testing portion that verifies the serialization and overall parser correctness, fulfilling the parent topic's promise of a comprehensive test suite.
 
 - **Build and Execution:** The `src/main.c` file serves as the test runner, invoking all test cases and managing initialization and finalization phases.
 

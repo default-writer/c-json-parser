@@ -13,10 +13,10 @@ Its core purpose is to allow client code to manipulate parsed JSON data flexibly
 JSON data in memory is represented as a tree of `json_value` objects, each with a type indicating whether it is a null, boolean, number, string, array, or object. This module includes functions that enable:
 
 - **Adding elements to arrays:**  
-  The function analogous to `json_array_push()` allows appending new JSON values to an existing array, automatically resizing the underlying storage if needed.
+  The internal function `json_array_push()` allows appending new JSON values to an existing array, automatically resizing the underlying storage if needed.
 
 - **Setting or replacing object key-value pairs:**  
-  The function similar to `json_object_set_take_key()` inserts or replaces a key-value pair within a JSON object. It searches for an existing key and replaces its value if found; otherwise, it adds a new entry. The implementation manages dynamic resizing of the object's internal storage and carefully handles ownership of the key and value pointers to avoid memory leaks.
+  The internal function `json_object_set_take_key()` inserts or replaces a key-value pair within a JSON object. It searches for an existing key and replaces its value if found; otherwise, it adds a new entry. The implementation manages dynamic resizing of the object's internal storage and carefully handles ownership of the key and value pointers to avoid memory leaks.
 
 The module employs dynamic arrays internally to store elements of JSON arrays and key-value pairs for JSON objects, with growth strategies that double the capacity when limits are reached, ensuring efficient memory use and amortized constant-time insertions.
 
@@ -57,6 +57,7 @@ The deep equality checks integrate closely with testing workflows to assert corr
   To append an item to a JSON array, the array's internal dynamic list is resized if necessary, and the new item is copied into the array's items. For example:
 
   ```c
+  // Internal function
   json_array_push(my_array, new_item);
   ```
 

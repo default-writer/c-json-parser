@@ -21,10 +21,10 @@ The major functionalities are implemented primarily in `src/json.c` and declared
    Developers can use `json_parse()` to convert a JSON string into an in-memory `json_value` tree. This function handles all JSON types and nested structures.
 
 2. **Accessing JSON Data**  
-   For objects, `json_object_get()` retrieves values by key. For arrays, direct indexing on the `json_value` array field can be performed.
+   For objects, the internal function `json_object_get()` retrieves values by key. For arrays, direct indexing on the `json_value` array field can be performed.
 
 3. **Manipulating JSON Values**  
-   Use functions like `json_array_push()` to append elements to arrays or [json_object_set_take_key()](https://nextdocs.ai/github/default-writer/c-json-parser/80075) to set key-value pairs in objects.
+   The library uses internal functions like `json_array_push()` to append elements to arrays or `json_object_set_take_key()` to set key-value pairs in objects.
 
 4. **Comparing JSON Structures**  
    `json_equal()` performs a deep comparison of two JSON value trees, useful for test assertions or synchronization checks.

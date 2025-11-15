@@ -158,13 +158,13 @@ TestRunner->>TestRunner: Output pass/fail result
 
 ## Interactions and Dependencies
 
-- **With Parsing and Representation**:  
+- **Parsing and Representation**:  
   Serialization relies on the structured JSON tree created by the parsing subsystem. The test suite depends on both parsing and serialization to verify correctness end-to-end.
 
-- **With Memory Management**:  
+- **Memory Management**:  
   The module carefully manages allocation and deallocation of buffers and `json_value` structures, ensuring no leaks during repeated serialization and testing.
 
-- **With Output and Logging**:  
+- **Output and Logging**:  
   The test suite uses formatted console output with ANSI color codes for clear pass/fail visualization, adapting to platform capabilities.
 
 ---
