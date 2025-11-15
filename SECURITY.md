@@ -2,13 +2,14 @@
 
 ## Supported Versions
 
-Currently, all supported version are acceptable for PR starting from commit 9b748e758ec5496101ecb54fd9f37f082ab8bedd
+Currently, all supported version are acceptable for PR starting from commit 074adb0f156e592d83812eeabc8b597d0b9f6b3a (version 
 
 | Version | Git hash                                 | Supported          |
-| ------- | ---------------------------------------- |                    |
-| 0.0.1   | 9b748e758ec5496101ecb54fd9f37f082ab8bedd | :x:                |
-|         |                                          | :white_check_mark: |
-| < 4.0   |                                          |:x:                 |
+| ------- | ---------------------------------------- | ------------------ |
+| < 2.0   |                                          | :white_check_mark: |
+| 1.0.0   |                                          | :white_check_mark: |
+| 1.0.0   |                                          | :white_check_mark: |
+|         | 074adb0f156e592d83812eeabc8b597d0b9f6b3a | :x:                |
 
 ## Reporting a Vulnerability
 
