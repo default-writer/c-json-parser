@@ -1,6 +1,16 @@
 #ifndef TEST_H
 #define TEST_H
 
+#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <time.h>
+#endif
+
 #include <ctype.h>
 #include <limits.h>
 #include <stdarg.h>

@@ -4,6 +4,18 @@
 #define PREFIX_CHAR_OFFSET 10
 #define POSTFIX_CHAR_OFFSET 10
 
+#define TIME_NANOSECONDS 1000000UL
+#define TIME_MILLISECONDS 1000UL
+#define TIME_SECONDS 60UL
+#define TIME_MINUTES 60UL
+#define TIME_HOURS 24UL
+#define TIME_EPSILON 1000000000UL
+
+#define TEST_COUNT 1000000UL
+
+static long long start_time;
+static long long end_time;
+
 int tests_run = 0;
 int tests_passed = 0;
 
@@ -149,6 +161,37 @@ TEST(test_simple_json_parsing) {
   END_TEST;
 }
 
+long long get_time_ns(void) {
+#ifdef _WIN32
+  LARGE_INTEGER t, f;
+  QueryPerformanceCounter(&t);
+  QueryPerformanceFrequency(&f);
+  return (long long)(t.QuadPart * TIME_EPSILON / f.QuadPart);
+#else
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (long long)ts.tv_sec * TIME_EPSILON + ts.tv_nsec;
+#endif
+}
+
+void print_time_diff(const char* test, long long start_ns, long long end_ns) {
+  long long diff_ns = end_ns - start_ns;
+  long long ns_per_ms = TIME_NANOSECONDS;
+  long long ns_per_s = TIME_MILLISECONDS * ns_per_ms;
+  long long ns_per_m = TIME_SECONDS * ns_per_s;
+  long long ns_per_h = TIME_MINUTES * ns_per_m;
+
+  long long hours = diff_ns / ns_per_h;
+  diff_ns %= ns_per_h;
+  long long minutes = diff_ns / ns_per_m;
+  diff_ns %= ns_per_m;
+  long long seconds = diff_ns / ns_per_s;
+  diff_ns %= ns_per_s;
+  long long milliseconds = diff_ns / ns_per_ms;
+
+  printf("%s execution time: %02lld:%02lld:%02lld.%03lld\n", test, hours, minutes, seconds, milliseconds);
+}
+
 TEST(test_json_parsing) {
   json_pool_reset();
   const char *filename = "test/test.json";
@@ -186,6 +229,44 @@ TEST(test_json_parsing) {
   /* cleanup */
   free(json);
   free(out);
+
+  END_TEST;
+}
+
+TEST(test_json_perf_test) {
+  json_pool_reset();
+
+  const char *filename = "test/test.json";
+  FILE *fp = fopen(filename, "r");
+  ASSERT_PTR_NOT_NULL(fp);
+
+  fseek(fp, 0, SEEK_END);
+  long size = ftell(fp);
+  fseek(fp, 0, SEEK_SET);
+
+  if (size == -1) {
+    fclose(fp);
+    return;
+  }
+
+  char *json = calloc(1, size + 1);
+  ASSERT_PTR_NOT_NULL(json);
+
+  fread(json, 1, size, fp);
+  json[size] = '\0';
+  fclose(fp);
+
+  /* parse into internal json_value* */
+  start_time = get_time_ns();
+  for (size_t i = 0; i < TEST_COUNT; i++) {
+    json_value *_v = json_parse(json);
+    json_free((json_value *)_v);
+  }
+  end_time = get_time_ns();
+  print_time_diff("test_json_parsing", start_time, end_time);
+
+  /* cleanup */
+  free(json);
 
   END_TEST;
 }
