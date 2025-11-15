@@ -26,10 +26,9 @@ build json.obj: cc src/json.c
 build test.obj: cc test/test.c
 
 # Build statement for the executable
-build main.exe: link main.obj json.obj test.obj
-
-# Default target
-default main.exe
+build main.stamp: link_named main.obj json.obj test.obj
+  name = test-main.exe
+build main: phony main.stamp
 
 # --- O2 Target ---
 cflags_o2 = $cflags /O2
@@ -40,7 +39,7 @@ build json.obj.o2: cc src/json.c
 build test.obj.o2: cc test/test.c
   cflags = $cflags_o2
 build o2.stamp: link_named main.obj.o2 json.obj.o2 test.obj.o2
-  name = pert.exe
+  name = test-o2.exe
 build o2: phony o2.stamp
 
 # --- O3 Target ---
@@ -52,7 +51,7 @@ build json.obj.o3: cc src/json.c
 build test.obj.o3: cc test/test.c
   cflags = $cflags_o3
 build o3.stamp: link_named main.obj.o3 json.obj.o3 test.obj.o3
-  name = pert.exe
+  name = test-o3.exe
 build o3: phony o3.stamp
 
 # --- Perf Target ---
@@ -65,6 +64,9 @@ build json.obj.perf: cc src/json.c
 build test.obj.perf: cc test/test.c
   cflags = $cflags_perf
 build perf.stamp: link_named main.obj.perf json.obj.perf test.obj.perf
-  name = pert.exe
+  name = test-perf.exe
   ldflags = $ldflags_perf
 build perf: phony perf.stamp
+
+# Default target
+default main
