@@ -2,16 +2,17 @@
 
 ## Project Purpose and Objectives
 
-This project implements a robust C-language JSON processing library that provides parsing, manipulation, comparison, serialization, and printing of JSON data. The core objective is to offer a lightweight, efficient, and standards-compliant JSON parser and utility that can be embedded in C applications. The system focuses on:
+This project provides a lightweight and efficient C library for JSON processing, designed for easy embedding into C applications. It offers a comprehensive feature set for handling JSON data.
 
-- Parsing JSON text into a structured, in-memory representation supporting all JSON types: null, boolean, number, string, array, and object.
-- Allowing safe and flexible manipulation of JSON data structures through an API.
-- Providing deep equality comparison of JSON values for testing and validation.
-- Enabling serialization of JSON values back into formatted JSON text with pretty-printing support.
-- Offering utilities for efficient memory management and safe file I/O on multiple platforms.
-- Supplying a test suite that validates parser correctness and robustness across a broad range of JSON inputs.
+Key objectives include:
 
-The major functionalities are implemented primarily in `src/json.c` and declared in `src/json.h`. The entry point in `src/main.c` initializes and runs JSON parsing tests defined in the `test` directory, ensuring correctness and stability.
+- **Parsing**: Convert JSON text into a structured, in-memory tree representation.
+- **Manipulation**: Programmatically access and modify JSON objects and arrays.
+- **Comparison**: Perform deep equality checks between JSON values for validation.
+- **Serialization**: Convert the in-memory structure back into a formatted JSON string.
+- **Robustness**: Ensure correctness and stability with a comprehensive test suite.
+
+The core logic is implemented in `src/json.c` and `src/json.h`, with `src/main.c` driving the test suite.
 
 ## Example Workflows and Use Cases
 
