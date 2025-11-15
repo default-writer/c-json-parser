@@ -95,21 +95,25 @@ InstallScripts -.-> Toolchain["Toolchain (LLVM, Ninja)"]
 ## Developer Navigation
 
 ### Frontend Developers Start Here
+
 - Explore `src/main.c` for program entry and test execution flow.
 - Review `test/test.c` and `test/test.h` for test cases validating JSON parsing and equality.
 - Use `test/test.json` and `test/test-simple.json` for test input examples.
 
 ### Backend Developers Focus On
+
 - `src/json.c` and `src/json.h` to understand JSON parsing, printing, and manipulation logic.
 - Study memory management and recursive parsing functions.
 - Extend or optimize parsing states and value handling.
 
 ### Build and Toolchain Maintenance
+
 - Modify `build.linux.ninja` and `build.windows.ninja` for build customization.
 - Use `bin/install.sh` (Linux) or `bin/install.ps1` (Windows) to set up or update development environments.
 - Troubleshoot build or toolchain issues through these scripts.
 
 ### Testing and Validation
+
 - Add new test cases to `test/test.c` using the provided test macros.
 - Create new JSON test files in the `test/` directory for edge cases.
 - Use colored output for quick visual verification of test status.
