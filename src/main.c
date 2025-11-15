@@ -21,8 +21,11 @@ int main(void) {
 
   TEST_SUITE("performance tests");
   test_json_perf_test();
+
 #ifdef USE_JSON_C
+
   test_json_c_parser();
+
 #endif
 
   TEST_FINALIZE();
