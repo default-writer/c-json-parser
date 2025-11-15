@@ -24,7 +24,7 @@ The major functionalities are implemented primarily in `src/json.c` and declared
    For objects, `json_object_get()` retrieves values by key. For arrays, direct indexing on the `json_value` array field can be performed.
 
 3. **Manipulating JSON Values**  
-   Use functions like `json_array_push()` to append elements to arrays or [json_object_set_take_key()](/projects/376/80073) to set key-value pairs in objects.
+   Use functions like `json_array_push()` to append elements to arrays or [json_object_set_take_key()](https://nextdocs.ai/github/default-writer/376/80073) to set key-value pairs in objects.
 
 4. **Comparing JSON Structures**  
    `json_equal()` performs a deep comparison of two JSON value trees, useful for test assertions or synchronization checks.

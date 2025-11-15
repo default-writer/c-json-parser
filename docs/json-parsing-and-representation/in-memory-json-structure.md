@@ -35,9 +35,9 @@ The core data structure is the `json_value` struct, which represents any JSON va
 
 - The parser implemented in the [`Recursive JSON Parsing`](/80084) subtopic populates these structures as it processes JSON text, assigning references and building nested arrays and objects.
 
-- Manipulation APIs like [json_array_push()](/projects/376/80073) or [json_object_set_take_key()](/projects/376/80073) (covered in [`JSON Manipulation and Comparison`](80082)) operate on these in-memory structures to modify JSON data safely.
+- Manipulation APIs like [json_array_push()](https://nextdocs.ai/github/default-writer/376/80073) or [json_object_set_take_key()](https://nextdocs.ai/github/default-writer/376/80073) (covered in [`JSON Manipulation and Comparison`](80082)) operate on these in-memory structures to modify JSON data safely.
 
-- Serialization ([json_stringify()](/projects/376/80073)) and printing ([json_print()](/projects/376/80073)) routines traverse these structures to output JSON text.
+- Serialization ([json_stringify()](https://nextdocs.ai/github/default-writer/376/80073)) and printing ([json_print()](https://nextdocs.ai/github/default-writer/376/80073)) routines traverse these structures to output JSON text.
 
 ### Illustrative Code Snippet
 
