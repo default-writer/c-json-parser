@@ -1,59 +1,61 @@
-# Ninja build file generated from Makefile.linux
+# Ninja build file for Linux
 
 # Variables
 cc = clang
-cflags = -Wall -Wextra -std=c11 -g
-ldflags = -fuse-ld=lld -lrt
+cflags = -Wall -Wextra -std=c11 -g -Ilibs/include -DUSE_JSON_C
+ldflags = -fuse-ld=lld -lrt -Llibs/lib -ljson-c
 
 # Rule for compiling .c files to .o
 rule cc
   command = $cc $cflags -c -o $out $in
   description = Compiling $in
 
-# Rule for linking .o files
-rule link
-  command = $cc $ldflags -o $out $in
-  description = Linking $out
-
 # Rule for linking .o files with a specific name
-rule link_named
-  command = $cc $ldflags -o $name $in && touch $out
+rule link
+  command = $cc $ldflags -o $name $in
   description = Linking $name
 
 # Build statements for object files
 build main.o: cc src/main.c
 build json.o: cc src/json.c
 build test.o: cc test/test.c
+build test_json_c.o: cc test/test_json_c.c
 
 # Build statement for the executable
-build main.stamp: link_named main.o json.o test.o
+build main.stamp: link main.o json.o test.o test_json_c.o
   name = test-main
 build main: phony main.stamp
 
 # --- O2 Target ---
+cflags_o2 = $cflags -O2
 build main.o.o2: cc src/main.c
-  cflags = $cflags -O2
+  cflags = $cflags_o2
 build json.o.o2: cc src/json.c
-  cflags = $cflags -O2
+  cflags = $cflags_o2
 build test.o.o2: cc test/test.c
-  cflags = $cflags -O2
-build o2.stamp: link_named main.o.o2 json.o.o2 test.o.o2
+  cflags = $cflags_o2
+build test_json_c.o.o2: cc test/test_json_c.c
+  cflags = $cflags_o2
+build o2.stamp: link main.o.o2 json.o.o2 test.o.o2 test_json_c.o.o2
   name = test-o2
 build o2: phony o2.stamp
 
 # --- O3 Target ---
+cflags_o3 = $cflags -O3
 build main.o.o3: cc src/main.c
-  cflags = $cflags -O3
+  cflags = $cflags_o3
 build json.o.o3: cc src/json.c
-  cflags = $cflags -O3
+  cflags = $cflags_o3
 build test.o.o3: cc test/test.c
-  cflags = $cflags -O3
-build o3.stamp: link_named main.o.o3 json.o.o3 test.o.o3
+  cflags = $cflags_o3
+build test_json_c.o.o3: cc test/test_json_c.c
+  cflags = $cflags_o3
+build o3.stamp: link main.o.o3 json.o.o3 test.o.o3 test_json_c.o.o3
   name = test-o3
 build o3: phony o3.stamp
 
 # --- Perf Target ---
-cflags_perf = -O3 -march=native -flto
+cflags_perf = -Wall -Wextra -std=c11 -Ilibs/include -DUSE_JSON_C -O3 -march=native -flto
 ldflags_perf = $ldflags -flto
 build main.o.perf: cc src/main.c
   cflags = $cflags_perf
@@ -61,8 +63,11 @@ build json.o.perf: cc src/json.c
   cflags = $cflags_perf
 build test.o.perf: cc test/test.c
   cflags = $cflags_perf
-build perf.stamp: link_named main.o.perf json.o.perf test.o.perf
+build test_json_c.o.perf: cc test/test_json_c.c
+  cflags = $cflags_perf
+build perf.stamp: link main.o.perf json.o.perf test.o.perf test_json_c.o.perf
   name = test-perf
+  ldflags = $ldflags_perf
 build perf: phony perf.stamp
 
 # Default target

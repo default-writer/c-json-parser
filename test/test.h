@@ -20,14 +20,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TEST_SETUP()                 \
-  extern void test_initialize(void); \
-  extern int tests_run;              \
-  extern int tests_passed;           \
-  extern const char *GREEN;          \
-  extern const char *RED;            \
-  extern const char *RESET;          \
-  extern void test_initialize(void);
+#define TEST_SETUP()                  \
+  extern void test_initialize(void);  \
+  extern int tests_run;               \
+  extern int tests_passed;            \
+  extern const char *GREEN;           \
+  extern const char *RED;             \
+  extern const char *RESET;           \
+  extern void test_initialize(void);  \
+  extern long long get_time_ns(void); \
+  extern void print_time_diff(const char *test, long long start_ns, long long end_ns);
 
 #define TEST_INITIALIZE()                                                                      \
   test_initialize();                                                                           \
@@ -88,6 +90,15 @@
 #define ASSERT_EQ(expected, actual)                                                                        \
   do {                                                                                                     \
     if ((expected) != (actual)) {                                                                          \
+      printf("  assertion failed at %s:%d: Expected %ld, got %ld\n", __FILE__, __LINE__, (long)(expected), \
+             (long)(actual));                                                                              \
+      passed = 0;                                                                                          \
+    }                                                                                                      \
+  } while (0)
+
+#define ASSERT_NOT_EQ(expected, actual)                                                                    \
+  do {                                                                                                     \
+    if ((expected) == (actual)) {                                                                          \
       printf("  assertion failed at %s:%d: Expected %ld, got %ld\n", __FILE__, __LINE__, (long)(expected), \
              (long)(actual));                                                                              \
       passed = 0;                                                                                          \

@@ -17,7 +17,7 @@ fi
 
 sudo apt-get update -y
 sudo apt-get upgrade -y
-sudo apt-get install -y lsb-release wget gpg gcc make unzip
+sudo apt-get install -y lsb-release wget gpg gcc make cmake unzip
 
 cwd=$(cd "$(dirname $(dirname "${BASH_SOURCE[0]}"))" &> /dev/null && pwd)
 TOOLS_DIR="${cwd}/.tools"

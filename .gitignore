@@ -7,6 +7,6 @@
 **/*.stamp
 build/
 libs/
-test*
-main*
+test-*
+main-*
 /.ninja_log
