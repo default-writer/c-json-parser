@@ -2,6 +2,16 @@
 
 A simple JSON parser in C
 
+- lightning-fast implementation for a reasonable trade-offs, performance x4.009 comared to [json-c](https://github.com/json-c/json-c)
+
+## docs
+
+- [TOC](https://github.com/default-writer/c-json-parser/tree/main/docs)
+
+## screenshots
+
+![alt text](image.png)
+
 ## tools
 
 Ninja + Clang
