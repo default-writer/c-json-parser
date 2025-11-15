@@ -27,7 +27,7 @@ static size_t json_value_free_count;
 static void *new_json_value(void);
 static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t len, json_value *value);
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
-static json_value *json_new_null(void);
+static json_value *json_new_null(const char *ptr, size_t len);
 static json_value *json_new_boolean(const char *ptr, size_t len);
 static json_value *json_new_number(const char *ptr, size_t len);
 static json_value *json_new_array(void);
@@ -119,11 +119,13 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
   return NULL;
 }
 
-static json_value *json_new_null(void) {
-  json_value *v = (json_value *)new_json_value();
+static json_value *json_new_null(const char *ptr, size_t len) {
+  json_value *v = new_json_value();
   if (!v)
     return NULL;
   v->type = J_NULL;
+  v->u.string.ptr = ptr;
+  v->u.string.len = len;
   return v;
 }
 
@@ -494,8 +496,9 @@ static json_value *parse_value_build(const char **s, int id) {
   if (**s == '[')
     return parse_array_value(s, ++id);
   if (**s == 'n') {
+    const char *ptr = *s;
     if (match_literal_build(s, "null"))
-      return json_new_null();
+      return json_new_null(ptr, TEXT_SIZE("null"));
     return NULL;
   }
   if (**s == 't') {
@@ -752,7 +755,7 @@ static int print_value_compact_buf(const json_value *v, bs *b) {
   case J_BOOLEAN:
     return bs_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
   case J_NUMBER:
-    /* write number into buffer using printf */
+    /* write number into buffer */
     return bs_write(b, v->u.number.ptr, (int)v->u.number.len);
   case J_STRING:
     return print_string_escaped_buf(b, v->u.string.ptr, v->u.string.len);
@@ -867,7 +870,7 @@ const char *json_source(const json_value *v) {
     return NULL;
   switch (v->type) {
   case J_NULL:
-    return v->u.number.ptr;
+    return v->u.string.ptr;
   case J_BOOLEAN:
     return v->u.boolean.ptr;
   case J_NUMBER:

@@ -38,12 +38,12 @@ static inline FILE *safe_fopen(const char *filename, const char *mode) {
  * @brief Enumeration of JSON value types.
  */
 typedef enum {
-  J_NULL = 1,    /**< null value */
-  J_BOOLEAN = 2, /**< boolean value (true or false) */
-  J_NUMBER = 3,  /**< number value (integer or floating-point) */
-  J_STRING = 4,  /**< string value */
-  J_ARRAY = 5,   /**< array value */
-  J_OBJECT = 6   /**< object value */
+  J_NULL = 1,    // null value
+  J_BOOLEAN = 2, // boolean value (true or false)
+  J_NUMBER = 3,  // number value (integer or floating-point)
+  J_STRING = 4,  // string value
+  J_ARRAY = 5,   // array value
+  J_OBJECT = 6   // object value
 } json_type;
 
 /**
@@ -51,8 +51,8 @@ typedef enum {
  * This is used to avoid allocating new memory for strings, numbers, and booleans.
  */
 typedef struct {
-  const char *ptr; /**< Pointer to the start of the value in the source JSON string. */
-  size_t len;      /**< Length of the value. */
+  const char *ptr; // Pointer to the start of the value in the source JSON string.
+  size_t len;      // Length of the value.
 } reference;
 
 /* Forward declarations */
@@ -64,21 +64,21 @@ typedef struct json_object json_object;
  * The type of the value is determined by the `type` field.
  */
 typedef struct json_value {
-  json_type type; /**< The type of the JSON value. */
+  json_type type; // The type of the JSON value.
   union {
-    reference string;  /**< Used when type is J_STRING. */
-    reference boolean; /**< Used when type is J_BOOLEAN. */
-    reference number;  /**< Used when type is J_NUMBER. */
+    reference string;  // J_STRING.
+    reference boolean; // J_BOOLEAN.
+    reference number;  // J_NUMBER.
     struct {
-      json_value **items; /**< Array of JSON values. */
-      size_t count;       /**< Number of items in the array. */
-      size_t capacity;    /**< Allocated capacity of the array. */
-    } array;              /**< Used when type is J_ARRAY. */
+      json_value **items; // Array of JSON values.
+      size_t count;       // Number of items in the array.
+      size_t capacity;    // Allocated capacity of the array.
+    } array;              // J_ARRAY.
     struct {
-      json_object *items; /**< Array of key-value pairs. */
-      size_t count;       /**< Number of items in the object. */
-      size_t capacity;    /**< Allocated capacity of the object. */
-    } object;             /**< Used when type is J_OBJECT. */
+      json_object *items; // Array of key-value pairs.
+      size_t count;       // Number of items in the object.
+      size_t capacity;    // Allocated capacity of the object.
+    } object;             // J_OBJECT.
   } u;
 } json_value;
 
@@ -86,15 +86,15 @@ typedef struct json_value {
  * @brief Represents a key-value pair in a JSON object.
  */
 typedef struct json_object {
-  const char *ptr;   /**< Pointer to the key in the source JSON string. */
-  size_t len;        /**< Length of the key. */
-  json_value *value; /**< Pointer to the JSON value. */
+  const char *ptr;   // Pointer to the key in the source JSON string.
+  size_t len;        // Length of the key.
+  json_value *value; // Pointer to the JSON value.
 } json_object;
 
 /**
- * @brief Returns a JSON string of json_value objects.
- * @param json The JSON value oject.
- * @return A pointer to the json_value origin, or NULL on error.
+ * @brief Returns a pointer to the original JSON source string.
+ * @param v The JSON value object.
+ * @return A pointer to the original JSON source string, or NULL on error.
  */
 const char *json_source(const json_value *v);
 
@@ -108,8 +108,8 @@ json_value *json_parse(const char *json);
 
 /**
  * @brief Compares two JSON strings for structural equality.
- * @param a The first JSON string.
- * @param b The second JSON string.
+ * @param a The first JSON value.
+ * @param b The second JSON value.
  * @return true if the JSON structures are equivalent, false otherwise.
  */
 bool json_equal(const json_value *a, const json_value *b);
@@ -131,7 +131,7 @@ void json_free(json_value *v);
 /**
  * @brief Prints a json_value tree to a standard output.
  * @param v The json_value to print.
- * @param out The standatd output FILE handle.
+ * @param out The standard output FILE handle.
  */
 void json_print(const json_value *v, FILE *out);
 

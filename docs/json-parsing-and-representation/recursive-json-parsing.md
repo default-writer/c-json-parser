@@ -38,8 +38,9 @@ static json_value *parse_value_build(const char **s, int id) {
   if (**s == '[')
     return parse_array_value(s, ++id);
   if (**s == 'n') {
+    const char *ptr = *s;
     if (match_literal_build(s, "null"))
-      return json_new_null();
+      return json_new_null(ptr, TEXT_SIZE("null"));
     return NULL;
   }
   if (**s == 't') {

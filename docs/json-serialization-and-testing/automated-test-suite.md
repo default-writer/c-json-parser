@@ -88,14 +88,12 @@ static bool test_json_equal(const char *a, const char *b) {
     fprintf(stderr, "a context: \"");
     for (size_t i = start_a; i < off_a + ctx_after && pa[i] != '\0'; ++i) {
       char c = pa[i];
-      printf("a:%x\n", c);
       fputc(c, stderr);
     }
     fprintf(stderr, "\"\n");
     fprintf(stderr, "b context: \"");
     for (size_t i = start_b; i < off_b + ctx_after && pb[i] != '\0'; ++i) {
       char c = pb[i];
-      printf("b:%x\n", c);
       fputc(c, stderr);
     }
     fprintf(stderr, "\"\n");
