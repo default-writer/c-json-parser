@@ -25,3 +25,23 @@ build main: link main.o json.o test.o
 
 # Default target
 default main
+
+# --- O2 Target ---
+build main.o.o2: cc src/main.c
+  cflags = $cflags -O2
+build json.o.o2: cc src/json.c
+  cflags = $cflags -O2
+build test.o.o2: cc test/test.c
+  cflags = $cflags -O2
+build o2: link main.o.o2 json.o.o2 test.o.o2
+  ldflags = $ldflags -o main
+
+# --- O3 Target ---
+build main.o.o3: cc src/main.c
+  cflags = $cflags -O3
+build json.o.o3: cc src/json.c
+  cflags = $cflags -O3
+build test.o.o3: cc test/test.c
+  cflags = $cflags -O3
+build o3: link main.o.o3 json.o.o3 test.o.o3
+  ldflags = $ldflags -o main
