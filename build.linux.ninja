@@ -15,16 +15,20 @@ rule link
   command = $cc $ldflags -o $out $in
   description = Linking $out
 
+# Rule for linking .o files with a specific name
+rule link_named
+  command = $cc $ldflags -o $name $in && touch $out
+  description = Linking $name
+
 # Build statements for object files
 build main.o: cc src/main.c
 build json.o: cc src/json.c
 build test.o: cc test/test.c
 
 # Build statement for the executable
-build main: link main.o json.o test.o
-
-# Default target
-default main
+build main.stamp: link_named main.o json.o test.o
+  name = test-main
+build main: phony main.stamp
 
 # --- O2 Target ---
 build main.o.o2: cc src/main.c
@@ -33,8 +37,9 @@ build json.o.o2: cc src/json.c
   cflags = $cflags -O2
 build test.o.o2: cc test/test.c
   cflags = $cflags -O2
-build o2: link main.o.o2 json.o.o2 test.o.o2
-  ldflags = $ldflags -o main
+build o2.stamp: link_named main.o.o2 json.o.o2 test.o.o2
+  name = test-o2
+build o2: phony o2.stamp
 
 # --- O3 Target ---
 build main.o.o3: cc src/main.c
@@ -43,5 +48,22 @@ build json.o.o3: cc src/json.c
   cflags = $cflags -O3
 build test.o.o3: cc test/test.c
   cflags = $cflags -O3
-build o3: link main.o.o3 json.o.o3 test.o.o3
-  ldflags = $ldflags -o main
+build o3.stamp: link_named main.o.o3 json.o.o3 test.o.o3
+  name = test-o3
+build o3: phony o3.stamp
+
+# --- Perf Target ---
+cflags_perf = -O3 -march=native -flto
+ldflags_perf = $ldflags -flto
+build main.o.perf: cc src/main.c
+  cflags = $cflags_perf
+build json.o.perf: cc src/json.c
+  cflags = $cflags_perf
+build test.o.perf: cc test/test.c
+  cflags = $cflags_perf
+build perf.stamp: link_named main.o.perf json.o.perf test.o.perf
+  name = test-perf
+build perf: phony perf.stamp
+
+# Default target
+default main
