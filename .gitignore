@@ -5,6 +5,8 @@
 **/*.pdb
 **/*.o.*
 **/*.stamp
+build/
+libs/
 test*
 main*
 /.ninja_log
