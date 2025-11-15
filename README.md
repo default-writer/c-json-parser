@@ -4,6 +4,10 @@ A simple JSON parser in C
 
 - lightning-fast implementation for a reasonable trade-offs, performance x4.009 comared to [json-c](https://github.com/json-c/json-c)
 
+## badges
+
+[![CodeQL](https://github.com/default-writer/c-json-parser/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/default-writer/c-json-parser/actions/workflows/codeql.yml)
+
 ## docs
 
 - [documentation](https://github.com/default-writer/c-json-parser/tree/main/docs)
