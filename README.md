@@ -36,3 +36,9 @@ ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.nin
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o3
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf
 ```
+
+## python
+
+```bash
+python3 test/perf_test.py
+```
