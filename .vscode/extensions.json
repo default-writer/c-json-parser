@@ -4,6 +4,10 @@
         "llvm-vs-code-extensions.lldb-dap",
         "google.geminicodeassist",
         "daylerees.rainglow",
-        "batyan-soft.fast-tasks"
+        "batyan-soft.fast-tasks",
+        "letmaik.git-tree-compare",
+        "exelord.git-commits",
+        "donjayamanne.githistory",
+        "mhutchie.git-graph"
     ]
 }
