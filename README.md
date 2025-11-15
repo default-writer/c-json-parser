@@ -6,7 +6,7 @@ A simple JSON parser in C
 
 ## docs
 
-- [TOC](https://github.com/default-writer/c-json-parser/tree/main/docs)
+- [documentation](https://github.com/default-writer/c-json-parser/tree/main/docs)
 
 ## screenshots
 
