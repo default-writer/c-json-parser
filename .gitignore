@@ -4,6 +4,7 @@
 **/*.obj
 **/*.pdb
 **/*.o.*
+**/*.stamp
 test*
 main*
 /.ninja_log
