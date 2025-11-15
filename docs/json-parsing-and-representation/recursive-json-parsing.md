@@ -45,13 +45,13 @@ static json_value *parse_value_build(const char **s, int id) {
   if (**s == 't') {
     const char *ptr = *s;
     if (match_literal_build(s, "true"))
-      return json_new_boolean(ptr, 4);
+      return json_new_boolean(ptr, TEXT_SIZE("true"));
     return NULL;
   }
   if (**s == 'f') {
     const char *ptr = *s;
     if (match_literal_build(s, "false"))
-      return json_new_boolean(ptr, 5);
+      return json_new_boolean(ptr, TEXT_SIZE("false"));
     return NULL;
   }
   if (**s == '-' || isdigit((unsigned char)**s))

@@ -55,32 +55,40 @@ The deep equality checks integrate closely with testing workflows to assert corr
 
 - **Add to array:**  
   To append an item to a JSON array, the array's internal dynamic list is resized if necessary, and the new item is copied into the array's items. For example:
+
   ```c
   json_array_push(my_array, new_item);
   ```
+
   This ensures `my_array` contains the newly appended value.
 
 - **Set object key-value:**  
   To set or replace a key-value pair in a JSON object:
+
   ```c
   json_object_set_take_key(my_object, key_ptr, key_len, value);
   ```
+
   This searches for `key_ptr` in the object keys and replaces the associated value if found; otherwise, it adds a new key-value pair, expanding capacity as needed.
 
 ### Comparing JSON Values
 
 To check if two JSON `json_value` trees are structurally equal:
+
 ```c
 bool are_equal = json_equal(value1, value2);
 ```
+
 This performs recursive comparison based on type and content, including nested arrays and objects.
 
 ### Memory Handling
 
 When JSON values are no longer needed:
+
 ```c
 json_free(value);
 ```
+
 This frees the entire JSON subtree rooted at `value`, including all nested arrays and objects.
 
 ## Internal Design Patterns and Concepts

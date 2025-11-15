@@ -33,22 +33,76 @@ The Automated Test Suite operates by executing defined test cases that:
 ### Code Snippet: Structural Equality Check and Diagnostic
 
 ```c
-bool test_json_equal(const char *a, const char *b) {
-  // Parse both JSON strings
-  const json_value *va = json_parse(a);
-  const json_value *vb = json_parse(b);
-  if (!va || !vb) return false;
+static bool test_json_equal(const char *a, const char *b) {
+  if (!a || !b)
+    return false;
 
-  // Compare JSON structures deeply
+  const char *pa = a;
+  const char *pb = b;
+
+  if (!a && !b) {
+    return false;
+  }
+
+  skip_ws(&pa);
+  skip_ws(&pb);
+
+  json_pool_reset();
+  json_value *va = json_parse(pa);
+  json_value *vb = json_parse(pb);
+
+  if (!va || !vb) {
+    return false;
+  }
+
+  if (va->type != vb->type) {
+    json_free(va);
+    json_free(vb);
+    return false;
+  }
+
   bool eq = json_equal(va, vb);
 
   if (!eq) {
-    // Locate first differing byte ignoring whitespace
-    // Print mismatch context around that position
+    /* find first differing position in the original inputs (skip whitespace) */
+    const char *xa = pa;
+    const char *xb = pb;
+    while (*xa || *xb) {
+      while (isspace((unsigned char)*xa))
+        xa++;
+      while (isspace((unsigned char)*xb))
+        xb++;
+      if (*xa != *xb)
+        break;
+      xa++;
+      xb++;
+    }
+    size_t off_a = (size_t)(xa - pa);
+    size_t off_b = (size_t)(xb - pb);
+    /* print brief context */
+    size_t ctx_before = PREFIX_CHAR_OFFSET;
+    size_t ctx_after = POSTFIX_CHAR_OFFSET;
+    size_t start_a = (off_a > ctx_before) ? off_a - ctx_before : 0;
+    size_t start_b = (off_b > ctx_before) ? off_b - ctx_before : 0;
+    fprintf(stderr, "JSON mismatch: first differing byte offsets a=%zu b=%zu\n", off_a, off_b);
+    fprintf(stderr, "a context: \"");
+    for (size_t i = start_a; i < off_a + ctx_after && pa[i] != '\0'; ++i) {
+      char c = pa[i];
+      printf("a:%x\n", c);
+      fputc(c, stderr);
+    }
+    fprintf(stderr, "\"\n");
+    fprintf(stderr, "b context: \"");
+    for (size_t i = start_b; i < off_b + ctx_after && pb[i] != '\0'; ++i) {
+      char c = pb[i];
+      printf("b:%x\n", c);
+      fputc(c, stderr);
+    }
+    fprintf(stderr, "\"\n");
   }
 
-  json_free(va);
-  json_free(vb);
+  json_free((json_value *)va);
+  json_free((json_value *)vb);
   return eq;
 }
 ```

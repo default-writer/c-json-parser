@@ -43,21 +43,21 @@ The core data structure is the `json_value` struct, which represents any JSON va
 
 ```c
 typedef struct json_value {
-  json_type type;
+  json_type type; /**< The type of the JSON value. */
   union {
-    reference string;    // For J_STRING
-    reference boolean;   // For J_BOOLEAN
-    reference number;    // For J_NUMBER
+    reference string;  /**< Used when type is J_STRING. */
+    reference boolean; /**< Used when type is J_BOOLEAN. */
+    reference number;  /**< Used when type is J_NUMBER. */
     struct {
-      json_value *items;
-      size_t count;
-      size_t capacity;
-    } array;             // For J_ARRAY
+      json_value **items; /**< Array of JSON values. */
+      size_t count;       /**< Number of items in the array. */
+      size_t capacity;    /**< Allocated capacity of the array. */
+    } array;              /**< Used when type is J_ARRAY. */
     struct {
-      json_object *items;
-      size_t count;
-      size_t capacity;
-    } object;            // For J_OBJECT
+      json_object *items; /**< Array of key-value pairs. */
+      size_t count;       /**< Number of items in the object. */
+      size_t capacity;    /**< Allocated capacity of the object. */
+    } object;             /**< Used when type is J_OBJECT. */
   } u;
 } json_value;
 ```

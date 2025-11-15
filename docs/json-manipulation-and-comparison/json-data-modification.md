@@ -30,9 +30,15 @@ These operations form the fundamental building blocks for JSON structure mutatio
 ### Example Interaction Snippet
 
 ```c
-// Add or update a key-value pair in an object
-bool success = json_object_set_take_key(obj, key_ptr, key_len, value);
+reference ref = {*s, 0};
 
+/* Take ownership of the parsed key buffer (no extra duplication). */
+if (!json_object_set_take_key(obj, ref.ptr, ref.len, val)) {
+  /* insertion failed: free transferred resources */
+  free_json_value_contents(val);
+  free_json_value_contents(obj);
+  return NULL;
+}
 // Retrieve a value by key from an object
 json_value *val = json_object_get(obj, key_ptr, key_len);
 

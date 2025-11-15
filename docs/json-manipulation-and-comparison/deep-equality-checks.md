@@ -47,14 +47,18 @@ bool json_equal(const json_value *a, const json_value *b) {
   case J_NULL:
     return true;
   case J_BOOLEAN:
-    return a->u.boolean.len == b->u.boolean.len &&
-           strncmp(a->u.boolean.ptr, b->u.boolean.ptr, a->u.boolean.len) == 0;
-  case J_NUMBER:
-    return a->u.number.len == b->u.number.len &&
-           strncmp(a->u.number.ptr, b->u.number.ptr, a->u.number.len) == 0;
+    return a->u.boolean.len == b->u.boolean.len && strncmp(a->u.boolean.ptr, b->u.boolean.ptr, a->u.boolean.len) == 0;
+  case J_NUMBER: {
+    return a->u.number.len == b->u.number.len && strncmp(a->u.number.ptr, b->u.number.ptr, a->u.number.len) == 0;
+  }
   case J_STRING:
-    return a->u.string.len == b->u.string.len &&
-           strncmp(a->u.string.ptr, b->u.string.ptr, a->u.string.len) == 0;
+    if (a->u.string.ptr == NULL && b->u.string.ptr == NULL)
+      return true;
+    if (a->u.string.ptr == NULL || b->u.string.ptr == NULL)
+      return false;
+    if (a->u.string.len != b->u.string.len)
+      return false;
+    return strncmp(a->u.string.ptr, b->u.string.ptr, a->u.string.len) == 0;
   case J_ARRAY:
     return json_array_equal(a, b);
   case J_OBJECT:

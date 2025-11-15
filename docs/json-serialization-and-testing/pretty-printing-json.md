@@ -42,29 +42,38 @@ static void print_value(const json_value *v, int indent, FILE *out) {
   case J_NULL:
     fputs("null", out);
     break;
+  case J_BOOLEAN:
+    fprintf(out, "%.*s", (int)v->u.boolean.len, v->u.boolean.ptr);
+    break;
+  case J_NUMBER:
+    fprintf(out, "%.*s", (int)v->u.number.len, v->u.number.ptr);
+    break;
   case J_STRING:
     print_string_escaped(out, v->u.string.ptr, v->u.string.len);
     break;
   case J_ARRAY:
+    /* arrays printed single-line */
     print_array_compact(v, out);
     break;
-  case J_OBJECT:
-    fputs("{\n", out);
+  case J_OBJECT: {
+    fputs("{\n", out); /* keep object starting symbol on its own line with
+                          properties below */
     for (size_t i = 0; i < v->u.object.count; ++i) {
-      if (i) fputs(",\n", out);
+      if (i)
+        fputs(",\n", out);
       print_indent(out, indent + 1);
       json_object *e = &v->u.object.items[i];
       print_string_escaped(out, e->ptr, e->len);
       fputs(": ", out);
+      /* If value is an object, recurse to pretty format; arrays remain
+       * single-line */
       print_value(e->value, indent + 1, out);
     }
     fputc('\n', out);
     print_indent(out, indent);
     fputc('}', out);
     break;
-  default:
-    // Other types handled similarly
-    break;
+  }
   }
 }
 ```

@@ -23,5 +23,5 @@
     "screencastMode.fontSize": 24,
     "editor.minimap.sectionHeaderFontSize": 8,
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
-    "editor.defaultFoldingRangeProvider": "llvm-vs-code-extensions.vscode-clangd"
+    "editor.defaultFoldingRangeProvider": "llvm-vs-code-extensions.vscode-clangd",
 }
