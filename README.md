@@ -14,10 +14,8 @@ A simple JSON parser in C
 
 ## screenshots
 
-
-<img width="3840" height="2064" alt="logo_c_json_parser" src="https://github.com/user-attachments/assets/3d72cc18-d0aa-4109-9ef5-ba259a6dcce3" />
-
-<img width="3840" height="2064" alt="image" src="https://github.com/user-attachments/assets/6eae14ab-0def-49f0-af36-2bca5e099dc8" />
+![logo_c_json_parser](![alt text](image-1.png))
+![logo_c_json_parser](![alt text](image-2.png))
 
 ## tools
 
