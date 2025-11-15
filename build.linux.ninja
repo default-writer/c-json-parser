@@ -56,7 +56,7 @@ build o3: phony o3.stamp
 
 # --- Perf Target ---
 cflags_perf = -Wall -Wextra -std=c11 -Ilibs/include -DUSE_JSON_C -O3 -march=native -flto
-ldflags_perf = $ldflags -flto
+ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops -fuse-ld=lld -lrt -Llibs/lib -ljson-c
 build main.o.perf: cc src/main.c
   cflags = $cflags_perf
 build json.o.perf: cc src/json.c
@@ -67,6 +67,7 @@ build test_json_c.o.perf: cc test/test_json_c.c
   cflags = $cflags_perf
 build perf.stamp: link main.o.perf json.o.perf test.o.perf test_json_c.o.perf
   name = test-perf
+  cflags = $cflags_perf
   ldflags = $ldflags_perf
 build perf: phony perf.stamp
 
