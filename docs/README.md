@@ -14,45 +14,22 @@ Key objectives include:
 
 The core logic is implemented in `src/json.c` and `src/json.h`, with `src/main.c` driving the test suite.
 
-## Example Workflows and Use Cases
+## API Overview
 
-### JSON Parsing and Querying
-
-1. **Parsing JSON Text**  
-   Developers can use `json_parse()` to convert a JSON string into an in-memory `json_value` tree. This function handles all JSON types and nested structures.
-
-2. **Accessing JSON Data**  
-   For objects, the internal function `json_object_get()` retrieves values by key. For arrays, direct indexing on the `json_value` array field can be performed.
-
-3. **Manipulating JSON Values**  
-   The library uses internal functions like `json_array_push()` to append elements to arrays or `json_object_set_take_key()` to set key-value pairs in objects.
-
-4. **Comparing JSON Structures**  
-   `json_equal()` performs a deep comparison of two JSON value trees, useful for test assertions or synchronization checks.
-
-5. **Serializing JSON**  
-   `json_stringify()` converts a `json_value` tree back into a pretty-printed JSON string for storage or transmission.
-
-6. **Memory Management**  
-   The library employs a memory pool for `json_value` structures to minimize `malloc` calls. Dynamic arrays and objects are managed with `realloc`. After processing, `json_free()` recursively frees the entire JSON tree, returning `json_value` structures to the pool.
-
-### Test Execution Workflow
-
-- The `src/main.c` initializes the test environment using macros from `test/test.h`.
-- It runs parsing and equality tests defined in `test/test.c` using the JSON files `test/test.json` and `test/test-simple.json` to cover complex and simple JSON cases.
-- Tests output colored terminal results and detailed mismatch context on failure.
-
-```mermaid
-flowchart TD
-A[JSON Text Input] --> B["json_parse()"]
-B --> C[json_value Tree]
-C --> D{Operation}
-D -->|Access/Modify| E["json_object_get(), json_array_push()"]
-D -->|Compare| F["json_equal()"]
-D -->|Serialize| G["json_stringify()"]
-G --> H[JSON Text Output]
-C --> I["json_free()"]
-```
+- **`json_parse()`**:
+  Converts a JSON string into an in-memory `json_value` tree.
+- **`json_object_get()`**:
+  Retrieves a value from a JSON object by key.
+- **`json_array_push()`**:
+  Appends an element to a JSON array.
+- **`json_object_set_take_key()`**:
+  Sets a key-value pair in a JSON object.
+- **`json_equal()`**:
+  Performs a deep comparison of two JSON values.
+- **`json_stringify()`**:
+  Converts a `json_value` tree back into a formatted JSON string.
+- **`json_free()`**:
+  Recursively frees an entire JSON tree and its associated memory.
 
 ## Stack and Technologies
 
