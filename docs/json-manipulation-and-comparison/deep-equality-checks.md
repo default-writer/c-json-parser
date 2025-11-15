@@ -17,7 +17,7 @@ Deep equality comparison operates by recursively traversing two JSON value trees
 - **Objects**:  
   Two JSON objects are equal if they have the same number of key-value pairs and each key in one object exists in the other with a deeply equal value. The order of keys is not significant; keys are matched by string content.
 
-The core function implementing this logic is `json_equal()`, which performs type checks and delegates to specialized helpers for arrays (`json_array_equal()`) and objects ([json_object_equal()](https://nextdocs.ai/github/default-writer/376/80073)).
+The core function implementing this logic is `json_equal()`, which performs type checks and delegates to specialized helpers for arrays (`json_array_equal()`) and objects ([json_object_equal()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075)).
 
 ### Key Workflows
 

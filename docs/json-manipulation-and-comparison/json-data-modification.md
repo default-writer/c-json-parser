@@ -11,16 +11,16 @@ This functionality is essential for use cases where JSON data must be programmat
 The key workflows supported by *JSON Data Modification* include:
 
 - **Adding or Updating Object Properties**  
-  The function [json_object_set_take_key()](https://nextdocs.ai/github/default-writer/376/80073) inserts a new key-value pair into a JSON object or updates the value if the key already exists. It operates by searching the object's internal key array and replacing the value if found, otherwise expanding the capacity of the key-value array if needed, and appending the new entry. This function takes ownership of the key's string pointer to avoid unnecessary duplication.
+  The function [json_object_set_take_key()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075) inserts a new key-value pair into a JSON object or updates the value if the key already exists. It operates by searching the object's internal key array and replacing the value if found, otherwise expanding the capacity of the key-value array if needed, and appending the new entry. This function takes ownership of the key's string pointer to avoid unnecessary duplication.
 
 - **Retrieving Object Properties by Key**  
-  The function [json_object_get()](https://nextdocs.ai/github/default-writer/376/80073) returns a pointer to the JSON value associated with a given key in an object, or NULL if the key does not exist. This provides read-access to dynamic properties within JSON objects.
+  The function [json_object_get()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075) returns a pointer to the JSON value associated with a given key in an object, or NULL if the key does not exist. This provides read-access to dynamic properties within JSON objects.
 
 - **Appending Elements to Arrays**  
-  The function [json_array_push()](https://nextdocs.ai/github/default-writer/376/80073) adds a new element to the end of a JSON array, resizing the internal array storage if required. It ensures the array can grow dynamically as elements are added.
+  The function [json_array_push()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075) adds a new element to the end of a JSON array, resizing the internal array storage if required. It ensures the array can grow dynamically as elements are added.
 
 - **Creating New JSON Values for Arrays and Objects**  
-  Functions like [json_new_object()](https://nextdocs.ai/github/default-writer/376/80073) and [json_new_array()](https://nextdocs.ai/github/default-writer/376/80073) allocate and initialize empty JSON object and array structures to serve as containers for further modifications.
+  Functions like [json_new_object()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075) and [json_new_array()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075) allocate and initialize empty JSON object and array structures to serve as containers for further modifications.
 
 - **Memory Management During Modification**  
   When replacing values in objects, the old JSON value is freed properly to avoid memory leaks, ensuring safe mutation of the JSON tree.

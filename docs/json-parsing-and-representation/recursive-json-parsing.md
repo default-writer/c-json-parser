@@ -8,7 +8,7 @@ This subtopic focuses specifically on implementing recursive descent parsing tec
 
 ## Functionality
 
-The recursive parsing workflow is initiated by the public API function [json_parse()](https://nextdocs.ai/github/default-writer/376/80073), which prepares the input and calls the core recursive parser function `parse_value_build()`. This function dispatches parsing to specialized routines depending on the JSON token encountered:
+The recursive parsing workflow is initiated by the public API function [json_parse()](hhttps://nextdocs.ai/github/default-writer/c-json-parser/80075), which prepares the input and calls the core recursive parser function `parse_value_build()`. This function dispatches parsing to specialized routines depending on the JSON token encountered:
 
 - **Strings**: Handled by `parse_string_value()`, which processes characters inside double quotes, managing escape sequences and Unicode escapes using a finite state machine.
 - **Numbers**: Parsed by `parse_number_value()` using standard C library conversion (`strtod`) to validate numeric formats.
