@@ -173,12 +173,12 @@ static void json_array_push(json_value *arr, json_value *item) {
   if (!arr || arr->type != J_ARRAY || !item)
     return;
   if (arr->u.array.count == arr->u.array.capacity) {
-    size_t ncap = arr->u.array.capacity ? arr->u.array.capacity * 2 : DICTIONARY_SIZE;
-    json_value **newitems = realloc(arr->u.array.items, ncap * sizeof(json_value *));
-    if (!newitems)
+    size_t capacity = arr->u.array.capacity ? arr->u.array.capacity * 2 : DICTIONARY_SIZE;
+    json_value **items = realloc(arr->u.array.items, capacity * sizeof(json_value *));
+    if (!items)
       return;
-    arr->u.array.items = newitems;
-    arr->u.array.capacity = ncap;
+    arr->u.array.items = items;
+    arr->u.array.capacity = capacity;
   }
   arr->u.array.items[arr->u.array.count++] = item;
 }
