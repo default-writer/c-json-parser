@@ -105,8 +105,8 @@ static bool test_json_equal(const char *a, const char *b) {
     fprintf(stderr, "\"\n");
   }
 
-  json_free((json_value*)va);
-  json_free((json_value*)vb);
+  json_free((json_value *)va);
+  json_free((json_value *)vb);
   return eq;
 }
 
@@ -139,7 +139,7 @@ TEST(test_simple_json_parsing) {
   /* render json_value back to string */
   char *out = json_stringify(v);
   ASSERT_PTR_NOT_NULL(out);
-  json_free((json_value*)v);
+  json_free((json_value *)v);
 
   /* compare structurally (order-insensitive) */
   ASSERT(test_json_equal(json, out));
@@ -180,7 +180,7 @@ TEST(test_json_parsing) {
   /* render json_value back to string */
   char *out = json_stringify(v);
   ASSERT_PTR_NOT_NULL(out);
-  json_free((json_value*)v);
+  json_free((json_value *)v);
 
   /* compare structurally (order-insensitive) */
   ASSERT(test_json_equal(json, out));

@@ -1,7 +1,7 @@
 #include "json.h"
 
 #define DICTIONARY_SIZE 16
-#define JSON_VALUE_POOL_SIZE 0x10000
+#define JSON_VALUE_POOL_SIZE 0x200
 
 #define STATE_INITIAL 1
 #define STATE_ESCAPE_START 2
@@ -20,10 +20,11 @@ typedef struct {
 
 /* json_value pool */
 static json_value json_value_pool[JSON_VALUE_POOL_SIZE];
-static size_t json_value_pool_index = 0;
+static json_value *json_value_free_pool[JSON_VALUE_POOL_SIZE];
+static size_t json_value_free_count;
 
 /* forward declarations */
-static void* new_json_value(void);
+static void *new_json_value(void);
 static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t len, json_value *value);
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
 static json_value *json_new_null(void);
@@ -68,15 +69,14 @@ static int bs_putc(bs *b, char c);
 /* --- json helpers --- */
 static int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize);
 static bool json_array_equal(const json_value *a, const json_value *b);
-static bool json_object_equal(const json_value *a, const json_value *b); 
+static bool json_object_equal(const json_value *a, const json_value *b);
 
 /* implementation */
-static void* new_json_value(void) {
-  if (json_value_pool_index + 1 > JSON_VALUE_POOL_SIZE) {
+static void *new_json_value(void) {
+  if (json_value_free_count == 0) {
     return NULL;
   }
-  void* ptr = &json_value_pool[json_value_pool_index];
-  json_value_pool_index++;
+  void *ptr = json_value_free_pool[JSON_VALUE_POOL_SIZE - json_value_free_count--];
   memset(ptr, 0, sizeof(json_value));
   return ptr;
 }
@@ -206,6 +206,8 @@ static void free_json_value_contents(json_value *v) {
   default:
     break;
   }
+  json_value_free_pool[json_value_free_count++] = v;
+  v->type = 0;
 }
 
 static void skip_ws(const char **s) {
@@ -860,13 +862,13 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
 
 /* --- public API --- */
 
-const char* json_source(const json_value *v) {
+const char *json_source(const json_value *v) {
   if (!v)
     return NULL;
-  switch(v->type) {
+  switch (v->type) {
   case J_NULL:
     return v->u.number.ptr;
-    case J_BOOLEAN:
+  case J_BOOLEAN:
     return v->u.boolean.ptr;
   case J_NUMBER:
     return v->u.number.ptr;
@@ -910,7 +912,7 @@ char *json_stringify(const json_value *v) {
     return NULL;
   int rc = json_stringify_to_buffer(v, buf, MAX_BUFFER_SIZE);
   if (rc >= 0) {
-    /* rc is bytes written (excluding NUL) */
+    /* rc is bytes written (excluding '\0') */
     /* shrink to fit */
     char *shr = realloc(buf, (size_t)rc + 1);
     if (shr)
@@ -958,12 +960,14 @@ void json_free(json_value *v) {
 }
 
 void json_pool_reset(void) {
-  json_value_pool_index = 0;
+  for (size_t i = 0; i < JSON_VALUE_POOL_SIZE; i++) {
+    json_value_free_pool[i] = &json_value_pool[i];
+  }
+  json_value_free_count = JSON_VALUE_POOL_SIZE;
 }
 
 void json_print(const json_value *v, FILE *out) {
-   print_value(v, 0, out);
+  print_value(v, 0, out);
 }
-
 
 /* End of file */

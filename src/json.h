@@ -38,12 +38,12 @@ static inline FILE *safe_fopen(const char *filename, const char *mode) {
  * @brief Enumeration of JSON value types.
  */
 typedef enum {
-  J_NULL,    /**< null value */
-  J_BOOLEAN, /**< boolean value (true or false) */
-  J_NUMBER,  /**< number value (integer or floating-point) */
-  J_STRING,  /**< string value */
-  J_ARRAY,   /**< array value */
-  J_OBJECT   /**< object value */
+  J_NULL = 1,    /**< null value */
+  J_BOOLEAN = 2, /**< boolean value (true or false) */
+  J_NUMBER = 3,  /**< number value (integer or floating-point) */
+  J_STRING = 4,  /**< string value */
+  J_ARRAY = 5,   /**< array value */
+  J_OBJECT = 6   /**< object value */
 } json_type;
 
 /**
@@ -71,9 +71,9 @@ typedef struct json_value {
     reference number;  /**< Used when type is J_NUMBER. */
     struct {
       json_value **items; /**< Array of JSON values. */
-      size_t count;      /**< Number of items in the array. */
-      size_t capacity;   /**< Allocated capacity of the array. */
-    } array;             /**< Used when type is J_ARRAY. */
+      size_t count;       /**< Number of items in the array. */
+      size_t capacity;    /**< Allocated capacity of the array. */
+    } array;              /**< Used when type is J_ARRAY. */
     struct {
       json_object *items; /**< Array of key-value pairs. */
       size_t count;       /**< Number of items in the object. */
