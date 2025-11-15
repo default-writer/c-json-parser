@@ -32,5 +32,7 @@ ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.nin
 ## profiling / performance tests (json-c)
 
 ```bash
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o2
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o3
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf
 ```

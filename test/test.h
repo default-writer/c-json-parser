@@ -31,11 +31,22 @@
   extern long long get_time_ns(void); \
   extern void print_time_diff(const char *test, long long start_ns, long long end_ns);
 
-#define TEST_INITIALIZE()                                                                      \
-  test_initialize();                                                                           \
-  printf("===============================================================================\n"); \
-  printf("running unit tests\n");                                                              \
-  printf("===============================================================================\n");
+#define TEST_DEFINITION(name) \
+  extern void(name)(void);
+
+#define TEST_INITIALIZE() \
+  do {                    \
+    test_initialize();    \
+    tests_run = 0;        \
+    tests_passed = 0;     \
+  } while (0)
+
+#define TEST_SUITE(name)                                                                         \
+  do {                                                                                           \
+    printf("===============================================================================\n"); \
+    printf("running %s\n", name);                                                                \
+    printf("===============================================================================\n"); \
+  } while (0)
 
 #define TEST_FINALIZE()                                                                            \
   do {                                                                                             \
