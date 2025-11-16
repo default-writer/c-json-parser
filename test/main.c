@@ -3,7 +3,7 @@
 TEST_SETUP()
 TEST_DEFINITION(test_simple_json_parsing)
 TEST_DEFINITION(test_json_parsing)
-TEST_DEFINITION(test_json_perf_test)
+TEST_DEFINITION(test_c_json_parser)
 
 #ifdef USE_JSON_C
 
@@ -31,7 +31,7 @@ int main(void) {
 
 #else
 
-  test_json_perf_test();
+  test_c_json_parser();
 
 #endif
 

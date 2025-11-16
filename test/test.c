@@ -233,7 +233,7 @@ TEST(test_json_parsing) {
   END_TEST;
 }
 
-TEST(test_json_perf_test) {
+TEST(test_c_json_parser) {
   json_pool_reset();
 
   const char *filename = "test/test.json";

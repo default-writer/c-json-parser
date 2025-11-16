@@ -108,11 +108,11 @@ if __name__ == "__main__":
         print(f"test_json_parsing execution time: {format_time(perf_end_time - perf_start_time)}")
         
         # This test is just for display to match the desired output format
-        run_test("test_json_perf_test", lambda: None)
+        run_test("test_c_json_parser", lambda: None)
     except Exception as e:
         print(f"Performance test failed: {e}")
         # Log a failed test for the summary
-        run_test("test_json_perf_test", lambda: (_ for _ in ()).throw(Exception("Perf test failed")))
+        run_test("test_c_json_parser", lambda: (_ for _ in ()).throw(Exception("Perf test failed")))
 
 
     finalize_tests()
