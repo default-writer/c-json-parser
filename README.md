@@ -6,11 +6,11 @@ A simple JSON parser in C
 
 ## comparison to json-c
 
-| Metric                            | c-json-parser    | json-c          |
-| :-------------------------------- | ---------------: | --------------: |
-| execution time                    |     00:00:01.041 |    00:00:04.197 |
-| bytes allocated                   |        4,400,004 |      52,900,004 |
-| Total Heap Usage (bytes)          |    1,292,809,439 |   4,179,609,439 |
+| Metric                              | c-json-parser    | json-c          |
+| :-----------------------------------| ---------------: | --------------: |
+| execution time                      |     00:00:01.041 |    00:00:04.197 |
+| allocation calls                    |        4,400,004 |      52,900,004 |
+| total heap usage (bytes allocated)  |    1,292,809,439 |   4,179,609,439 |
 
 ## badges
 
