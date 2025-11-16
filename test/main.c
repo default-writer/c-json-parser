@@ -15,16 +15,25 @@ int main(void) {
 
   TEST_INITIALIZE();
 
+#ifndef USE_PERFORMANCE_TESTS
+
   TEST_SUITE("unit tests");
   test_simple_json_parsing();
   test_json_parsing();
 
+#else
+
   TEST_SUITE("performance tests");
-  test_json_perf_test();
 
 #ifdef USE_JSON_C
 
   test_json_c_parser();
+
+#else
+
+  test_json_perf_test();
+
+#endif
 
 #endif
 

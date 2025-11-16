@@ -2,7 +2,15 @@
 
 A simple JSON parser in C
 
-- lightning-fast implementation for a reasonable trade-offs, performance x4.009 comared to [json-c](https://github.com/json-c/json-c)
+- lightning-fast implementation for a reasonable trade-offs, performance improvement rate of x4/x10 for speed/memory, comared to [json-c](https://github.com/json-c/json-c)
+
+## comparison to json-c
+
+| Metric                            | c-json-parser    | json-c          |
+| :-------------------------------- | ---------------: | --------------: |
+| execution time                    |     00:00:01.041 |    00:00:04.197 |
+| bytes allocated                   |        4,400,004 |      52,900,004 |
+| Total Heap Usage (bytes)          |    1,292,809,439 |   4,179,609,439 |
 
 ## badges
 
@@ -47,15 +55,16 @@ ninja -f build.linux.ninja && ./test-main
 ## testing
 
 ```bash
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja && valgrind -s ./test-main
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o2
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o3
 ```
 
 ## profiling / performance tests (json-c)
 
 ```bash
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o2
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o3
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf-json-c
 ```
 
 ## python
