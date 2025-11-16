@@ -6,40 +6,40 @@ This project provides a lightweight and efficient C library for JSON processing,
 
 Key objectives include:
 
-- **Parsing**: Convert JSON text into a structured, in-memory tree representation.
-- **Manipulation**: Programmatically access and modify JSON objects and arrays.
-- **Comparison**: Perform deep equality checks between JSON values for validation.
-- **Serialization**: Convert the in-memory structure back into a formatted JSON string.
-- **Robustness**: Ensure correctness and stability with a comprehensive test suite.
+- Parsing: Convert JSON text into a structured, in-memory tree representation.
+- Manipulation: Programmatically access and modify JSON objects and arrays.
+- Comparison: Perform deep equality checks between JSON values for validation.
+- Serialization: Convert the in-memory structure back into a formatted JSON string.
+- Robustness: Ensure correctness and stability with a comprehensive test suite.
 
 The core logic is implemented in `src/json.c` and `src/json.h`, with `src/main.c` driving the test suite.
 
 ## API Overview
 
-- **`json_parse()`**:
+- `json_parse()`:
   Converts a JSON string into an in-memory `json_value` tree.
-- **`json_object_get()`**:
+- `json_object_get()`:
   Retrieves a value from a JSON object by key.
-- **`json_array_push()`**:
+- `json_array_push()`:
   Appends an element to a JSON array.
-- **`json_object_set_take_key()`**:
+- `json_object_set_take_key()`:
   Sets a key-value pair in a JSON object.
-- **`json_equal()`**:
+- `json_equal()`:
   Performs a deep comparison of two JSON values.
-- **`json_stringify()`**:
+- `json_stringify()`:
   Converts a `json_value` tree back into a formatted JSON string.
-- **`json_free()`**:
+- `json_free()`:
   Recursively frees an entire JSON tree and its associated memory.
 
 ## Stack and Technologies
 
-- **C Language (C11)**: Core implementation language chosen for performance, portability, and minimal dependencies.
-- **Clang/Clang-CL Compiler**: Used for compiling source code on Linux and Windows. Selected for modern C standard support and tooling compatibility.
-- **Ninja Build System**: Provides fast, reproducible builds with simple declarative syntax. Ninja is driven by generated build files from Makefile configurations.
-- **LLVM Toolchain (Version 21)**: Includes Clang compiler, linker (lld), and debugging tools (lldb-dap), essential for building and debugging on both Linux and Windows.
-- **PowerShell and Bash Scripts**: Automate environment setup and toolchain installation tailored for Windows (`install.ps1`) and Linux (`install.sh`).
-- **ANSI Escape Codes**: Used in test output for colored terminal feedback to improve developer experience.
-- **Standard C Libraries**: For string manipulation, memory management, file I/O, and platform abstractions.
+- C Language (C11): Core implementation language chosen for performance, portability, and minimal dependencies.
+- Clang/Clang-CL Compiler: Used for compiling source code on Linux and Windows. Selected for modern C standard support and tooling compatibility.
+- Ninja Build System: Provides fast, reproducible builds with simple declarative syntax. Ninja is driven by generated build files from Makefile configurations.
+- LLVM Toolchain (Version 21): Includes Clang compiler, linker (lld), and debugging tools (lldb-dap), essential for building and debugging on both Linux and Windows.
+- PowerShell and Bash Scripts: Automate environment setup and toolchain installation tailored for Windows (`install.ps1`) and Linux (`install.sh`).
+- ANSI Escape Codes: Used in test output for colored terminal feedback to improve developer experience.
+- Standard C Libraries: For string manipulation, memory management, file I/O, and platform abstractions.
 
 These technologies were chosen to ensure cross-platform build and development workflows, maximize performance, and maintain minimal external dependencies.
 
@@ -47,11 +47,11 @@ These technologies were chosen to ensure cross-platform build and development wo
 
 The architecture is modular and layered around core JSON processing logic, build automation, and testing framework:
 
-- **Core Library (`src/json.c` & `src/json.h`)**: Implements JSON parsing, serialization, and utilities.
-- **Application Entry (`src/main.c`)**: Runs test harness invoking JSON parsing and validation functions.
-- **Testing Suite (`test/test.c`, `test/test.h`, and JSON test files)**: Defines test cases that validate parser correctness with diverse JSON inputs.
-- **Build System (Ninja files)**: Platform-specific build instructions for compiling C source files and linking executables.
-- **Installation Scripts (`bin/install.sh` and `bin/install.ps1`)**: Automate environment setup and toolchain installation for Linux and Windows respectively.
+- Core Library (`src/json.c` & `src/json.h`): Implements JSON parsing, serialization, and utilities.
+- Application Entry (`src/main.c`): Runs test harness invoking JSON parsing and validation functions.
+- Testing Suite (`test/test.c`, `test/test.h`, and JSON test files): Defines test cases that validate parser correctness with diverse JSON inputs.
+- Build System (Ninja files): Platform-specific build instructions for compiling C source files and linking executables.
+- Installation Scripts (`bin/install.sh` and `bin/install.ps1`): Automate environment setup and toolchain installation for Linux and Windows respectively.
 
 Interactions:
 
@@ -108,3 +108,9 @@ Fail --> Report["Print Mismatch Details"]
 Pass --> End["End Test Suite"]
 Report --> End
 ```
+
+## Further Reading
+
+- [JSON Manipulation and Comparison](json-manipulation-and-comparison/README.md)
+- [JSON Parsing and Representation](json-parsing-and-representation/README.md)
+- [JSON Serialization and Testing](json-serialization-and-testing/README.md)

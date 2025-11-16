@@ -12,10 +12,10 @@ Its core purpose is to allow client code to manipulate parsed JSON data flexibly
 
 JSON data in memory is represented as a tree of `json_value` objects, each with a type indicating whether it is a null, boolean, number, string, array, or object. This module includes functions that enable:
 
-- **Adding elements to arrays:**  
+- Adding elements to arrays:  
   The internal function `json_array_push()` allows appending new JSON values to an existing array, automatically resizing the underlying storage if needed.
 
-- **Setting or replacing object key-value pairs:**  
+- Setting or replacing object key-value pairs:  
   The internal function `json_object_set_take_key()` inserts or replaces a key-value pair within a JSON object. It searches for an existing key and replaces its value if found; otherwise, it adds a new entry. The implementation manages dynamic resizing of the object's internal storage and carefully handles ownership of the key and value pointers to avoid memory leaks.
 
 The module employs dynamic arrays internally to store elements of JSON arrays and key-value pairs for JSON objects, with growth strategies that double the capacity when limits are reached, ensuring efficient memory use and amortized constant-time insertions.
@@ -53,7 +53,7 @@ The deep equality checks integrate closely with testing workflows to assert corr
 
 ### Modifying JSON Objects and Arrays
 
-- **Add to array:**  
+- Add to array:  
   To append an item to a JSON array, the array's internal dynamic list is resized if necessary, and the new item is copied into the array's items. For example:
 
   ```c
@@ -63,7 +63,7 @@ The deep equality checks integrate closely with testing workflows to assert corr
 
   This ensures `my_array` contains the newly appended value.
 
-- **Set object key-value:**  
+- Set object key-value:  
   To set or replace a key-value pair in a JSON object:
 
   ```c
@@ -94,16 +94,16 @@ This frees the entire JSON subtree rooted at `value`, including all nested array
 
 ## Internal Design Patterns and Concepts
 
-- **Dynamic Array Growth:**  
+- Dynamic Array Growth:  
   Both arrays and objects use internal capacity fields and double their allocated size whenever the current storage is exhausted. This pattern balances memory allocation overhead with efficient insertions.
 
-- **String References:**  
+- String References:  
   Instead of duplicating string data for keys, numbers, or booleans, the module stores pointers (`reference`) into the original parsed JSON string, avoiding extra allocations. This requires careful lifetime management to ensure the source string remains valid during manipulation.
 
-- **Recursive Operations:**  
+- Recursive Operations:  
   Both freeing and equality checking are implemented recursively, traversing the JSON tree structure in depth-first order.
 
-- **Ownership Transfer:**  
+- Ownership Transfer:  
   The `json_object_set_take_key()` function is designed to take ownership of the `value` pointer passed to it, meaning the caller relinquishes responsibility for freeing that value after insertion. This helps prevent memory leaks and double frees.
 
 ## Visualization of JSON Manipulation and Comparison Workflow
@@ -135,8 +135,7 @@ JSONTree --> FreeMem
 
 This diagram illustrates the flow from JSON text input through parsing, optional modification using array push or object set operations, deep equality comparison, serialization back to text, and finally memory cleanup.
 
-## References
+## Further Reading
 
-- For foundational parsing and representation details, see [JSON Parsing and Representation](None).
-- For output formatting and testing of JSON, refer to [JSON Serialization and Testing](None).
-- For details on modifying JSON data structures and comparing them, see the subtopics [JSON Data Modification](/JSON Data Modification) and [Deep Equality Checks](/Deep Equality Checks).
+- [JSON Serialization and Testing](../json-serialization-and-testing/README.md)
+- [JSON Parsing and Representation](../json-parsing-and-representation/README.md)

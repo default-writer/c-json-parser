@@ -2,27 +2,27 @@
 
 ## Purpose
 
-Within the broader scope of [JSON Parsing and Representation](https://nextdocs.ai/github/default-writer/c-json-parser/80084), `Recursive JSON Parsing` addresses the challenge of efficiently converting JSON text into a structured, in-memory tree representation by leveraging recursion. JSON’s nested nature—with arrays containing objects, objects containing arrays, and so forth—requires a parsing approach capable of handling arbitrarily deep structures while maintaining correctness and performance.
+Within the broader scope of [JSON Parsing and Representation](README.md), `Recursive JSON Parsing` addresses the challenge of efficiently converting JSON text into a structured, in-memory tree representation by leveraging recursion. JSON’s nested nature—with arrays containing objects, objects containing arrays, and so forth—requires a parsing approach capable of handling arbitrarily deep structures while maintaining correctness and performance.
 
 This subtopic focuses specifically on implementing recursive descent parsing techniques that systematically process JSON strings, numbers, arrays, and objects. It ensures proper state management during parsing, particularly for complex constructs like escaped characters in strings and nested containers. The approach enables the core parser to build accurate data structures while detecting syntax errors and handling whitespace effectively.
 
 ## Functionality
 
-The recursive parsing workflow is initiated by the public API function [json_parse()](https://nextdocs.ai/github/default-writer/c-json-parser/80075), which prepares the input and calls the core recursive parser function `parse_value_build()`. This function dispatches parsing to specialized routines depending on the JSON token encountered:
+The recursive parsing workflow is initiated by the public API function [json_parse()](../../src/json.c), which prepares the input and calls the core recursive parser function `parse_value_build()`. This function dispatches parsing to specialized routines depending on the JSON token encountered:
 
-- **Strings**: Handled by `parse_string_value()`, which processes characters inside double quotes, managing escape sequences and Unicode escapes using a finite state machine.
-- **Numbers**: Parsed by `parse_number_value()` using standard C library conversion (`strtod`) to validate numeric formats.
-- **Arrays**: Parsed by `parse_array_value()`, which recursively invokes `parse_value_build()` for each element, managing commas and termination brackets.
-- **Objects**: Parsed by `parse_object_value()`, which recursively parses string keys and corresponding values, managing colon separators, commas, and closing braces.
+- Strings: Handled by `parse_string_value()`, which processes characters inside double quotes, managing escape sequences and Unicode escapes using a finite state machine.
+- Numbers: Parsed by `parse_number_value()` using standard C library conversion (`strtod`) to validate numeric formats.
+- Arrays: Parsed by `parse_array_value()`, which recursively invokes `parse_value_build()` for each element, managing commas and termination brackets.
+- Objects: Parsed by `parse_object_value()`, which recursively parses string keys and corresponding values, managing colon separators, commas, and closing braces.
 
 Each parsing function maintains its own state and position pointer within the input string. They invoke each other recursively as nested structures are encountered. Whitespace skipping is performed at appropriate points to ensure robustness against formatted JSON input.
 
 Key aspects of the implementation include:
 
-- **State Machine for Strings**: The parsing of strings uses explicit states (`STATE_INITIAL`, `STATE_ESCAPE_START`, `STATE_ESCAPE_UNICODE_BYTE1`, etc.) to correctly interpret escape sequences and validate Unicode hex digits.
-- **Memory Management**: `json_value` structures are allocated from a fixed-size memory pool to avoid frequent `malloc` calls. Dynamic arrays for array elements and object properties are managed with `realloc`. Ownership of parsed keys and values is carefully managed to avoid leaks or double-frees, especially in objects.
-- **Error Handling**: If any parsing step fails (e.g., invalid escape, unexpected token, memory allocation failure), the recursive calls unwind by freeing allocated memory and returning `NULL` to signal failure.
-- **Recursion Depth Tracking**: The `id` parameter passed through recursive calls can be used for debugging or limiting recursion depth, though it is incremented without explicit limits in this code.
+- State Machine for Strings: The parsing of strings uses explicit states (`STATE_INITIAL`, `STATE_ESCAPE_START`, `STATE_ESCAPE_UNICODE_BYTE1`, etc.) to correctly interpret escape sequences and validate Unicode hex digits.
+- Memory Management: `json_value` structures are allocated from a fixed-size memory pool to avoid frequent `malloc` calls. Dynamic arrays for array elements and object properties are managed with `realloc`. Ownership of parsed keys and values is carefully managed to avoid leaks or double-frees, especially in objects.
+- Error Handling: If any parsing step fails (e.g., invalid escape, unexpected token, memory allocation failure), the recursive calls unwind by freeing allocated memory and returning `NULL` to signal failure.
+- Recursion Depth Tracking: The `id` parameter passed through recursive calls can be used for debugging or limiting recursion depth, though it is incremented without explicit limits in this code.
 
 This recursive approach contrasts with iterative or lexer-driven parsers by directly mirroring the JSON grammar in function calls, which simplifies the logic and fits naturally with JSON’s nested structure.
 
@@ -61,21 +61,8 @@ static json_value *parse_value_build(const char **s, int id) {
 }
 ```
 
-## Integration
+## Further Reading
 
-`Recursive JSON Parsing` is a foundational subtopic within [JSON Parsing and Representation](https://nextdocs.ai/github/default-writer/c-json-parser/80084), providing the low-level mechanics behind the construction of the in-memory JSON value trees. It complements the [In-Memory JSON Structure](/80084) subtopic by producing the structured data that those data structures represent.
-
-The parsed `json_value` tree generated by this recursive parsing process is subsequently used by other modules:
-
-- **JSON Manipulation and Comparison (https://nextdocs.ai/github/default-writer/c-json-parser/80082)**: Manipulates and compares these parsed trees.
-- **JSON Serialization and Testing (https://nextdocs.ai/github/default-writer/c-json-parser/80083)**: Serializes the trees back into JSON text and validates parser behavior.
-
-Thus, recursive parsing acts as the entry point converting raw JSON text into the internal format that all other functionalities operate on safely and efficiently.
-
-## Diagram
-
-```mermaid
-flowchart TD
-```
-
-This flowchart illustrates the recursive descent decision process and recursive calls that build the JSON value tree from the input string.
+- [JSON Manipulation and Comparison](../json-manipulation-and-comparison/README.md)
+- [JSON Serialization and Testing](../json-serialization-and-testing/README.md)
+- [JSON Parsing and Representation](README.md)

@@ -10,19 +10,19 @@ This functionality is essential for use cases where JSON data must be programmat
 
 The key workflows supported by *JSON Data Modification* include:
 
-- **Adding or Updating Object Properties**  
-  The function [json_object_set_take_key()](https://nextdocs.ai/github/default-writer/c-json-parser/80075) inserts a new key-value pair into a JSON object or updates the value if the key already exists. It operates by searching the object's internal key array and replacing the value if found, otherwise expanding the capacity of the key-value array if needed, and appending the new entry. This function takes ownership of the key's string pointer to avoid unnecessary duplication.
+- Adding or Updating Object Properties  
+  The function [json_object_set_take_key()](../../src/json.c) inserts a new key-value pair into a JSON object or updates the value if the key already exists. It operates by searching the object's internal key array and replacing the value if found, otherwise expanding the capacity of the key-value array if needed, and appending the new entry. This function takes ownership of the key's string pointer to avoid unnecessary duplication.
 
-- **Retrieving Object Properties by Key**  
-  The function [json_object_get()](https://nextdocs.ai/github/default-writer/c-json-parser/80075) returns a pointer to the JSON value associated with a given key in an object, or NULL if the key does not exist. This provides read-access to dynamic properties within JSON objects.
+- Retrieving Object Properties by Key  
+  The function [json_object_get()](../../src/json.c) returns a pointer to the JSON value associated with a given key in an object, or NULL if the key does not exist. This provides read-access to dynamic properties within JSON objects.
 
-- **Appending Elements to Arrays**  
-  The function [json_array_push()](https://nextdocs.ai/github/default-writer/c-json-parser/80075) adds a new element to the end of a JSON array, resizing the internal array storage if required. It ensures the array can grow dynamically as elements are added.
+- Appending Elements to Arrays  
+  The function [json_array_push()](../../src/json.c) adds a new element to the end of a JSON array, resizing the internal array storage if required. It ensures the array can grow dynamically as elements are added.
 
-- **Creating New JSON Values for Arrays and Objects**  
-  Functions like [json_new_object()](https://nextdocs.ai/github/default-writer/c-json-parser/80075) and [json_new_array()](https://nextdocs.ai/github/default-writer/c-json-parser/80075) allocate and initialize empty JSON object and array structures to serve as containers for further modifications.
+- Creating New JSON Values for Arrays and Objects  
+  Functions like [json_new_object()](../../src/json.c) and [json_new_array()](../../src/json.c) allocate and initialize empty JSON object and array structures to serve as containers for further modifications.
 
-- **Memory Management During Modification**  
+- Memory Management During Modification  
   When replacing values in objects, the old JSON value is freed properly to avoid memory leaks, ensuring safe mutation of the JSON tree.
 
 These operations form the fundamental building blocks for JSON structure mutation, supporting both small incremental changes and complex restructuring.
@@ -45,17 +45,6 @@ json_value *val = json_object_get(obj, key_ptr, key_len);
 // Append a value to an array
 json_array_push(arr, element);
 ```
-
-## Integration
-
-*JSON Data Modification* is tightly integrated within the *JSON Manipulation and Comparison* topic (ID: 80082), serving as the core utilities that enable actual structural changes to JSON data. It complements the *Deep Equality Checks* subtopic by allowing mutation of JSON values that can later be validated for semantic equality.
-
-This subtopic also feeds into workflows covered in other topics such as:
-
-- **[JSON Parsing and Representation](https://nextdocs.ai/github/default-writer/c-json-parser/80084)**: After parsing JSON text into an in-memory structure, modification functions allow the data tree to be changed dynamically.
-- **[JSON Serialization and Testing](https://nextdocs.ai/github/default-writer/c-json-parser/80083)**: Once JSON data is modified, it can be serialized back into text for output or tested using equality checks and test suites.
-
-By providing direct manipulation interfaces on the structured representation, it bridges parsing, validation, and serialization steps, enabling a complete JSON processing lifecycle.
 
 ## Diagram
 
@@ -85,3 +74,10 @@ B2 --> B3
 ```
 
 This flowchart depicts how the modification functions handle adding or updating object keys and appending elements to arrays, including capacity checks and memory management.
+
+
+## Further Reading
+
+- [JSON Manipulation and Comparison](README.md)
+- [JSON Serialization and Testing](../json-serialization-and-testing/README.md)
+- [JSON Parsing and Representation](../json-parsing-and-representation/README.md)

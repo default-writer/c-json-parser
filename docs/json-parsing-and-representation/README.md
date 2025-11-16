@@ -10,10 +10,10 @@ The primary objective is to enable downstream components to work with JSON data 
 
 ### In-Memory JSON Structure
 
-The in-memory representation centers around the `json_value` data structure (declared in [json.h](https://nextdocs.ai/github/default-writer/c-json-parser/80075)), which uses a tagged union pattern to represent any JSON type:
+The in-memory representation centers around the `json_value` data structure (declared in [json.h](../../src/json.h)), which uses a tagged union pattern to represent any JSON type:
 
-- **Primitive types** (`null`, `boolean`, `number`, `string`) store references (`reference`) pointing directly into the original JSON source string. This approach avoids unnecessary copying of string and numeric data, improving performance and memory efficiency.
-- **Composite types** are represented with dynamically allocated arrays:
+- Primitive types (`null`, `boolean`, `number`, `string`) store references (`reference`) pointing directly into the original JSON source string. This approach avoids unnecessary copying of string and numeric data, improving performance and memory efficiency.
+- Composite types are represented with dynamically allocated arrays:
   - **Arrays** hold an expandable array of `json_value` elements.
   - **Objects** hold an expandable array of key-value pairs, where keys are strings referenced from the source JSON, and values are pointers to `json_value` instances.
 
@@ -40,41 +40,41 @@ If the parser encounters invalid syntax or unexpected characters at any point, i
 
 - The parser reuses slices of the original JSON string for strings, booleans, and numbers to avoid copying.
 - Arrays and objects dynamically resize their internal buffers as elements are added.
-- When setting object keys with [json_object_set_take_key](https://nextdocs.ai/github/default-writer/c-json-parser/80075), the module takes ownership of the key slice and the associated value, managing duplicate keys by replacing existing entries.
+- When setting object keys with [json_object_set_take_key](../../src/json.c), the module takes ownership of the key slice and the associated value, managing duplicate keys by replacing existing entries.
 - The `json_free` function recursively frees all allocated memory for nested arrays and objects, and returns the `json_value` structures to a memory pool.
 
 ## Key Functionalities and Workflow
 
 ### Parsing Workflow
 
-1. **Entry Point**: `json_parse(const char *json)` is called with the JSON text input.
-2. **Whitespace Skipping**: Leading whitespace is skipped to find the first significant token.
-3. **Value Parsing**: `parse_value_build` recursively parses the root JSON value based on the leading character.
-4. **Type-Specific Parsing**:
+1. Entry Point: `json_parse(const char *json)` is called with the JSON text input.
+2. Whitespace Skipping: Leading whitespace is skipped to find the first significant token.
+3. Value Parsing: `parse_value_build` recursively parses the root JSON value based on the leading character.
+4. Type-Specific Parsing:
    - **Strings**: `parse_string_value` handles quoted strings with escape sequences.
    - **Numbers**: `parse_number_value` parses numeric literals using `strtod`.
    - **Arrays**: `parse_array_value` parses comma-separated values within square brackets.
    - **Objects**: `parse_object_value` parses key-value pairs within curly braces.
    - **Literals**: `match_literal_build` matches `null`, `true`, and `false`.
-5. **Validation**: After parsing, trailing whitespace is skipped, and the parser ensures no trailing data exists.
-6. **Return**: The root `json_value` tree is returned, or `NULL` on failure.
+5. Validation: After parsing, trailing whitespace is skipped, and the parser ensures no trailing data exists.
+6. Return: The root `json_value` tree is returned, or `NULL` on failure.
 
 ### Access and Manipulation
 
-- Objects provide [json_object_get](https://nextdocs.ai/github/default-writer/c-json-parser/80075) to retrieve values by key efficiently.
-- Arrays support element addition via [json_array_push](https://nextdocs.ai/github/default-writer/c-json-parser/80075).
-- Equality checks ([json_equal](https://nextdocs.ai/github/default-writer/376/80077)) recursively compare JSON trees for structural equivalence.
+- Objects provide [json_object_get](../../src/json.c) to retrieve values by key efficiently.
+- Arrays support element addition via [json_array_push](../../src/json.c).
+- Equality checks ([json_equal](recursive-json-parsing.md)) recursively compare JSON trees for structural equivalence.
 - The module supports safe freeing and printing of the JSON tree.
 
 ### Serialization
 
-While serialization is primarily covered in the `[JSON Serialization and Testing](None)` topic, this module provides functions to print JSON values back to text, preserving formatting and escaping.
+While serialization is primarily covered in the `[JSON Serialization and Testing](../json-serialization-and-testing/README.md)` topic, this module provides functions to print JSON values back to text, preserving formatting and escaping.
 
 ## Interaction with Other Modules
 
-- The parser outputs a tree of `json_value` objects used by other modules such as `[JSON Manipulation and Comparison](None)` to modify or compare JSON data.
-- The serialized output generated by this module serves as input for `[JSON Serialization and Testing](None)` for formatting and validation.
-- The testing framework invokes [json_parse](https://nextdocs.ai/github/default-writer/c-json-parser/80075) to verify parser correctness against various JSON inputs.
+- The parser outputs a tree of `json_value` objects used by other modules such as `[JSON Manipulation and Comparison](../json-manipulation-and-comparison/README.md)` to modify or compare JSON data.
+- The serialized output generated by this module serves as input for `[JSON Serialization and Testing](../json-serialization-and-testing/README.md)` for formatting and validation.
+- The testing framework invokes [json_parse](../../src/json.c) to verify parser correctness against various JSON inputs.
 
 ## Illustration of the JSON Parsing Process
 
@@ -132,24 +132,29 @@ json_value "1" o-- "*" json_value : array items
 
 ## Important Concepts
 
-- **Pointer-Based String Storage**: Rather than copying string data, the parser stores pointers and lengths referencing the original JSON input. This reduces memory overhead but requires the input string to remain valid during the lifetime of the parsed tree.
-- **Dynamic Resizing**: Arrays and objects start with a small capacity and double their capacity when needed, avoiding frequent reallocations.
-- **Recursive Descent**: The parsing functions call each other recursively to handle nested structures, simplifying the parsing logic and mapping directly to JSON grammar.
-- **State Machine for String Parsing**: Parsing JSON strings involves a state machine to correctly interpret escape sequences including Unicode escapes.
-- **Ownership Semantics**: The module carefully manages ownership of allocated memory, transferring it where necessary and freeing on errors to prevent leaks.
+- Pointer-Based String Storage: Rather than copying string data, the parser stores pointers and lengths referencing the original JSON input. This reduces memory overhead but requires the input string to remain valid during the lifetime of the parsed tree.
+- Dynamic Resizing: Arrays and objects start with a small capacity and double their capacity when needed, avoiding frequent reallocations.
+- Recursive Descent: The parsing functions call each other recursively to handle nested structures, simplifying the parsing logic and mapping directly to JSON grammar.
+- State Machine for String Parsing: Parsing JSON strings involves a state machine to correctly interpret escape sequences including Unicode escapes.
+- Ownership Semantics: The module carefully manages ownership of allocated memory, transferring it where necessary and freeing on errors to prevent leaks.
 
 ## Summary of Main Functions (in [src/json.c](https://nextdocs.ai/github/default-writer/c-json-parser/80075))
 
-- [json_parse](https://nextdocs.ai/github/default-writer/c-json-parser/80075) — Entry point for parsing a JSON string.
+- [json_parse](../../src/json.c) — Entry point for parsing a JSON string.
 - `parse_value_build` — Dispatches to type-specific parse functions.
 - `parse_string_value` — Parses JSON strings with escape handling.
 - `parse_number_value` — Parses numeric literals.
 - `parse_array_value` — Parses arrays recursively.
 - `parse_object_value` — Parses objects recursively.
-- [json_object_set_take_key](https://nextdocs.ai/github/default-writer/c-json-parser/80075) — Inserts or updates object key-value pairs.
-- [json_object_get](https://nextdocs.ai/github/default-writer/c-json-parser/80075) — Retrieves values by key.
-- [json_equal](https://nextdocs.ai/github/default-writer/376/80077) — Recursively compares two JSON trees.
-- [json_free](https://nextdocs.ai/github/default-writer/c-json-parser/80075) — Recursively frees JSON tree memory.
-- [json_print](https://nextdocs.ai/github/default-writer/c-json-parser/80075) — Pretty-prints JSON tree to output.
+- [json_object_set_take_key](../../src/json.c) — Inserts or updates object key-value pairs.
+- [json_object_get](../../src/json.c) — Retrieves values by key.
+- [json_equal](recursive-json-parsing.md) — Recursively compares two JSON trees.
+- [json_free](../../src/json.c) — Recursively frees JSON tree memory.
+- [json_print](../../src/json.c) — Pretty-prints JSON tree to output.
 
-This module forms the essential first step in the full JSON processing pipeline, enabling all subsequent manipulation, comparison, and serialization operations by providing a robust, memory-efficient in-memory JSON representation. For details on how to manipulate and compare these structures, see `[JSON Manipulation and Comparison](None)`, and for serialization, see `[JSON Serialization and Testing](None)`.
+This module forms the essential first step in the full JSON processing pipeline, enabling all subsequent manipulation, comparison, and serialization operations by providing a robust, memory-efficient in-memory JSON representation. For details on how to manipulate and compare these structures, see `[JSON Manipulation and Comparison](../json-manipulation-and-comparison/README.md)`, and for serialization, see `[JSON Serialization and Testing](../json-serialization-and-testing/README.md)`.
+
+## Further Reading
+
+- [JSON Manipulation and Comparison](../json-manipulation-and-comparison/README.md)
+- [JSON Serialization and Testing](../json-serialization-and-testing/README.md)

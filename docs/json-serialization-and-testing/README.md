@@ -4,8 +4,8 @@
 
 The **JSON Serialization and Testing** module provides two essential capabilities within the project:
 
-1. **JSON Serialization**: Converting in-memory JSON data structures back into human-readable, pretty-printed JSON text.
-2. **Automated Test Suite**: A comprehensive set of tests that validate the correctness and robustness of the JSON parser and serializer.
+1. JSON Serialization: Converting in-memory JSON data structures back into human-readable, pretty-printed JSON text.
+2. Automated Test Suite: A comprehensive set of tests that validate the correctness and robustness of the JSON parser and serializer.
 
 This module ensures that JSON data parsed into the internal representation can be reliably and accurately serialized back, preserving structure and formatting conventions. Concurrently, it verifies through automated testing that parsing, equality checks, and serialization maintain fidelity and handle edge cases gracefully.
 
@@ -26,31 +26,31 @@ Key goals include:
 
 ### Core Concepts and Structure
 
-The serialization logic is implemented primarily in `src/json.c` with corresponding declarations in [src/json.h](https://nextdocs.ai/github/default-writer/c-json-parser/80075). It operates on the internal `json_value` structure, which represents JSON values recursively.
+The serialization logic is implemented primarily in `src/json.c` with corresponding declarations in [src/json.h](../../src/json.h). It operates on the internal `json_value` structure, which represents JSON values recursively.
 
 Key functions include:
 
-- **`json_stringify()`**  
+- `json_stringify()`  
   The main public API function that converts a `json_value` tree into a newly allocated pretty-printed JSON string. It internally uses a buffer-based printer to build the output string.
 
-- **`print_value()` and `print_value_buf()`**  
+- `print_value()` and `print_value_buf()`  
   Recursive functions that dispatch printing based on JSON type and manage indentation and formatting.
 
-- **String Escaping**  
+- String Escaping  
   Functions like `print_string_escaped()` ensure that special characters in strings are escaped properly (e.g., quotes, backslashes, Unicode sequences).
 
-- **Array and Object Formatting**  
+- Array and Object Formatting  
   - Arrays are printed compactly in a single line by `print_array_compact()` and related buffer functions.  
   - Objects are printed with indentation and line breaks for each key-value pair by `print_object_buf()`, improving readability for nested structures.
 
-- **Buffer Management**  
+- Buffer Management  
   A small buffer state (`bs`) manages writing characters efficiently into a fixed-size buffer, with careful overflow checks.
 
 The pretty-printing approach emphasizes a natural layout: objects are indented and multi-line, arrays stay compact unless nested within objects. This strikes a balance between readability and concise output.
 
 ### Interaction with Parsing and Representation
 
-This module depends on the structured JSON representation produced by the parsing subsystem (covered by the `[JSON Parsing and Representation](None)` topic). After parsing, the `json_value` tree is passed to serialization functions to produce textual output.
+This module depends on the structured JSON representation produced by the parsing subsystem (covered by the `[JSON Parsing and Representation](../json-parsing-and-representation/README.md)` topic). After parsing, the `json_value` tree is passed to serialization functions to produce textual output.
 
 The serializers use the stored string pointers (`reference`) within `json_value` nodes to print JSON primitives without duplicating data unnecessarily.
 
@@ -103,22 +103,22 @@ The test suite is implemented mainly in the `test` directory:
 
 ### Key Testing Workflow
 
-1. **Initialization**  
+1. Initialization  
    `test_initialize()` sets up terminal coloring and other test environment details.
 
-2. **Test Execution**  
+2. Test Execution  
    Each test:
    - Reads JSON text from a file.
    - Parses it to an internal `json_value` tree.
    - Serializes the tree back to JSON text.
    - Compares the original and serialized JSON structurally.
 
-3. **Validation and Reporting**  
+3. Validation and Reporting  
    - Uses `json_equal()` to verify structural equality.
    - On failure, identifies the first differing byte offset and prints surrounding context to aid debugging.
    - Prints pass/fail results with color coding.
 
-4. **Integration with Main**  
+4. Integration with Main  
    The `src/main.c` file calls the test functions to run the suite automatically when the program executes.
 
 ### Automation Benefits
@@ -158,34 +158,39 @@ TestRunner->>TestRunner: Output pass/fail result
 
 ## Interactions and Dependencies
 
-- **Parsing and Representation**:  
+- Parsing and Representation:  
   Serialization relies on the structured JSON tree created by the parsing subsystem. The test suite depends on both parsing and serialization to verify correctness end-to-end.
 
-- **Memory Management**:  
+- Memory Management:  
   The module carefully manages allocation and deallocation of buffers and `json_value` structures, ensuring no leaks during repeated serialization and testing.
 
-- **Output and Logging**:  
+- Output and Logging:  
   The test suite uses formatted console output with ANSI color codes for clear pass/fail visualization, adapting to platform capabilities.
 
 ---
 
 ## Important Concepts and Patterns
 
-- **Reference-Based String Storage**  
+- Reference-Based String Storage  
   JSON strings, numbers, and booleans are stored as references to the original input buffer to avoid unnecessary copying, enabling efficient serialization.
 
-- **Recursive Serialization**  
+- Recursive Serialization  
   The serialization functions recursively traverse the `json_value` tree, formatting nested arrays and objects according to their types.
 
-- **Buffer State Abstraction**  
+- Buffer State Abstraction  
   The `bs` structure abstracts buffer writing with capacity and position tracking, supporting both file and memory buffer outputs.
 
-- **Test Macros for Consistency**  
+- Test Macros for Consistency  
   The test suite leverages custom macros to standardize test definitions, assertions, and result reporting, improving maintainability.
 
-- **Contextual Mismatch Reporting**  
+- Contextual Mismatch Reporting  
   When tests fail, the suite pinpoints the first byte discrepancy and prints surrounding characters, helping identify subtle parsing or serialization bugs.
 
 ---
 
-The above details capture the essence and architecture of the **JSON Serialization and Testing** module, illustrating how it ensures JSON data integrity through reliable serialization and rigorous automated validation. For further understanding of the JSON data structures and parsing mechanisms, refer to the `[JSON Parsing and Representation](None)` topic.
+The above details capture the essence and architecture of the **JSON Serialization and Testing** module, illustrating how it ensures JSON data integrity through reliable serialization and rigorous automated validation. For further understanding of the JSON data structures and parsing mechanisms, refer to the `[JSON Parsing and Representation](../json-parsing-and-representation/README.md)` topic.
+
+## Further Reading
+
+- [JSON Manipulation and Comparison](../json-manipulation-and-comparison/README.md)
+- [JSON Parsing and Representation](../json-parsing-and-representation/README.md)

@@ -6,33 +6,30 @@ Complete list of all documentation pages generated in Nextdocs for the c-json-pa
 
 ### 1. Project Overview
 
-- [Project purpose, objectives, architecture, technology stack, and developer navigation](https://nextdocs.ai/github/default-writer/c-json-parser/80081)
+- [Project purpose, objectives, architecture, technology stack, and developer navigation](README.md)
 
 ### 2. JSON Parsing and Representation
 
-- [In-memory JSON structure, recursive parsing algorithm, type handling](https://nextdocs.ai/github/default-writer/c-json-parser/80084)
-  - [In-Memory JSON Structure](https://nextdocs.ai/github/default-writer/c-json-parser/80076)
-  - [Recursive JSON Parsing](https://nextdocs.ai/github/default-writer/c-json-parser/80077)
+- [In-memory JSON structure, recursive parsing algorithm, type handling](json-parsing-and-representation/README.md)
+  - [In-Memory JSON Structure](json-parsing-and-representation/in-memory-json-structure.md)
+  - [Recursive JSON Parsing](json-parsing-and-representation/recursive-json-parsing.md)
 
 ### 3. JSON Manipulation and Comparison
 
-- [JSON data modification, deep equality checks, memory management](https://nextdocs.ai/github/default-writer/c-json-parser/80082)
-  - [JSON Data Modification](https://nextdocs.ai/github/default-writer/c-json-parser/80085)
-  - [Deep Equality Checks](https://nextdocs.ai/github/default-writer/c-json-parser/80089)
+- [JSON data modification, deep equality checks, memory management](json-manipulation-and-comparison/README.md)
+  - [JSON Data Modification](json-manipulation-and-comparison/json-data-modification.md)
+  - [Deep Equality Checks](json-manipulation-and-comparison/deep-equality-checks.md)
 
 ### 4. JSON Serialization and Testing
 
-- [JSON serialization to text, pretty-printing, comprehensive test suite](https://nextdocs.ai/github/default-writer/c-json-parser/80083)
-
-### 5. File Documentation
-
-- [Documentation of project files and directory structure](https://nextdocs.ai/github/default-writer/c-json-parser/80066)
-  - bin/ - Installation scripts (install.ps1, install.sh)
-  - src/ - Core source code (json.c, json.h, main.c)
-  - test/ - Test files (test.c, test.h, test.json, test-simple.json)
-  - build.linux.ninja - Linux build configuration
-  - build.windows.ninja - Windows build configuration
+- [JSON serialization to text, pretty-printing, comprehensive test suite](json-serialization-and-testing/README.md)
 
 ## Full Documentation Portal
 
-For complete interactive documentation with diagrams, code examples, and detailed workflows, visit [c-json-parser](https://nextdocs.ai/github/default-writer/c-json-parser)
+For complete interactive documentation with diagrams, code examples, and detailed workflows, visit [c-json-parser](.)
+
+## Further Reading
+
+- [JSON Manipulation and Comparison](json-manipulation-and-comparison/README.md)
+- [JSON Serialization and Testing](json-serialization-and-testing/README.md)
+- [JSON Parsing and Representation](json-parsing-and-representation/README.md)
