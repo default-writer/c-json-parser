@@ -119,7 +119,7 @@ The test suite is implemented mainly in the `test` directory:
    - Prints pass/fail results with color coding.
 
 4. Integration with Main  
-   The `src/main.c` file calls the test functions to run the suite automatically when the program executes.
+   The `test/main.c` file calls the test functions to run the suite automatically when the program executes.
 
 ### Automation Benefits
 

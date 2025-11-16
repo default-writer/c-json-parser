@@ -21,7 +21,7 @@ rule link_named
   description = Linking $name
 
 # Build statements for object files
-build main.obj: cc src/main.c
+build main.obj: cc test/main.c
 build json.obj: cc src/json.c
 build test.obj: cc test/test.c
 
@@ -32,7 +32,7 @@ build main: phony main.stamp
 
 # --- O2 Target ---
 cflags_o2 = $cflags /O2
-build main.obj.o2: cc src/main.c
+build main.obj.o2: cc test/main.c
   cflags = $cflags_o2
 build json.obj.o2: cc src/json.c
   cflags = $cflags_o2
@@ -44,7 +44,7 @@ build o2: phony o2.stamp
 
 # --- O3 Target ---
 cflags_o3 = $cflags /O2
-build main.obj.o3: cc src/main.c
+build main.obj.o3: cc test/main.c
   cflags = $cflags_o3
 build json.obj.o3: cc src/json.c
   cflags = $cflags_o3
@@ -57,7 +57,7 @@ build o3: phony o3.stamp
 # --- Perf Target ---
 cflags_perf = $cflags /O2 /GL
 ldflags_perf = $ldflags /LTCG
-build main.obj.perf: cc src/main.c
+build main.obj.perf: cc test/main.c
   cflags = $cflags_perf
 build json.obj.perf: cc src/json.c
   cflags = $cflags_perf

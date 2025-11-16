@@ -12,7 +12,7 @@ Key objectives include:
 - Serialization: Convert the in-memory structure back into a formatted JSON string.
 - Robustness: Ensure correctness and stability with a comprehensive test suite.
 
-The core logic is implemented in `src/json.c` and `src/json.h`, with `src/main.c` driving the test suite.
+The core logic is implemented in `src/json.c` and `src/json.h`, with `test/main.c` driving the test suite.
 
 ## API Overview
 
@@ -48,7 +48,7 @@ These technologies were chosen to ensure cross-platform build and development wo
 The architecture is modular and layered around core JSON processing logic, build automation, and testing framework:
 
 - Core Library (`src/json.c` & `src/json.h`): Implements JSON parsing, serialization, and utilities.
-- Application Entry (`src/main.c`): Runs test harness invoking JSON parsing and validation functions.
+- Application Entry (`test/main.c`): Runs test harness invoking JSON parsing and validation functions.
 - Testing Suite (`test/test.c`, `test/test.h`, and JSON test files): Defines test cases that validate parser correctness with diverse JSON inputs.
 - Build System (Ninja files): Platform-specific build instructions for compiling C source files and linking executables.
 - Installation Scripts (`bin/install.sh` and `bin/install.ps1`): Automate environment setup and toolchain installation for Linux and Windows respectively.
@@ -62,7 +62,7 @@ Interactions:
 
 ```mermaid
 graph TB
-TestRunner["Test Runner (src/main.c)"] --> JSONLib["JSON Library (src/json.c/h)"]
+TestRunner["Test Runner (test/main.c)"] --> JSONLib["JSON Library (src/json.c/h)"]
 JSONLib --> TestSuite["Tests (test/test.c, test.json)"]
 BuildSystem["Build System (Ninja)"] --> Executable["Executable (main)"]
 Executable --> TestRunner
@@ -74,7 +74,7 @@ InstallScripts -.-> Toolchain["Toolchain (LLVM, Ninja)"]
 
 ### Frontend Developers Start Here
 
-- Explore `src/main.c` for program entry and test execution flow.
+- Explore `test/main.c` for program entry and test execution flow.
 - Review `test/test.c` and `test/test.h` for test cases validating JSON parsing and equality.
 - Use `test/test.json` and `test/test-simple.json` for test input examples.
 

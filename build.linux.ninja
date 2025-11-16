@@ -16,7 +16,7 @@ rule link
   description = Linking $name
 
 # Build statements for object files
-build main.o: cc src/main.c
+build main.o: cc test/main.c
 build json.o: cc src/json.c
 build test.o: cc test/test.c
 build test_json_c.o: cc test/test_json_c.c
@@ -28,7 +28,7 @@ build main: phony main.stamp
 
 # --- O2 Target ---
 cflags_o2 = $cflags -O2
-build main.o.o2: cc src/main.c
+build main.o.o2: cc test/main.c
   cflags = $cflags_o2
 build json.o.o2: cc src/json.c
   cflags = $cflags_o2
@@ -42,7 +42,7 @@ build o2: phony o2.stamp
 
 # --- O3 Target ---
 cflags_o3 = $cflags -O3
-build main.o.o3: cc src/main.c
+build main.o.o3: cc test/main.c
   cflags = $cflags_o3
 build json.o.o3: cc src/json.c
   cflags = $cflags_o3
@@ -57,7 +57,7 @@ build o3: phony o3.stamp
 # --- Perf Target ---
 cflags_perf = -Wall -Wextra -std=c11 -Ilibs/include -DUSE_JSON_C -O3 -march=native -flto
 ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops -fuse-ld=lld -lrt -Llibs/lib -ljson-c
-build main.o.perf: cc src/main.c
+build main.o.perf: cc test/main.c
   cflags = $cflags_perf
 build json.o.perf: cc src/json.c
   cflags = $cflags_perf

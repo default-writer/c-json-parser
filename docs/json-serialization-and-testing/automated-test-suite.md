@@ -28,7 +28,7 @@ The Automated Test Suite operates by executing defined test cases that:
 
 - Error Diagnostics: If structural equality fails, the suite locates the first differing byte in the inputs and prints surrounding context with offsets.
 
-- Test Harness: The `main()` function in `src/main.c` initializes the environment, runs all test cases, and finalizes with a summary.
+- Test Harness: The `main()` function in `test/main.c` initializes the environment, runs all test cases, and finalizes with a summary.
 
 ### Code Snippet: Structural Equality Check and Diagnostic
 
