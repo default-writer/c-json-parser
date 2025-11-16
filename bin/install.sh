@@ -58,4 +58,4 @@ grep -qxF 'export PATH='"$TOOLS_DIR/llvm"':$PATH' $HOME/.bashrc || echo 'export 
 
 [[ $SHLVL -eq 2 ]] && echo OK
 
-cd "${pwd}"
+cd "${cwd}"
