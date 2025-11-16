@@ -28,8 +28,14 @@ mkdir build
 cd build
 git clone https://github.com/json-c/json-c.git
 cd json-c
-cmake -DCMAKE_INSTALL_PREFIX=../../libs/ -DCMAKE_BUILD_TYPE=Release
+cmake -DCMAKE_INSTALL_PREFIX=../../libs/ -DCMAKE_BUILD_TYPE=release
 make all install
+```
+
+or just run (linux-based)
+
+```bash
+./bin/install_json_c.sh
 ```
 
 ## building
