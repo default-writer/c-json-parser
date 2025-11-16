@@ -5,11 +5,11 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 16, 2025 at 9:17:17 PM GMT+3
+ *   November 16, 2025 at 9:27:03 PM GMT+3
  *
  */
 /*
-    Copyright (C) 2022-2047 Artur Mustafin (artur.mustafin@gmail.com)
+    Copyright (C) 2022-2047 default-writer
     All rights reserved.
 
     Redistribution and use in source and binary forms, with or without

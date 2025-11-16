@@ -29,7 +29,7 @@
       "commentbegin": "/*",
       "commentprefix": " *",
       "commentend": " */",
-      "author": "Artur Mustafin (artur.mustafin@gmail.com)",
+      "author": "default-writer",
       "license_bsd3": [
         "/*",
         "    Copyright (C) 2022-2047 ${year} ${author}",
