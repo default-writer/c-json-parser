@@ -86,7 +86,7 @@ static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t le
     return false;
   /* check existing keys by comparing strings */
   for (size_t i = 0; i < obj->u.object.count; ++i) {
-    if (obj->u.object.items[i].ptr && strncmp(obj->u.object.items[i].ptr, ptr, len) == 0) {
+    if (obj->u.object.items[i].key.ptr && strncmp(obj->u.object.items[i].key.ptr, ptr, len) == 0) {
       free_json_value_contents(obj->u.object.items[i].value);
       obj->u.object.items[i].value = value;
       return true;
@@ -102,8 +102,8 @@ static bool json_object_set_take_key(json_value *obj, const char *ptr, size_t le
     obj->u.object.items = items;
     obj->u.object.capacity = capacity;
   }
-  obj->u.object.items[obj->u.object.count].ptr = ptr;
-  obj->u.object.items[obj->u.object.count].len = len;
+  obj->u.object.items[obj->u.object.count].key.ptr = ptr;
+  obj->u.object.items[obj->u.object.count].key.len = len;
   obj->u.object.items[obj->u.object.count].value = value;
   obj->u.object.count++;
   return true;
@@ -113,7 +113,7 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
   if (!obj || obj->type != J_OBJECT || !key)
     return NULL;
   for (size_t i = 0; i < obj->u.object.count; ++i) {
-    if (strncmp(obj->u.object.items[i].ptr, key, len) == 0)
+    if (strncmp(obj->u.object.items[i].key.ptr, key, len) == 0)
       return obj->u.object.items[i].value;
   }
   return NULL;
@@ -559,7 +559,7 @@ static void print_object_compact(const json_value *v, FILE *out) {
     if (i)
       fputs(", ", out);
     json_object *e = &v->u.object.items[i];
-    print_string_escaped(out, e->ptr, e->len);
+    print_string_escaped(out, e->key.ptr, e->key.len);
     fputs(": ", out);
     print_value_compact(e->value, out);
   }
@@ -623,7 +623,7 @@ static void print_value(const json_value *v, int indent, FILE *out) {
         fputs(",\n", out);
       print_indent(out, indent + 1);
       json_object *e = &v->u.object.items[i];
-      print_string_escaped(out, e->ptr, e->len);
+      print_string_escaped(out, e->key.ptr, e->key.len);
       fputs(": ", out);
       /* If value is an object, recurse to pretty format; arrays remain
        * single-line */
@@ -704,7 +704,7 @@ static int print_object_buf(const json_value *v, bs *b, int indent) {
     if (print_indent_buf(b, indent + 1) < 0)
       return -1;
     json_object *ent = &v->u.object.items[i];
-    if (print_string_escaped_buf(b, ent->ptr, ent->len) < 0)
+    if (print_string_escaped_buf(b, ent->key.ptr, ent->key.len) < 0)
       return -1;
     if (bs_write(b, ": ", 2) < 0)
       return -1;
@@ -734,7 +734,7 @@ static int print_object_compact_buf(const json_value *v, bs *b) {
         return -1;
     }
     json_object *ent = &v->u.object.items[i];
-    if (print_string_escaped_buf(b, ent->ptr, ent->len) < 0)
+    if (print_string_escaped_buf(b, ent->key.ptr, ent->key.len) < 0)
       return -1;
     if (bs_write(b, ": ", 2) < 0)
       return -1;
@@ -854,7 +854,7 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
     return false;
   for (size_t i = 0; i < a->u.object.count; ++i) {
     json_object *e = &a->u.object.items[i];
-    json_value *bv = json_object_get(b, e->ptr, e->len);
+    json_value *bv = json_object_get(b, e->key.ptr, e->key.len);
     if (!bv)
       return false;
     if (!json_equal(e->value, bv))
