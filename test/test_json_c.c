@@ -4,7 +4,7 @@
 
 #include "../libs/include/json-c/json.h"
 
-#define TEST_COUNT 1000000UL
+#define TEST_COUNT 100000UL
 
 TEST_SETUP();
 

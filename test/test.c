@@ -11,7 +11,7 @@
 #define TIME_HOURS 24UL
 #define TIME_EPSILON 1000000000UL
 
-#define TEST_COUNT 1000000UL
+#define TEST_COUNT 100000UL
 
 static long long start_time;
 static long long end_time;

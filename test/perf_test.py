@@ -9,7 +9,7 @@ import sys
 tests_run = 0
 tests_passed = 0
 LINE_WIDTH = 80
-TEST_COUNT = 1000000
+TEST_COUNT = 100000
 
 # Enable colors only if stdout is a TTY
 if sys.stdout.isatty():

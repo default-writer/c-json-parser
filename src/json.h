@@ -86,8 +86,7 @@ typedef struct json_value {
  * @brief Represents a key-value pair in a JSON object.
  */
 typedef struct json_object {
-  const char *ptr;   // Pointer to the key in the source JSON string.
-  size_t len;        // Length of the key.
+  reference key;     // Key of the object.
   json_value *value; // Pointer to the JSON value.
 } json_object;
 
