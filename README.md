@@ -2,7 +2,7 @@
 
 A simple JSON parser in C
 
-- lightning-fast implementation for a reasonable trade-offs, performance improvement rate of x4/x10 for speed/memory, comared to [json-c](https://github.com/json-c/json-c)
+- lightning-fast implementation for a reasonable trade-offs, performance improvement rate of x4/x10 for speed/memory, compared to [json-c](https://github.com/json-c/json-c)
 
 ## comparison to json-c (min/100K runs)
 
