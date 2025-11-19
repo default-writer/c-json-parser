@@ -1,16 +1,21 @@
-## TL;DR  
+# TL;DR  
 
 The current implementation stores **only the tree nodes** (`json_value`) in a tiny fixed‑size pool and keeps **all container metadata (arrays, objects) in contiguous “vector‑like” buffers** that are grown with `realloc`.  
 
-### Alternatives
+## Alternatives
 
 * `json_value *items` (instead of `json_value **items`) – i.e. an *inline* array of whole `json_value` structs, or  
 * `json_object **items` (instead of `json_object *items`) – i.e. an array of *pointers* to individually allocated `json_object`s, or  
 * a representation where an object is a `json_value **` with the first element being a *key* value  
 
-Changing the container members to another altenatives forces the parser to allocate **one extra heap block per element** (or per key/value pair) and, in the case of the inline‑struct version, blows up the size of each element dramatically. The result is a **10‑× increase in the number of malloc/realloc calls** (the benchmark shows 4.4 M vs 52.9 M) and a **3‑× larger total heap footprint**.
+Changing the container members to another altenatives forces the parser to allocate: 
 
-### Source code
+- adds one extra heap block per element per key/value pair 
+- inline‑struct version increases the size of each element
+
+The result is a **10‑× increase in the number of malloc/realloc calls** (the benchmark shows 4.4 M vs 52.9 M) and a **3‑× larger total heap footprint**.
+
+## Source code
 
 Below is a line‑by‑line walk‑through of the code that shows why the current layout is so cheap and why the alternatives are expensive.
 
