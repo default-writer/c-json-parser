@@ -1,8 +1,11 @@
-# simple JSON parser in C
+# C JSON parser
 
-A simple JSON parser in C
+- lightning-fast implementation of a JSON parser
+- performance improvement rate of x4/x10 for speed/memory compared to alternatives: [json-c](https://github.com/json-c/json-c)
 
-- lightning-fast implementation for a reasonable trade-offs, performance improvement rate of x4/x10 for speed/memory, compared to [json-c](https://github.com/json-c/json-c)
+## badges
+
+[![CodeQL](https://github.com/default-writer/c-json-parser/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/default-writer/c-json-parser/actions/workflows/codeql.yml)
 
 ## comparison to json-c (min/100K runs)
 
@@ -12,18 +15,15 @@ A simple JSON parser in C
 | allocation calls                    |        4,400,004 |      52,900,004 |
 | total heap usage (bytes allocated)  |    1,292,809,439 |   4,179,609,439 |
 
-## badges
-
-[![CodeQL](https://github.com/default-writer/c-json-parser/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/default-writer/c-json-parser/actions/workflows/codeql.yml)
-
 ## docs
 
+- [data structures](https://github.com/default-writer/c-json-parser/blob/main/docs/json-data-structures.md)
 - [documentation](https://github.com/default-writer/c-json-parser/tree/main/docs)
 
 ## screenshots
 
 ![logo_c_json_parser](images/image-1.png)
-![logo_c_json_parser](images/image-2.png)
+<!-- ![logo_c_json_parser](images/image-2.png) -->
 
 ## tools
 
