@@ -232,8 +232,8 @@ Each of those forces a `malloc` per element (or per pair) and destroys the O(1)�
   * Forces a full `json_value` node for every key (instead of a cheap `reference`).  
   * Results in **two nodes per member** (key + value) and extra pointer indirections, turning the previously *logarithmic* allocation behaviour into a *linear* one.
 
-### Conclusion  
+## 7. Conclusion  
 
 - The current layout gives **O(log N)** allocation work per container.  
 - The alternatives turn it into **O(N)** allocations and dramatically increase the heap footprint, causing the parser to **exhaust memory** and **slow down**.  
-- Keep the pool‑allocated node per value and a single contiguous vector per container to stay fast and memory‑efficient.
+- Keeping the pool‑allocated node per value and a single contiguous vector per container allows code to run fast and being a memory‑efficient.
