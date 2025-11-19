@@ -8,12 +8,20 @@ The current implementation stores **only the tree nodes** (`json_value`) in a ti
 * `json_object **items` (instead of `json_object *items`) – i.e. an array of *pointers* to individually allocated `json_object`s, or  
 * a representation where an object is a `json_value **` with the first element being a *key* value  
 
-Changing the container members to another altenatives forces the parser to allocate: 
+Changing the container members to another altenatives forces the parser to allocate:
 
-- adds one extra heap block per element per key/value pair 
-- inline‑struct version increases the size of each element
+* Adds one extra heap block per element per key/value pair
+* Inline‑struct version increases the size of each element
 
 The result is a **10‑× increase in the number of malloc/realloc calls** (the benchmark shows 4.4 M vs 52.9 M) and a **3‑× larger total heap footprint**.
+
+## Speed comparison
+
+| Metric                              | c-json-parser    | json-c          |
+| :-----------------------------------| ---------------: | --------------: |
+| execution time                      |     00:00:01.035 |    00:00:04.197 |
+| allocation calls                    |        4,400,004 |      52,900,004 |
+| total heap usage (bytes allocated)  |    1,292,809,439 |   4,179,609,439 |
 
 ## Source code
 
@@ -225,20 +233,20 @@ Each of those forces a `malloc` per element (or per pair) and destroys the O(1)�
 
 ### What happens when you change the layout  
 
-- **`json_value **items` → `json_value *items`**  
+* **`json_value **items` → `json_value *items`**  
   * Stores whole `json_value` structs inline.  
   * Each element becomes **~6× larger** (pointer → struct) and must be **copied** on every push, blowing up memory and CPU usage.  
 
-- **`json_object *items` → `json_object **items`**  
+* **`json_object *items` → `json_object **items`**  
   * Introduces **one extra heap allocation per key/value pair** (the `json_object` itself).  
   * Allocation pattern changes from *one per capacity increase* to *two per insertion* → massive increase in allocation calls.  
 
-- **Object as `json_value **` with the first entry being a key**  
+* **Object as `json_value **` with the first entry being a key**  
   * Forces a full `json_value` node for every key (instead of a cheap `reference`).  
   * Results in **two nodes per member** (key + value) and extra pointer indirections, turning the previously *logarithmic* allocation behaviour into a *linear* one.
 
 ## 7. Conclusion  
 
-- The current layout gives **O(log N)** allocation work per container.  
-- The alternatives turn it into **O(N)** allocations and dramatically increase the heap footprint, causing the parser to **exhaust memory** and **slow down**.  
-- Keeping the pool‑allocated node per value and a single contiguous vector per container allows code to run fast and being a memory‑efficient.
+* The current layout gives **O(log N)** allocation work per container.  
+* The alternatives turn it into **O(N)** allocations and dramatically increase the heap footprint, causing the parser to **exhaust memory** and **slow down**.  
+* Keeping the pool‑allocated node per value and a single contiguous vector per container allows code to run fast and being a memory‑efficient.
