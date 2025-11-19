@@ -17,8 +17,8 @@
 
 ## docs
 
-- [data structures](https://github.com/default-writer/c-json-parser/blob/main/docs/json-data-structures.md)
-- [documentation](https://github.com/default-writer/c-json-parser/tree/main/docs)
+- [data structures](docs/data-structures.md)
+- [documentation](docs)
 
 ## screenshots
 
