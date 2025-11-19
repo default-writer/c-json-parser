@@ -1,17 +1,18 @@
 ## TL;DR  
 
-*The current implementation stores **only the tree nodes** (`json_value`) in a tiny fixed‑size pool and keeps **all container metadata (arrays, objects) in contiguous “vector‑like” buffers** that are grown with `realloc`.  
-Changing the container members to  
+The current implementation stores **only the tree nodes** (`json_value`) in a tiny fixed‑size pool and keeps **all container metadata (arrays, objects) in contiguous “vector‑like” buffers** that are grown with `realloc`.  
+
+### Alternatives
 
 * `json_value *items` (instead of `json_value **items`) – i.e. an *inline* array of whole `json_value` structs, or  
 * `json_object **items` (instead of `json_object *items`) – i.e. an array of *pointers* to individually allocated `json_object`s, or  
 * a representation where an object is a `json_value **` with the first element being a *key* value  
 
-forces the parser to allocate **one extra heap block per element** (or per key/value pair) and, in the case of the inline‑struct version, blows up the size of each element dramatically. The result is a **10‑× increase in the number of malloc/realloc calls** (the benchmark shows 4.4 M vs 52.9 M) and a **3‑× larger total heap footprint**.
+Changing the container members to another altenatives forces the parser to allocate **one extra heap block per element** (or per key/value pair) and, in the case of the inline‑struct version, blows up the size of each element dramatically. The result is a **10‑× increase in the number of malloc/realloc calls** (the benchmark shows 4.4 M vs 52.9 M) and a **3‑× larger total heap footprint**.
+
+### Source code
 
 Below is a line‑by‑line walk‑through of the code that shows why the current layout is so cheap and why the alternatives are expensive.
-
----
 
 ## 1. What the current data structures *are*
 
@@ -59,8 +60,6 @@ Because of that:
 * **The only heap blocks that grow dynamically are the “vector” buffers** for array elements and object members.  
 * Those buffers are *re‑allocated* only when the capacity is exhausted, i.e. **O(log N) allocations per container**, not O(N).
 
----
-
 ## 2. Where the allocations actually happen
 
 | Function | What it allocates | Why it is cheap |
@@ -71,8 +70,6 @@ Because of that:
 | `free_json_value_contents()` | walks the tree, frees the *vector* buffers (`free(v->u.array.items)`, `free(v->u.object.items)`) and then puts the node back into the pool. | Only one free per container, not per element. |
 
 No other `malloc`/`free` calls appear in the parser or printer. That is why the benchmark shows **≈ 4 M allocation calls** (the *realloc* calls for the vectors) versus **≈ 53 M** for a naïve design.
-
----
 
 ## 3. What would happen if we change the container members
 
@@ -137,8 +134,6 @@ struct {
 
 * **Memory layout becomes irregular** – the object’s “vector” now stores *pointers to heterogeneous structs* (key nodes and value nodes) rather than a compact array of homogeneous `json_object` structs. This leads to more `malloc`/`free` calls and a larger overall heap size.
 
----
-
 ## 4. How the current design avoids the pitfalls
 
 | Feature | Implementation detail | Effect on allocations / memory |
@@ -151,8 +146,6 @@ struct {
 | **No per‑element malloc** | Elements are stored *by value* (pointers) inside the vector, not as separate heap blocks. | Allocation count stays low, memory fragmentation stays low. |
 
 Because of these choices the parser can handle a 1‑GB JSON document with **≈ 4 M allocation calls** and a **≈ 1.3 GB** heap footprint (most of that is the original JSON string itself, which is *borrowed*).
-
----
 
 ## 5. Quantitative illustration
 
@@ -181,8 +174,6 @@ Assume an object with **100 000 members** (a typical “large map”).
 * Each call incurs lock contention inside the allocator, cache misses, and bookkeeping overhead → 4× slower.  
 * The extra allocations also increase fragmentation and the overall amount of memory that the allocator must manage → ~3× larger RSS.
 
----
-
 ## 7. Bottom line – design guidelines for a low‑allocation JSON parser
 
 1. **Allocate only the logical nodes** (`json_value`) from a pre‑allocated pool or a bump allocator.  
@@ -193,8 +184,6 @@ Assume an object with **100 000 members** (a typical “large map”).
 6. **Keep the union inside `json_value` small** (just two pointers for a reference) – the larger the union, the more memory you waste for each node that lives in the pool.
 
 If you follow those rules you will end up with the same allocation profile as the *c‑json‑parser* shown in the table: a handful of megabytes of heap, a few million `realloc` calls, and sub‑second parse times for multi‑gigabyte inputs.
-
---- 
 
 ### Quick code sketch for the “bad” alternatives (what not to do)
 
@@ -222,6 +211,29 @@ typedef struct {
 
 Each of those forces a `malloc` per element (or per pair) and destroys the O(1)‑per‑container‑growth property that keeps the parser fast and memory‑efficient.
 
---- 
+**The benchmark’s speed isn’t a hidden compiler trick – it’s all about the data‑structure choice.**  
 
-**In short:** the magic of the benchmark is not a mysterious compiler trick; it is the *data‑structure choice*. By keeping **one pool‑allocated node per JSON value** and **one contiguous vector per container**, the parser does *logarithmic* allocation work. Swapping `json_value **items` for `json_value *items`, or `json_object *items` for `json_object **items`, or turning objects into a `json_value **` key/value list, converts that logarithmic behavior into a *linear* number of allocations and blows up the memory footprint dramatically. That is why the alternative designs quickly exhaust memory and become far slower.
+| What the current design does | Why it’s fast |
+|------------------------------|----------------|
+| **One pool‑allocated `json_value` node per JSON value** | No per‑element `malloc`; nodes come from a static pool. |
+| **One contiguous vector (dynamic array) per container** | Only a *logarithmic* number of `realloc` calls as the vector grows. |
+
+### What happens when you change the layout  
+
+- **`json_value **items` → `json_value *items`**  
+  * Stores whole `json_value` structs inline.  
+  * Each element becomes **~6× larger** (pointer → struct) and must be **copied** on every push, blowing up memory and CPU usage.  
+
+- **`json_object *items` → `json_object **items`**  
+  * Introduces **one extra heap allocation per key/value pair** (the `json_object` itself).  
+  * Allocation pattern changes from *one per capacity increase* to *two per insertion* → massive increase in allocation calls.  
+
+- **Object as `json_value **` with the first entry being a key**  
+  * Forces a full `json_value` node for every key (instead of a cheap `reference`).  
+  * Results in **two nodes per member** (key + value) and extra pointer indirections, turning the previously *logarithmic* allocation behaviour into a *linear* one.
+
+### Conclusion  
+
+- The current layout gives **O(log N)** allocation work per container.  
+- The alternatives turn it into **O(N)** allocations and dramatically increase the heap footprint, causing the parser to **exhaust memory** and **slow down**.  
+- Keep the pool‑allocated node per value and a single contiguous vector per container to stay fast and memory‑efficient.
