@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 16, 2025 at 9:26:56 PM GMT+3
+ *   November 21, 2025 at 9:48:46 PM GMT+3
  *
  */
 /*
@@ -96,6 +96,8 @@ typedef struct {
 /* Forward declarations */
 typedef struct json_value json_value;
 typedef struct json_object json_object;
+typedef struct json_value_node json_value_node;
+typedef struct json_object_node json_object_node;
 
 /**
  * @brief Represents a JSON value.
@@ -108,15 +110,13 @@ typedef struct json_value {
     reference boolean; // J_BOOLEAN.
     reference number;  // J_NUMBER.
     struct {
-      json_value **items; // Array of JSON values.
-      size_t count;       // Number of items in the array.
-      size_t capacity;    // Allocated capacity of the array.
-    } array;              // J_ARRAY.
+      json_value_node *last;
+      json_value_node *items; // Array of JSON values.
+    } array;                  // J_ARRAY.
     struct {
-      json_object *items; // Array of key-value pairs.
-      size_t count;       // Number of items in the object.
-      size_t capacity;    // Allocated capacity of the object.
-    } object;             // J_OBJECT.
+      json_object_node *last;
+      json_object_node *items; // Array of key-value pairs.
+    } object;                  // J_OBJECT.
   } u;
 } json_value;
 
@@ -127,6 +127,19 @@ typedef struct json_object {
   reference key;     // Key of the object.
   json_value *value; // Pointer to the JSON value.
 } json_object;
+
+/**
+ * @brief Represents a node in a linked list of JSON values.
+ */
+typedef struct json_object_node {
+  json_object item;
+  json_object_node *next; // Pointer to the JSON value.
+} json_object_node;
+
+typedef struct json_value_node {
+  json_value* item;
+  json_value_node *next; // Pointer to the JSON value.
+} json_value_node;
 
 /**
  * @brief Returns a pointer to the original JSON source string.

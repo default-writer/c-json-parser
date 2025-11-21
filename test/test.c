@@ -149,6 +149,7 @@ TEST(test_simple_json_parsing) {
   /* render json_value back to string */
   char *out = json_stringify(v);
   ASSERT_PTR_NOT_NULL(out);
+  json_print(v, stdout);
   json_free((json_value *)v);
 
   /* compare structurally (order-insensitive) */
