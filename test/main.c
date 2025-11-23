@@ -15,7 +15,7 @@ TEST_DEFINITION(test_json_c_parser);
 
 int main(void) {
 
-  UTILS_INITIALIZE();
+  TEST_INITIALIZE;
 
 #ifndef USE_PERFORMANCE_TESTS
 
@@ -39,7 +39,7 @@ int main(void) {
 
 #endif
 
-  TEST_FINALIZE();
+  TEST_FINALIZE;
 
   return 0;
 }

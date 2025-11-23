@@ -17,11 +17,11 @@
 #define TEST_DEFINITION(name) \
   extern void(name)(void)
 
-#define UTILS_INITIALIZE() \
-  do {                     \
+#define TEST_INITIALIZE \
+  do {                  \
     utils_initialize();    \
-    tests_run = 0;         \
-    tests_passed = 0;      \
+    tests_run = 0;      \
+    tests_passed = 0;   \
   } while (0)
 
 #define TEST_SUITE(name)                                                                         \
@@ -31,7 +31,7 @@
     printf("===============================================================================\n"); \
   } while (0)
 
-#define TEST_FINALIZE()                                                                          \
+#define TEST_FINALIZE                                                                            \
   do {                                                                                           \
     printf("===============================================================================\n"); \
     printf("tests run: %d\n", tests_run);                                                        \
@@ -46,8 +46,9 @@
     }                                                                                            \
   } while (0)
 
-#define TEST(name)             \
+#define TEST(name, ...)        \
   void name() {                \
+    __VA_ARGS__;               \
     do {                       \
       json_initialize();       \
       tests_run++;             \
@@ -131,4 +132,3 @@
 TEST_SETUP();
 
 #endif // TEST_H
-

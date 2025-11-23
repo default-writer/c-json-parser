@@ -128,9 +128,11 @@ bool utils_test_json_equal(const char *a, const char *b) {
   bool eq = json_equal(&va, &vb);
 
   if (!eq) {
+
     /* find first differing position in the original inputs (skip whitespace) */
     const char *xa = pa;
     const char *xb = pb;
+
     while (*xa != '\0' && *xb != '\0') {
       NEXT_TOKEN(&xa);
       NEXT_TOKEN(&xb);
@@ -139,35 +141,45 @@ bool utils_test_json_equal(const char *a, const char *b) {
       xa++;
       xb++;
     }
+
     if (*xa != '\0')
       while (isspace((unsigned char)*xa))
         xa++;
     if (*xb != '\0')
       while (isspace((unsigned char)*xb))
         xb++;
+
     size_t off_a = (size_t)(xa - pa);
     size_t off_b = (size_t)(xb - pb);
+
     /* print brief context */
     size_t ctx_before = PREFIX_CHAR_OFFSET;
     size_t ctx_after = POSTFIX_CHAR_OFFSET;
     size_t start_a = (off_a > ctx_before) ? off_a - ctx_before : 0;
     size_t start_b = (off_b > ctx_before) ? off_b - ctx_before : 0;
-    fprintf(stderr, "JSON mismatch: first differing byte offsets a=%zu b=%zu\n", off_a, off_b);
+
+    fprintf(stderr, "mismatch: first diff byte offsets a=%zu b=%zu\n", off_a, off_b);
     fprintf(stderr, "a context: \"");
+
     for (size_t i = start_a; i < off_a + ctx_after && pa[i] != '\0'; ++i) {
       char c = pa[i];
       fputc(c, stderr);
     }
+
     fprintf(stderr, "\"\n");
     fprintf(stderr, "b context: \"");
+
     for (size_t i = start_b; i < off_b + ctx_after && pb[i] != '\0'; ++i) {
       char c = pb[i];
       fputc(c, stderr);
     }
+
     fprintf(stderr, "\"\n");
+
   }
 
   json_free(&va);
   json_free(&vb);
+
   return eq;
 }
