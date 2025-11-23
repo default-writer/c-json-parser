@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 23, 2025 at 7:32:51 PM GMT+3
+ *   November 23, 2025 at 7:57:01 PM GMT+3
  *
  */
 /*
@@ -834,9 +834,6 @@ static int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize)
   if (print_value_buf(v, 0, &bstate) < 0)
     return -1;
 
-  if (bs_putc(&bstate, '\n') < 0)
-    return -1;
-
   /* ensure NUL termination if space remains */
   if (bstate.pos < bstate.cap)
     bstate.buf[bstate.pos] = '\0';
@@ -937,8 +934,10 @@ char *json_stringify(const json_value *v) {
   int rc = json_stringify_to_buffer(v, buf, MAX_BUFFER_SIZE);
   if (rc >= 0) {
     char *shr = realloc(buf, (size_t)rc + 1);
-    if (shr)
+    if (shr) {
       buf = shr;
+      buf[rc] = '\0';
+    }
     return buf;
   }
   free(buf);
