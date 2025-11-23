@@ -128,4 +128,7 @@
     }                                                                                           \
   } while (0)
 
+TEST_SETUP();
+
 #endif // TEST_H
+

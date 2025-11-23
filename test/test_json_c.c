@@ -6,8 +6,6 @@
 
 #define TEST_COUNT 100000UL
 
-TEST_SETUP();
-
 TEST(test_json_c_parser) {
   char *json = utils_get_test_json_data("test/test.json");
   ASSERT_PTR_NOT_NULL(json);

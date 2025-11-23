@@ -110,8 +110,6 @@ bool utils_test_json_equal(const char *a, const char *b) {
     return false;
   }
 
-  // json_pool_reset();
-
   json_value va;
   memset(&va, 0, sizeof(json_value));
 

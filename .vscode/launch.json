@@ -8,10 +8,10 @@
             "preLaunchTask": "build",
             "cwd": "${workspaceFolder}",
             "windows": {
-                "program": "${workspaceFolder}/test-main.exe"
+                "program": "${workspaceFolder}/test-memory.exe"
             },
             "linux": {
-                "program": "${workspaceFolder}/test-main"
+                "program": "${workspaceFolder}/test-memory"
             }
         }
     ]

@@ -12,14 +12,16 @@
                 "command": "ninja",
                 "args": [
                     "-f",
-                    "build.windows.ninja"
+                    "build.windows.ninja",
+                    "memory"
                 ]
             },
             "linux": {
                 "command": "ninja",
                 "args": [
                     "-f",
-                    "build.linux.ninja"
+                    "build.linux.ninja",
+                    "memory"
                 ]
             }
         },

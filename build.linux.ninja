@@ -27,7 +27,10 @@ build main.stamp: link main.o json.o test.o test_json_c.o utils.o
   name = test-main
 build main: phony main.stamp
 
-# --- O2 Target ---
+# Default target
+default main
+
+# --- O2 target ---
 cflags_o2 = $cflags -O2
 build main.o.o2: cc test/main.c
   cflags = $cflags_o2
@@ -43,7 +46,7 @@ build o2.stamp: link main.o.o2 json.o.o2 test.o.o2 test_json_c.o.o2 utils.o.o2
   name = test-o2
 build o2: phony o2.stamp
 
-# --- O3 Target ---
+# --- O3 target ---
 cflags_o3 = $cflags -O3
 build main.o.o3: cc test/main.c
   cflags = $cflags_o3
@@ -59,7 +62,7 @@ build o3.stamp: link main.o.o3 json.o.o3 test.o.o3 test_json_c.o.o3 utils.o.o3
   name = test-o3
 build o3: phony o3.stamp
 
-# --- Perf Target ---
+# --- Perf target ---
 cflags_perf = -Wall -Wextra -std=c11 -Ilibs/include -DUSE_PERFORMANCE_TESTS -O3 -march=native -flto
 ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops -fuse-ld=lld -lrt -Llibs/lib -ljson-c
 build main.o.perf: cc test/main.c
@@ -78,7 +81,7 @@ build perf.stamp: link main.o.perf json.o.perf test.o.perf test_json_c.o.perf ut
   ldflags = $ldflags_perf
 build perf: phony perf.stamp
 
-# --- Perf Target ---
+# --- Perf target ---
 cflags_perf_json_c = -Wall -Wextra -std=c11 -Ilibs/include -DUSE_PERFORMANCE_TESTS -DUSE_JSON_C -O3 -march=native -flto
 ldflags_perf_json_c = $ldflags -flto -flto=thin -fvectorize -funroll-loops -fuse-ld=lld -lrt -Llibs/lib -ljson-c
 build main_perf_json_c.o.perf: cc test/main.c
@@ -97,5 +100,19 @@ build perf_json_c.stamp: link main_perf_json_c.o.perf json_perf_json_c.o.perf te
   ldflags = $ldflags_perf_json_c
 build perf-json-c: phony perf_json_c.stamp
 
-# Default target
-default main
+# --- memory target ---
+test_memory_cflags_perf = -Wall -Wextra -std=c11 -g
+test_memory_ldflags_perf = $ldflags
+build test_memory_test_memory.o.perf: cc test/test_memory.c
+  cflags = $test_memory_cflags_perf
+build test_memory_json.o.perf: cc src/json.c
+  cflags = $test_memory_cflags_perf
+build test_memory_test.o.perf: cc test/test.c
+  cflags = $test_memory_cflags_perf
+build test_memory_utils.o.perf: cc test/utils.c
+  cflags = $test_memory_cflags_perf
+build test_memory.stamp: link test_memory_test_memory.o.perf test_memory_json.o.perf test_memory_test.o.perf test_memory_utils.o.perf
+  name = test-memory
+  cflags = $test_memory_cflags_perf
+  ldflags = $test_memory_ldflags_perf
+build memory: phony test_memory.stamp

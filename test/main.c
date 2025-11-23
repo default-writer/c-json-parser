@@ -3,7 +3,6 @@
 #include <stdio.h>
 #define printf printf
 
-TEST_SETUP();
 // TEST_DEFINITION(test_simple_json_parsing);
 TEST_DEFINITION(test_json_parsing);
 TEST_DEFINITION(test_c_json_parser);

@@ -2,8 +2,6 @@
 
 #define TEST_COUNT 100000UL
 
-TEST_SETUP();
-
 TEST(test_simple_json_parsing) {
   char *json = utils_get_test_json_data("test/test-simple.json");
   ASSERT_PTR_NOT_NULL(json);
@@ -66,7 +64,7 @@ TEST(test_c_json_parser) {
   /* parse into internal json_value* */
   long long start_time = utils_get_time();
   for (size_t i = 0; i < TEST_COUNT; i++) {
-    // memset(&v, 0, sizeof(json_value));
+    memset(&v, 0, sizeof(json_value));
     json_parse(json, &v);
     json_free(&v);
   }

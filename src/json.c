@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 23, 2025 at 3:12:03 AM GMT+3
+ *   November 23, 2025 at 11:07:37 AM GMT+3
  *
  */
 /*
@@ -118,7 +118,6 @@ static inline json_array_node *new_json_array_node(void) {
     return NULL;
   }
   json_array_node *ptr = json_array_node_free_pool[JSON_VALUE_POOL_SIZE - --json_array_node_free_count];
-  // memset(ptr, 0, sizeof(json_array_node));
   // printf("%016lld:%016llx\r\n", (unsigned long long)json_array_node_free_count, (unsigned long long)ptr);
   return ptr;
 }
@@ -129,7 +128,6 @@ static inline json_object_node *new_json_object_node(void) {
     return NULL;
   }
   json_object_node *ptr = json_object_node_free_pool[JSON_VALUE_POOL_SIZE - --json_object_node_free_count];
-  // memset(ptr, 0, sizeof(json_object_node));
   // printf("%016lld:%016llx\r\n", (unsigned long long)json_object_node_free_count, (unsigned long long)ptr);
   return ptr;
 }
@@ -434,28 +432,23 @@ static bool parse_object_value(const char **s, json_value *v) {
     }
     (*s)++;
     NEXT_TOKEN(s);
-    json_object_node *object_node = new_json_object_node();
-    if (!object_node)
-      return false;
-
-    object_node->item.key.ptr = ref.ptr;
-    object_node->item.key.len = ref.len;
-    // node->item.value = v;
-
+    json_object_node *object_node = NULL;
     json_object_node *object_items = v->u.object.items;
     while (object_items) {
       json_object_node *next = object_items->next;
       if (object_items->item.key.ptr && ref.ptr && object_items->item.key.len == ref.len && strncmp(object_items->item.key.ptr, ref.ptr, ref.len) == 0) {
-        memcpy(&object_items->item.value, &object_node->item.value, sizeof(json_value));
-        // free_json_value_contents(object_items->item.value);
-        // object_items->item.value = node->item.value;
-        // free(object_items);
         break;
       }
       object_items = next;
     }
     if (object_items == NULL) {
+      object_node = new_json_object_node();
+      object_node->item.key.ptr = ref.ptr;
+      object_node->item.key.len = ref.len;
+      // node->item.value = v;
       json_object_push(v, object_node);
+    } else {
+      object_node = object_items;
     }
     if (!parse_value_build(s, &object_node->item.value)) {
       free_json_value_contents(v);
