@@ -150,3 +150,10 @@ bool utils_test_json_equal(const char *a, const char *b) {
 
   return false;
 }
+
+void utils_output(const char *s) {
+  printf("-------------------------------------------------------------------------------\n");
+  fputs(s, stdout);
+  fputs("\n", stdout);
+  printf("-------------------------------------------------------------------------------\n");
+}

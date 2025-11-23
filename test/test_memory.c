@@ -23,7 +23,7 @@ TEST(test_memory_leaks, char *json) {
   /* compare structurally (order-insensitive) */
   ASSERT_TRUE(utils_test_json_equal(json, source));
 
-  fputs(json, stdout);
+  utils_output(json);
 
   /* cleanup */
   json_free(&v);

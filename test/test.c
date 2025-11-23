@@ -20,6 +20,8 @@ TEST(test_simple_json_parsing) {
   /* compare structurally (order-insensitive) */
   ASSERT_TRUE(utils_test_json_equal(json, source));
 
+  utils_output(json);
+
   /* cleanup */
   json_free(&v);
   free(json);
@@ -45,6 +47,8 @@ TEST(test_json_parsing) {
 
   /* compare structurally (order-insensitive) */
   ASSERT_TRUE(utils_test_json_equal(json, source));
+
+  utils_output(json);
 
   /* cleanup */
   json_free(&v);
