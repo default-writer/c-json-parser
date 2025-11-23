@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 21, 2025 at 9:48:46 PM GMT+3
+ *   November 23, 2025 at 2:44:23 AM GMT+3
  *
  */
 /*
@@ -48,7 +48,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_BUFFER_SIZE 0xffff
+#define MAX_BUFFER_SIZE 0xFFFF
 
 #ifdef _WIN32
 #include <windows.h>
@@ -82,7 +82,7 @@ typedef enum {
   J_STRING = 4,  // string value
   J_ARRAY = 5,   // array value
   J_OBJECT = 6   // object value
-} json_type;
+} json_token;
 
 /**
  * @brief Represents a reference to a part of the original JSON string.
@@ -96,7 +96,7 @@ typedef struct {
 /* Forward declarations */
 typedef struct json_value json_value;
 typedef struct json_object json_object;
-typedef struct json_value_node json_value_node;
+typedef struct json_array_node json_array_node;
 typedef struct json_object_node json_object_node;
 
 /**
@@ -104,14 +104,14 @@ typedef struct json_object_node json_object_node;
  * The type of the value is determined by the `type` field.
  */
 typedef struct json_value {
-  json_type type; // The type of the JSON value.
+  json_token type; // The type of the JSON value.
   union {
     reference string;  // J_STRING.
     reference boolean; // J_BOOLEAN.
     reference number;  // J_NUMBER.
     struct {
-      json_value_node *last;
-      json_value_node *items; // Array of JSON values.
+      json_array_node *last;
+      json_array_node *items; // Array of JSON values.
     } array;                  // J_ARRAY.
     struct {
       json_object_node *last;
@@ -125,7 +125,7 @@ typedef struct json_value {
  */
 typedef struct json_object {
   reference key;     // Key of the object.
-  json_value *value; // Pointer to the JSON value.
+  json_value value; // Pointer to the JSON value.
 } json_object;
 
 /**
@@ -136,10 +136,10 @@ typedef struct json_object_node {
   json_object_node *next; // Pointer to the JSON value.
 } json_object_node;
 
-typedef struct json_value_node {
-  json_value* item;
-  json_value_node *next; // Pointer to the JSON value.
-} json_value_node;
+typedef struct json_array_node {
+  json_value item;
+  json_array_node *next; // Pointer to the JSON value.
+} json_array_node;
 
 /**
  * @brief Returns a pointer to the original JSON source string.
@@ -154,7 +154,7 @@ const char *json_source(const json_value *v);
  * @param json The JSON string to parse.
  * @return A pointer to the root json_value, or NULL on error.
  */
-json_value *json_parse(const char *json);
+bool json_parse(const char *json, json_value *root);
 
 /**
  * @brief Compares two JSON strings for structural equality.
@@ -186,9 +186,16 @@ void json_free(json_value *v);
 void json_print(const json_value *v, FILE *out);
 
 /**
- * @brief Resets the internal memory pool used for JSON value allocation.
- * This should be called before a series of parsing operations to ensure a clean state.
+ * @brief Returns next token from input string,
+ * @param s Null-terminated input string.
+ * @return true if next token can be read from input string, of false otherwise.
  */
-void json_pool_reset(void);
+bool json_next_token(const char **s);
+
+// /**
+//  * @brief Resets the internal memory pool used for JSON value allocation.
+//  * This should be called before a series of parsing operations to ensure a clean state.
+//  */
+// void json_pool_reset(void);
 
 #endif /* JSON_H */

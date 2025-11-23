@@ -19,10 +19,11 @@ rule link
 build main.o: cc test/main.c
 build json.o: cc src/json.c
 build test.o: cc test/test.c
+build utils.o: cc test/utils.c
 build test_json_c.o: cc test/test_json_c.c
 
 # Build statement for the executable
-build main.stamp: link main.o json.o test.o test_json_c.o
+build main.stamp: link main.o json.o test.o test_json_c.o utils.o
   name = test-main
 build main: phony main.stamp
 
@@ -34,9 +35,11 @@ build json.o.o2: cc src/json.c
   cflags = $cflags_o2
 build test.o.o2: cc test/test.c
   cflags = $cflags_o2
+build utils.o.o2: cc test/utils.c
+  cflags = $cflags_o2  
 build test_json_c.o.o2: cc test/test_json_c.c
   cflags = $cflags_o2
-build o2.stamp: link main.o.o2 json.o.o2 test.o.o2 test_json_c.o.o2
+build o2.stamp: link main.o.o2 json.o.o2 test.o.o2 test_json_c.o.o2 utils.o.o2
   name = test-o2
 build o2: phony o2.stamp
 
@@ -48,9 +51,11 @@ build json.o.o3: cc src/json.c
   cflags = $cflags_o3
 build test.o.o3: cc test/test.c
   cflags = $cflags_o3
+build utils.o.o3: cc test/utils.c
+  cflags = $cflags_o3  
 build test_json_c.o.o3: cc test/test_json_c.c
   cflags = $cflags_o3
-build o3.stamp: link main.o.o3 json.o.o3 test.o.o3 test_json_c.o.o3
+build o3.stamp: link main.o.o3 json.o.o3 test.o.o3 test_json_c.o.o3 utils.o.o3
   name = test-o3
 build o3: phony o3.stamp
 
@@ -63,9 +68,11 @@ build json.o.perf: cc src/json.c
   cflags = $cflags_perf
 build test.o.perf: cc test/test.c
   cflags = $cflags_perf
+build utils.o.perf: cc test/utils.c
+  cflags = $cflags_perf
 build test_json_c.o.perf: cc test/test_json_c.c
   cflags = $cflags_perf
-build perf.stamp: link main.o.perf json.o.perf test.o.perf test_json_c.o.perf
+build perf.stamp: link main.o.perf json.o.perf test.o.perf test_json_c.o.perf utils.o.perf
   name = test-perf
   cflags = $cflags_perf
   ldflags = $ldflags_perf
@@ -80,9 +87,11 @@ build json_perf_json_c.o.perf: cc src/json.c
   cflags = $cflags_perf_json_c
 build test_perf_json_c.o.perf: cc test/test.c
   cflags = $cflags_perf_json_c
+build utils_perf_json_c.o.perf: cc test/utils.c
+  cflags = $cflags_perf
 build test_json_c_perf_json_c.o.perf: cc test/test_json_c.c
   cflags = $cflags_perf_json_c
-build perf_json_c.stamp: link main_perf_json_c.o.perf json_perf_json_c.o.perf test_perf_json_c.o.perf test_json_c_perf_json_c.o.perf
+build perf_json_c.stamp: link main_perf_json_c.o.perf json_perf_json_c.o.perf test_perf_json_c.o.perf test_json_c_perf_json_c.o.perf utils_perf_json_c.o.perf
   name = test-perf-json-c
   cflags = $cflags_perf_json_c
   ldflags = $ldflags_perf_json_c

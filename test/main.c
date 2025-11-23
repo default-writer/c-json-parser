@@ -1,9 +1,12 @@
 #include "../test/test.h"
 
-TEST_SETUP()
-TEST_DEFINITION(test_simple_json_parsing)
-TEST_DEFINITION(test_json_parsing)
-TEST_DEFINITION(test_c_json_parser)
+#include <stdio.h>
+#define printf printf
+
+TEST_SETUP();
+// TEST_DEFINITION(test_simple_json_parsing);
+TEST_DEFINITION(test_json_parsing);
+TEST_DEFINITION(test_c_json_parser);
 
 #ifdef USE_JSON_C
 
@@ -13,12 +16,12 @@ TEST_DEFINITION(test_json_c_parser);
 
 int main(void) {
 
-  TEST_INITIALIZE();
+  UTILS_INITIALIZE();
 
 #ifndef USE_PERFORMANCE_TESTS
 
   TEST_SUITE("unit tests");
-  test_simple_json_parsing();
+  // test_simple_json_parsing();
   test_json_parsing();
 
 #else

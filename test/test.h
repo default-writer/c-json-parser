@@ -1,44 +1,27 @@
 #ifndef TEST_H
 #define TEST_H
 
-#if !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
-#define _POSIX_C_SOURCE 200809L
-#endif
+#include "../test/utils.h"
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <time.h>
-#endif
-
-#include <ctype.h>
-#include <limits.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#define printf printf
 
 #define TEST_SETUP()                  \
-  extern void test_initialize(void);  \
+  extern void utils_initialize(void); \
   extern int tests_run;               \
   extern int tests_passed;            \
   extern const char *GREEN;           \
   extern const char *RED;             \
   extern const char *RESET;           \
-  extern void test_initialize(void);  \
-  extern long long get_time_ns(void); \
-  extern void print_time_diff(const char *test, long long start_ns, long long end_ns);
+  extern void json_initialize(void)
 
 #define TEST_DEFINITION(name) \
-  extern void(name)(void);
+  extern void(name)(void)
 
-#define TEST_INITIALIZE() \
-  do {                    \
-    test_initialize();    \
-    tests_run = 0;        \
-    tests_passed = 0;     \
+#define UTILS_INITIALIZE() \
+  do {                     \
+    utils_initialize();    \
+    tests_run = 0;         \
+    tests_passed = 0;      \
   } while (0)
 
 #define TEST_SUITE(name)                                                                         \
@@ -48,28 +31,25 @@
     printf("===============================================================================\n"); \
   } while (0)
 
-#define TEST_FINALIZE()                                                                            \
-  do {                                                                                             \
-    if (tests_run == tests_passed) {                                                               \
-      printf("===============================================================================\n"); \
-      printf("tests run: %d\n", tests_run);                                                        \
-      printf("tests passed: %d\n", tests_passed);                                                  \
-      printf("===============================================================================\n"); \
-      printf("all tests %sPASSED%s\n", GREEN, RESET);                                              \
-      return 0;                                                                                    \
-    } else {                                                                                       \
-      printf("===============================================================================\n"); \
-      printf("tests run: %d\n", tests_run);                                                        \
-      printf("tests passed: %d\n", tests_passed);                                                  \
-      printf("===============================================================================\n"); \
-      printf("some tests %sFAILED%s\n", RED, RESET);                                               \
-      return 1;                                                                                    \
-    }                                                                                              \
+#define TEST_FINALIZE()                                                                          \
+  do {                                                                                           \
+    printf("===============================================================================\n"); \
+    printf("tests run: %d\n", tests_run);                                                        \
+    printf("tests passed: %d\n", tests_passed);                                                  \
+    printf("===============================================================================\n"); \
+    if (tests_run == tests_passed) {                                                             \
+      printf("all tests %sPASSED%s\n", GREEN, RESET);                                            \
+      return 0;                                                                                  \
+    } else {                                                                                     \
+      printf("some tests %sFAILED%s\n", RED, RESET);                                             \
+      return 1;                                                                                  \
+    }                                                                                            \
   } while (0)
 
 #define TEST(name)             \
   void name() {                \
     do {                       \
+      json_initialize();       \
       tests_run++;             \
       int passed = 1;          \
       char *test_name = #name; \
@@ -148,4 +128,4 @@
     }                                                                                           \
   } while (0)
 
-#endif
+#endif // TEST_H
