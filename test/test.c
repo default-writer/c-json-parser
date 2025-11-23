@@ -3,53 +3,53 @@
 #define TEST_COUNT 100000UL
 
 TEST(test_simple_json_parsing) {
-  char *json = utils_get_test_json_data("test/test-simple.json");
-  ASSERT_PTR_NOT_NULL(json);
+  char *source = utils_get_test_json_data("test/test-simple.json");
+  ASSERT_PTR_NOT_NULL(source);
 
   json_value v; // = new_json_value();
   memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */
-  json_parse(json, &v);
+  json_parse(source, &v);
   ASSERT_PTR_NOT_NULL(&v);
 
   /* render json_value back to string */
-  char *out = json_stringify(&v);
-  ASSERT_PTR_NOT_NULL(out);
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
 
   /* compare structurally (order-insensitive) */
-  ASSERT(utils_test_json_equal(json, out));
+  ASSERT_TRUE(utils_test_json_equal(json, source));
 
   /* cleanup */
   json_free(&v);
   free(json);
-  free(out);
+  free(source);
 
   END_TEST;
 }
 
 TEST(test_json_parsing) {
-  char *json = utils_get_test_json_data("test/test.json");
-  ASSERT_PTR_NOT_NULL(json);
+  char *source = utils_get_test_json_data("test/test.json");
+  ASSERT_PTR_NOT_NULL(source);
 
   json_value v; // = new_json_value();
   memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */
-  json_parse(json, &v);
+  json_parse(source, &v);
   ASSERT_PTR_NOT_NULL(&v);
 
   /* render json_value back to string */
-  char *out = json_stringify(&v);
-  ASSERT_PTR_NOT_NULL(out);
-  json_free(&v);
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
 
   /* compare structurally (order-insensitive) */
-  ASSERT(utils_test_json_equal(json, out));
+  ASSERT_TRUE(utils_test_json_equal(json, source));
 
   /* cleanup */
+  json_free(&v);
   free(json);
-  free(out);
+  free(source);
 
   END_TEST;
 }
@@ -69,7 +69,7 @@ TEST(test_c_json_parser) {
     json_free(&v);
   }
   long long end_time = utils_get_time();
-  utils_print_time_diff("test_json_parsing", start_time, end_time);
+  utils_print_time_diff(start_time, end_time);
 
   /* cleanup */
   free(json);

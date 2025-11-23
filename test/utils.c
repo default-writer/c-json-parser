@@ -10,12 +10,6 @@
 #define TIME_HOURS 24UL
 #define TIME_EPSILON 1000000000UL
 
-#define NEXT_TOKEN(s)        \
-  do {                       \
-    if (!json_next_token(s)) \
-      return false;          \
-  } while (0)
-
 int tests_run = 0;
 int tests_passed = 0;
 
@@ -57,13 +51,12 @@ long long utils_get_time(void) {
 #endif
 }
 
-void utils_print_time_diff(const char *test, long long start_ns, long long end_ns) {
+void utils_print_time_diff(long long start_ns, long long end_ns) {
   long long diff_ns = end_ns - start_ns;
   long long ns_per_ms = TIME_NANOSECONDS;
   long long ns_per_s = TIME_MILLISECONDS * ns_per_ms;
   long long ns_per_m = TIME_SECONDS * ns_per_s;
   long long ns_per_h = TIME_MINUTES * ns_per_m;
-
   long long hours = diff_ns / ns_per_h;
   diff_ns %= ns_per_h;
   long long minutes = diff_ns / ns_per_m;
@@ -71,8 +64,7 @@ void utils_print_time_diff(const char *test, long long start_ns, long long end_n
   long long seconds = diff_ns / ns_per_s;
   diff_ns %= ns_per_s;
   long long milliseconds = diff_ns / ns_per_ms;
-
-  printf("%s execution time: %02lld:%02lld:%02lld.%03lld\n", test, hours, minutes, seconds, milliseconds);
+  printf("%s                                                    %02lld:%02lld:%02lld.%03lld\n", "execution time:", hours, minutes, seconds, milliseconds);
 }
 
 char *utils_get_test_json_data(const char *filename) {
@@ -105,81 +97,56 @@ bool utils_test_json_equal(const char *a, const char *b) {
 
   const char *pa = a;
   const char *pb = b;
+  /* find first differing position in the original inputs (skip whitespace) */
+  const char *xa = a;
+  const char *xb = b;
 
-  if (!a && !b) {
-    return false;
+  while (*xa != '\0' && *xb != '\0') {
+    NEXT_TOKEN(&xa);
+    NEXT_TOKEN(&xb);
+    if (*xa != *xb)
+      break;
+    xa++;
+    xb++;
   }
 
-  json_value va;
-  memset(&va, 0, sizeof(json_value));
-
-  json_value vb;
-  memset(&vb, 0, sizeof(json_value));
-
-  json_parse(pa, &va);
-  json_parse(pb, &vb);
-
-  if (va.type != vb.type) {
-    json_free(&va);
-    json_free(&vb);
-    return false;
-  }
-
-  bool eq = json_equal(&va, &vb);
-
-  if (!eq) {
-
-    /* find first differing position in the original inputs (skip whitespace) */
-    const char *xa = pa;
-    const char *xb = pb;
-
-    while (*xa != '\0' && *xb != '\0') {
-      NEXT_TOKEN(&xa);
-      NEXT_TOKEN(&xb);
-      if (*xa != *xb)
-        break;
+  if (*xa != '\0')
+    while (isspace((unsigned char)*xa))
       xa++;
+  if (*xb != '\0')
+    while (isspace((unsigned char)*xb))
       xb++;
-    }
 
-    if (*xa != '\0')
-      while (isspace((unsigned char)*xa))
-        xa++;
-    if (*xb != '\0')
-      while (isspace((unsigned char)*xb))
-        xb++;
-
-    size_t off_a = (size_t)(xa - pa);
-    size_t off_b = (size_t)(xb - pb);
-
-    /* print brief context */
-    size_t ctx_before = PREFIX_CHAR_OFFSET;
-    size_t ctx_after = POSTFIX_CHAR_OFFSET;
-    size_t start_a = (off_a > ctx_before) ? off_a - ctx_before : 0;
-    size_t start_b = (off_b > ctx_before) ? off_b - ctx_before : 0;
-
-    fprintf(stderr, "mismatch: first diff byte offsets a=%zu b=%zu\n", off_a, off_b);
-    fprintf(stderr, "a context: \"");
-
-    for (size_t i = start_a; i < off_a + ctx_after && pa[i] != '\0'; ++i) {
-      char c = pa[i];
-      fputc(c, stderr);
-    }
-
-    fprintf(stderr, "\"\n");
-    fprintf(stderr, "b context: \"");
-
-    for (size_t i = start_b; i < off_b + ctx_after && pb[i] != '\0'; ++i) {
-      char c = pb[i];
-      fputc(c, stderr);
-    }
-
-    fprintf(stderr, "\"\n");
-
+  if (*xa == '\0' && *xb == '\0') {
+    return true;
   }
 
-  json_free(&va);
-  json_free(&vb);
+  size_t off_a = (size_t)(xa - pa);
+  size_t off_b = (size_t)(xb - pb);
 
-  return eq;
+  /* print brief context */
+  size_t ctx_before = PREFIX_CHAR_OFFSET;
+  size_t ctx_after = POSTFIX_CHAR_OFFSET;
+  size_t start_a = (off_a > ctx_before) ? off_a - ctx_before : 0;
+  size_t start_b = (off_b > ctx_before) ? off_b - ctx_before : 0;
+
+  fprintf(stderr, "mismatch: first diff byte offsets a=%zu b=%zu\n", off_a, off_b);
+  fprintf(stderr, "a context: \"");
+
+  for (size_t i = start_a; i < off_a + ctx_after && pa[i] != '\0'; ++i) {
+    char c = pa[i];
+    fputc(c, stderr);
+  }
+
+  fprintf(stderr, "\"\n");
+  fprintf(stderr, "b context: \"");
+
+  for (size_t i = start_b; i < off_b + ctx_after && pb[i] != '\0'; ++i) {
+    char c = pb[i];
+    fputc(c, stderr);
+  }
+
+  fprintf(stderr, "\"\n");
+
+  return false;
 }

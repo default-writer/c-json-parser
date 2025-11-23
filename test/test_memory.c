@@ -21,14 +21,12 @@ TEST(test_memory_leaks, char *json) {
   json_free(&v);
 
   /* compare structurally (order-insensitive) */
-  ASSERT(utils_test_json_equal(json, out));
-
-  /* cleanup */
-  free(out);
-
-  json_free(&v);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
 
   fputs(json, stdout);
+
+  /* cleanup */
+  json_free(&v);
   free(json);
 
   END_TEST;

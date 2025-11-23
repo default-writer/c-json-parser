@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 23, 2025 at 11:07:37 AM GMT+3
+ *   November 23, 2025 at 7:32:51 PM GMT+3
  *
  */
 /*
@@ -48,10 +48,10 @@
 #define STATE_ESCAPE_UNICODE_BYTE3 5
 #define STATE_ESCAPE_UNICODE_BYTE4 6
 #define TEXT_SIZE(name) (sizeof((name)) - 1)
-#define NEXT_TOKEN(s)        \
-  do {                       \
-    if (!json_next_token(s)) \
-      return false;          \
+#define NEXT_TOKEN(s)          \
+  do {                         \
+    if (!json_next_token((s))) \
+      return false;            \
   } while (0)
 
 /* small buffer state (used by buffer-based printers) */
@@ -212,18 +212,16 @@ static void free_json_value_contents(json_value *v) {
 }
 
 bool json_next_token(const char **s) {
-  while (**s != '\0' && isspace((unsigned char)**s))
-    (*s)++;
   if (**s == '\0')
     return false;
+  while (**s != '\0' && isspace((unsigned char)**s))
+    (*s)++;
   return true;
 }
 
 /* --- parser helpers --- */
 
 static bool parse_string_value(const char **s, json_value *v) {
-  if (**s != '"')
-    return false;
   const char *p = *s + 1;
   const char *ptr = *s + 1;
   size_t len = 0;
@@ -938,8 +936,6 @@ char *json_stringify(const json_value *v) {
     return NULL;
   int rc = json_stringify_to_buffer(v, buf, MAX_BUFFER_SIZE);
   if (rc >= 0) {
-    /* rc is bytes written (excluding '\0') */
-    /* shrink to fit */
     char *shr = realloc(buf, (size_t)rc + 1);
     if (shr)
       buf = shr;

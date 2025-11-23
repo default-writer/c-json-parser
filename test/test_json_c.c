@@ -17,7 +17,7 @@ TEST(test_json_c_parser) {
     json_object_put(jobj);
   }
   long long end_time = utils_get_time();
-  utils_print_time_diff("test_json_c_parser", start_time, end_time);
+  utils_print_time_diff(start_time, end_time);
 
   /* cleanup */
   free(json);

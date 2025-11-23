@@ -23,8 +23,14 @@
 #include "../src/json.h"
 
 long long utils_get_time(void);
-void utils_print_time_diff(const char *test, long long start_ns, long long end_ns);
+void utils_print_time_diff(long long start_ns, long long end_ns);
 char *utils_get_test_json_data(const char *filename);
 bool utils_test_json_equal(const char *a, const char *b);
+
+#define NEXT_TOKEN(s)                      \
+  do {                                     \
+    if (!json_next_token((s))) \
+      return false;                        \
+  } while (0)
 
 #endif // UTILS_H
