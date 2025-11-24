@@ -14,9 +14,9 @@
 | execution time (100K run)               |        00:00:00.881 |        00:00:01.196 |    00:00:04.236 |
 | execution time (1M runs)                |        00:00:08.808 |        00:00:11.838 |    00:00:42.702 |
 | allocation calls (100K runs)            |                   0 |          20,000,000 |      52,900,000 |
-| allocation calls (1M runs)              |                   0 |         200,000,000 |              -- |
+| allocation calls (1M runs)              |                   0 |         200,000,000 |     529,000,000 |
 | total heap usage (100K runs)            |                   0 |         806,400,000 |   4,179,600,000 |
-| total heap usage (1M runs)              |                   0 |       8,064,000,000 |   4,179,600,000 |
+| total heap usage (1M runs)              |                   0 |       8,064,000,000 |  41,796,000,000 |
 
 (*) - alloc-free linked-list version
 (**) - linked-list version
