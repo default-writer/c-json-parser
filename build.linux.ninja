@@ -82,15 +82,15 @@ build perf_alloc.stamp: link main.o.perf json.o.perf_alloc utils.o.perf
   ldflags = $ldflags_perf_long
 build perf-alloc: phony perf_alloc.stamp
 
-# --- perf-long-alloc target ---
+# --- perf-alloc-long target ---
 cflags_perf_long_alloc = $cflags_perf_long -DUSE_ALLOC
 build json.o.perf_long_alloc: cc src/json.c
   cflags = $cflags_perf_long_alloc
 build perf_long_alloc.stamp: link main.o.perf_long json.o.perf_long_alloc utils.o.perf
-  name = test-perf-long-alloc
+  name = test-perf-alloc-long
   cflags = $cflags_perf_long_alloc
   ldflags = $ldflags_perf_long
-build perf-long-alloc: phony perf_long_alloc.stamp
+build perf-alloc-long: phony perf_long_alloc.stamp
 
 # --- perf-json-c target ---
 cflags_perf_json_c = -Wall -Wextra -std=c11 -Ilibs/include -O3 -march=native -flto

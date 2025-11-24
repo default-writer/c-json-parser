@@ -23,8 +23,8 @@ ninja -f build.linux.ninja -t clean > /dev/null 2>&1
 ninja -f build.linux.ninja perf-alloc
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
 
-# perf-long-alloc target
-ninja -f build.linux.ninja perf-long-alloc
+# perf-alloc-long target
+ninja -f build.linux.ninja perf-alloc-long
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
 
 # perf-json-c target
