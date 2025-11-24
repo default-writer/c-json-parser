@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 16, 2025 at 9:26:56 PM GMT+3
+ *   November 24, 2025 at 6:58:46 AM GMT+3
  *
  */
 /*
@@ -40,15 +40,25 @@
 #define JSON_H
 
 #include <ctype.h>
-#include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_BUFFER_SIZE 0xffff
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef JSON_EXPORT
+#if defined(_MSC_VER) && defined(JSON_C_DLL)
+#define JSON_EXPORT __declspec(dllexport)
+#else
+#define JSON_EXPORT extern
+#endif
+#endif
+
+#define MAX_BUFFER_SIZE 0xFFFF
 
 #ifdef _WIN32
 #include <windows.h>
@@ -82,7 +92,7 @@ typedef enum {
   J_STRING = 4,  // string value
   J_ARRAY = 5,   // array value
   J_OBJECT = 6   // object value
-} json_type;
+} json_token;
 
 /**
  * @brief Represents a reference to a part of the original JSON string.
@@ -96,27 +106,27 @@ typedef struct {
 /* Forward declarations */
 typedef struct json_value json_value;
 typedef struct json_object json_object;
+typedef struct json_array_node json_array_node;
+typedef struct json_object_node json_object_node;
 
 /**
  * @brief Represents a JSON value.
  * The type of the value is determined by the `type` field.
  */
 typedef struct json_value {
-  json_type type; // The type of the JSON value.
+  json_token type; // The type of the JSON value.
   union {
     reference string;  // J_STRING.
     reference boolean; // J_BOOLEAN.
     reference number;  // J_NUMBER.
     struct {
-      json_value **items; // Array of JSON values.
-      size_t count;       // Number of items in the array.
-      size_t capacity;    // Allocated capacity of the array.
-    } array;              // J_ARRAY.
+      json_array_node *last;
+      json_array_node *items; // Array of JSON values.
+    } array;                  // J_ARRAY.
     struct {
-      json_object *items; // Array of key-value pairs.
-      size_t count;       // Number of items in the object.
-      size_t capacity;    // Allocated capacity of the object.
-    } object;             // J_OBJECT.
+      json_object_node *last;
+      json_object_node *items; // Array of key-value pairs.
+    } object;                  // J_OBJECT.
   } u;
 } json_value;
 
@@ -125,8 +135,21 @@ typedef struct json_value {
  */
 typedef struct json_object {
   reference key;     // Key of the object.
-  json_value *value; // Pointer to the JSON value.
+  json_value value; // Pointer to the JSON value.
 } json_object;
+
+/**
+ * @brief Represents a node in a linked list of JSON values.
+ */
+typedef struct json_object_node {
+  json_object item;
+  json_object_node *next; // Pointer to the JSON value.
+} json_object_node;
+
+typedef struct json_array_node {
+  json_value item;
+  json_array_node *next; // Pointer to the JSON value.
+} json_array_node;
 
 /**
  * @brief Returns a pointer to the original JSON source string.
@@ -141,7 +164,7 @@ const char *json_source(const json_value *v);
  * @param json The JSON string to parse.
  * @return A pointer to the root json_value, or NULL on error.
  */
-json_value *json_parse(const char *json);
+bool json_parse(const char *json, json_value *root);
 
 /**
  * @brief Compares two JSON strings for structural equality.
@@ -173,9 +196,20 @@ void json_free(json_value *v);
 void json_print(const json_value *v, FILE *out);
 
 /**
- * @brief Resets the internal memory pool used for JSON value allocation.
- * This should be called before a series of parsing operations to ensure a clean state.
+ * @brief Returns next token from input string,
+ * @param s Null-terminated input string.
+ * @return true if next token can be read from input string, of false otherwise.
  */
-void json_pool_reset(void);
+bool json_next_token(const char **s);
+
+// /**
+//  * @brief Resets the internal memory pool used for JSON value allocation.
+//  * This should be called before a series of parsing operations to ensure a clean state.
+//  */
+// void json_pool_reset(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* JSON_H */

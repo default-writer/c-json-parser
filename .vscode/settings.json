@@ -10,18 +10,18 @@
   "[cpp]": {
     "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
   },
-  "editor.fontSize": 8,
-  "editor.fontFamily": "'JetBrains Mono', 'Ubuntu Mono', 'ProggyVector', 'Monoid', 'Fira Code', monospace",
+  "editor.fontSize": 12,
+  "editor.fontFamily": "'Ubuntu Mono', 'JetBrains Mono', 'ProggyVector', 'Monoid', 'Fira Code', monospace",
   "window.zoomPerWindow": false,
-  "debug.console.fontSize": 8,
-  "terminal.integrated.fontSize": 8,
-  "chat.editor.fontSize": 8,
-  "chat.fontSize": 8,
+  "debug.console.fontSize": 12,
+  "terminal.integrated.fontSize": 12,
+  "chat.editor.fontSize": 12,
+  "chat.fontSize": 12,
   "errorLens.fontSize": "8",
-  "markdown.preview.fontSize": 8,
-  "scm.inputFontSize": 8,
+  "markdown.preview.fontSize": 12,
+  "scm.inputFontSize": 12,
   "screencastMode.fontSize": 24,
-  "editor.minimap.sectionHeaderFontSize": 8,
+  "editor.minimap.sectionHeaderFontSize": 12,
   "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd",
   "editor.defaultFoldingRangeProvider": "llvm-vs-code-extensions.vscode-clangd",
   "fileHeaderComment.parameter": {
@@ -101,5 +101,7 @@
     "*": [
       "${license_bsd3}"
     ]
-  }
+  },
+  "terminal.integrated.fontFamily": "'Ubuntu Mono'",
+  "editor.fontWeight": "normal"
 }

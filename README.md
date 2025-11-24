@@ -1,7 +1,7 @@
 # C JSON parser
 
 - lightning-fast implementation of a JSON parser
-- performance improvement rate of x4/x10 for speed/memory compared to alternatives: [json-c](https://github.com/json-c/json-c)
+- performance improvement rate of x4/x4 for speed/memory compared to alternatives: [json-c](https://github.com/json-c/json-c)
 
 ## badges
 
@@ -9,11 +9,16 @@
 
 ## Speed comparison
 
-| Metric                              | c-json-parser    | json-c          |
-| :-----------------------------------| ---------------: | --------------: |
-| execution time (100K runs)          |     00:00:01.028 |    00:00:04.197 |
-| allocation calls (100K runs)        |        4,400,004 |      52,900,004 |
-| total heap usage (bytes allocated)  |    1,292,809,439 |   4,179,609,439 |
+| Metric                                  |      json-parser(*) |       c-json-parser |          json-c |
+| :---------------------------------------| ------------------: | ------------------: | --------------: |
+| execution time (100K run)               |        00:00:00.881 |        00:00:01.182 |    00:00:04.156 |
+| execution time (1M runs)                |        00:00:08.808 |        00:00:11.838 |    00:00:42.702 |
+| allocation calls (100K runs)            |                   0 |          20,000,000 |      52,900,000 |
+| allocation calls (1M runs)              |                   0 |         200,000,000 |     529,000,000 |
+| total heap usage (100K runs)            |                   0 |         806,400,000 |   4,179,600,000 |
+| total heap usage (1M runs)              |                   0 |       8,064,000,000 |  41,796,000,000 |
+
+(*) - alloc-free version (fixed buffer size)
 
 ## docs
 
@@ -22,8 +27,7 @@
 
 ## screenshots
 
-![logo_c_json_parser](images/image-1.png)
-<!-- ![logo_c_json_parser](images/image-2.png) -->
+![logo_c_json_parser](images/image.png)
 
 ## tools
 
@@ -49,22 +53,26 @@ or just run (linux-based)
 ## building
 
 ```bash
+./build.sh
+```
+
+or
+
+```bash
 ninja -f build.linux.ninja && ./test-main
 ```
 
 ## testing
 
 ```bash
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o2
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o3
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
 ```
 
 ## profiling / performance tests (json-c)
 
 ```bash
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf-json-c
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf-json-c && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
 ```
 
 ## python

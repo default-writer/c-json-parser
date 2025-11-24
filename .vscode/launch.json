@@ -1,18 +1,31 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "debug",
-            "type": "lldb-dap",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "cwd": "${workspaceFolder}",
-            "windows": {
-                "program": "${workspaceFolder}/test-main.exe"
-            },
-            "linux": {
-                "program": "${workspaceFolder}/test-main"
-            }
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "debug",
+      "type": "lldb-dap",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "cwd": "${workspaceFolder}",
+      "windows": {
+        "program": "${workspaceFolder}/test-main.exe"
+      },
+      "linux": {
+        "program": "${workspaceFolder}/test-main"
+      }
+    },
+    {
+      "name": "debug memory",
+      "type": "lldb-dap",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "cwd": "${workspaceFolder}",
+      "windows": {
+        "program": "${workspaceFolder}/test-memory.exe"
+      },
+      "linux": {
+        "program": "${workspaceFolder}/test-memory"
+      }
+    }
+  ]
 }

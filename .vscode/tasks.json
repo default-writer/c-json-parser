@@ -1,50 +1,76 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "build",
-            "type": "shell",
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "windows": {
-                "command": "ninja",
-                "args": [
-                    "-f",
-                    "build.windows.ninja"
-                ]
-            },
-            "linux": {
-                "command": "ninja",
-                "args": [
-                    "-f",
-                    "build.linux.ninja"
-                ]
-            }
-        },
-        {
-            "label": "clean",
-            "type": "shell",
-            "group": "build",
-            "windows": {
-                "command": "ninja",
-                "args": [
-                    "-f",
-                    "build.windows.ninja",
-                    "-t",
-                    "clean"
-                ]
-            },
-            "linux": {
-                "command": "ninja",
-                "args": [
-                    "-f",
-                    "build.linux.ninja",
-                    "-t",
-                    "clean",
-                ]
-            }
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "windows": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.windows.ninja",
+          "main"
+        ]
+      },
+      "linux": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.linux.ninja",
+          "main"
+        ]
+      }
+    },
+    {
+      "label": "build memory",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "windows": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.windows.ninja",
+          "memory"
+        ]
+      },
+      "linux": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.linux.ninja",
+          "memory"
+        ]
+      }
+    },
+    {
+      "label": "clean",
+      "type": "shell",
+      "group": "build",
+      "windows": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.windows.ninja",
+          "-t",
+          "clean"
+        ]
+      },
+      "linux": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.linux.ninja",
+          "-t",
+          "clean",
+        ]
+      }
+    }
+  ]
 }
