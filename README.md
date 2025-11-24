@@ -28,8 +28,7 @@
 
 ## screenshots
 
-![logo_c_json_parser](images/image-1.png)
-<!-- ![logo_c_json_parser](images/image-2.png) -->
+![logo_c_json_parser](images/image.png)
 
 ## tools
 
