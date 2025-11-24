@@ -5,17 +5,17 @@
 
 #define printf printf
 
-#define TEST_SETUP()                  \
-  extern void utils_initialize(void); \
-  extern int tests_run;               \
-  extern int tests_passed;            \
-  extern const char *GREEN;           \
-  extern const char *RED;             \
-  extern const char *RESET;           \
-  extern void json_initialize(void)
+#define TEST_SETUP()                       \
+  JSON_EXPORT void utils_initialize(void); \
+  JSON_EXPORT int tests_run;               \
+  JSON_EXPORT int tests_passed;            \
+  JSON_EXPORT const char *GREEN;           \
+  JSON_EXPORT const char *RED;             \
+  JSON_EXPORT const char *RESET;           \
+  JSON_EXPORT void json_initialize(void)
 
 #define TEST_DEFINITION(name) \
-  extern void(name)(void)
+  JSON_EXPORT void(name)(void)
 
 #define TEST_INITIALIZE \
   do {                  \
@@ -57,19 +57,19 @@
       printf("running test: %65s\n", test_name); \
       do
 
-#define END_TEST                              \
-  }                                           \
-  while (0)                                   \
-    ;                                         \
-  if (passed) {                               \
-    tests_passed++;                           \
-    printf("status:  %60s", test_name);       \
-    printf(" ...%sPASSED%s\n", GREEN, RESET); \
-  } else {                                    \
-    printf("status:  %60s", test_name);       \
-    printf(" ...%sFAILED%s\n", RED, RESET);   \
-  }                                           \
-  }                                           \
+#define END_TEST                          \
+  }                                       \
+  while (0)                               \
+    ;                                     \
+  if (passed) {                           \
+    tests_passed++;                       \
+    printf("status: %65s", "");       \
+    printf("%sPASSED%s\n", GREEN, RESET); \
+  } else {                                \
+    printf("status: %65s", "");       \
+    printf("%sFAILED%s\n", RED, RESET);   \
+  }                                       \
+  }                                       \
   while (0)
 
 #define ASSERT_TRUE(actual)                                                           \

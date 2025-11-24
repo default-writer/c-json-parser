@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 23, 2025 at 7:57:01 PM GMT+3
+ *   November 24, 2025 at 6:51:26 AM GMT+3
  *
  */
 /*
@@ -61,6 +61,8 @@ typedef struct {
   int pos;
 } bs;
 
+#ifdef USE_ALLOC
+#else
 /* json_array_node pool */
 static json_array_node json_array_node_pool[JSON_VALUE_POOL_SIZE];
 static json_array_node *json_array_node_free_pool[JSON_VALUE_POOL_SIZE];
@@ -70,13 +72,10 @@ static size_t json_array_node_free_count = JSON_VALUE_POOL_SIZE;
 static json_object_node json_object_node_pool[JSON_VALUE_POOL_SIZE];
 static json_object_node *json_object_node_free_pool[JSON_VALUE_POOL_SIZE];
 static size_t json_object_node_free_count = JSON_VALUE_POOL_SIZE;
+#endif
 
 /* forward declarations */
-// static json_value *new_json_value(void);
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
-static void json_array_push(json_value *v, json_array_node *node);
-static void json_object_push(json_value *v, json_object_node *node);
-
 static void free_json_value_contents(json_value *v);
 
 /* --- parser helpers --- */
@@ -112,55 +111,6 @@ static bool json_array_equal(const json_value *a, const json_value *b);
 static bool json_object_equal(const json_value *a, const json_value *b);
 
 /* implementation */
-static inline json_array_node *new_json_array_node(void) {
-  // return calloc(1, sizeof(json_array_node));
-  if (json_array_node_free_count == 0) {
-    return NULL;
-  }
-  json_array_node *ptr = json_array_node_free_pool[JSON_VALUE_POOL_SIZE - --json_array_node_free_count];
-  // printf("%016lld:%016llx\r\n", (unsigned long long)json_array_node_free_count, (unsigned long long)ptr);
-  return ptr;
-}
-
-static inline json_object_node *new_json_object_node(void) {
-  // return calloc(1, sizeof(json_object_node));
-  if (json_object_node_free_count == 0) {
-    return NULL;
-  }
-  json_object_node *ptr = json_object_node_free_pool[JSON_VALUE_POOL_SIZE - --json_object_node_free_count];
-  // printf("%016lld:%016llx\r\n", (unsigned long long)json_object_node_free_count, (unsigned long long)ptr);
-  return ptr;
-}
-
-static void json_array_push(json_value *v, json_array_node *node) {
-  if (v->u.array.items == NULL) {
-    v->u.array.items = node;
-    return;
-  }
-  if (v->u.array.last == NULL) {
-    v->u.array.last = node;
-    v->u.array.items->next = node;
-    return;
-  }
-  json_array_node *last = v->u.array.last;
-  v->u.array.last = node;
-  last->next = node;
-}
-
-static void json_object_push(json_value *v, json_object_node *node) {
-  if (v->u.object.items == NULL) {
-    v->u.object.items = node;
-    return;
-  }
-  if (v->u.object.last == NULL) {
-    v->u.object.last = node;
-    v->u.object.items->next = node;
-    return;
-  }
-  json_object_node *last = v->u.object.last;
-  v->u.object.last = node;
-  last->next = node;
-}
 
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len) {
   if (!obj || obj->type != J_OBJECT || !key)
@@ -187,9 +137,17 @@ static void free_json_value_contents(json_value *v) {
     while (array_node) {
       json_array_node *next = array_node->next;
       free_json_value_contents(&array_node->item);
-      // free(array_node);
-      json_array_node_free_pool[JSON_VALUE_POOL_SIZE - json_array_node_free_count++] = array_node;
-      memset(array_node, 0, sizeof(json_array_node));
+#ifdef USE_ALLOC
+      free(array_node);
+#else
+      if (json_array_node_free_count < JSON_VALUE_POOL_SIZE) {
+        json_array_node_free_pool[JSON_VALUE_POOL_SIZE - json_array_node_free_count++] = array_node;
+      }
+      array_node->item.type = 0;
+      array_node->item.u.array.items = NULL;
+      array_node->item.u.array.last = NULL;
+      array_node->next = NULL;
+#endif
       array_node = next;
     }
     v->u.array.items = NULL;
@@ -198,9 +156,17 @@ static void free_json_value_contents(json_value *v) {
     while (object_node) {
       json_object_node *next = object_node->next;
       free_json_value_contents(&object_node->item.value);
-      // free(object_node);
-      json_object_node_free_pool[JSON_VALUE_POOL_SIZE - json_object_node_free_count++] = object_node;
-      memset(object_node, 0, sizeof(json_object_node));
+#ifdef USE_ALLOC
+      free(object_node);
+#else
+      if (json_object_node_free_count < JSON_VALUE_POOL_SIZE) {
+        json_object_node_free_pool[JSON_VALUE_POOL_SIZE - json_object_node_free_count++] = object_node;
+      }
+      object_node->item.value.type = 0;
+      object_node->item.value.u.object.items = NULL;
+      object_node->item.value.u.object.last = NULL;
+      object_node->next = NULL;
+#endif
       object_node = next;
     }
     v->u.object.items = NULL;
@@ -378,16 +344,40 @@ static bool parse_array_value(const char **s, json_value *v) {
   }
   while (1) {
     NEXT_TOKEN(s);
-    json_array_node *array_node = new_json_array_node(); //
-    if (!array_node)
+#ifdef USE_ALLOC
+    json_array_node *array_node = calloc(1, sizeof(json_array_node));
+    if (array_node == NULL) {
       return false;
-
-    json_array_push(v, array_node);
+    }
+#else
+    json_array_node *array_node = json_array_node_free_pool[JSON_VALUE_POOL_SIZE - --json_array_node_free_count];
+    if (json_array_node_free_count == 0) {
+      return false;
+    }
+#endif
+    do {
+      if (v->u.array.items == NULL) {
+        v->u.array.items = array_node;
+        break;
+      }
+      if (v->u.array.last == NULL) {
+        v->u.array.last = array_node;
+        v->u.array.items->next = array_node;
+        break;
+      }
+      json_array_node *last = v->u.array.last;
+      v->u.array.last = array_node;
+      last->next = array_node;
+    } while (0);
     if (!parse_value_build(s, &array_node->item)) {
       free_json_value_contents(v);
-      // free(array_node);
-      json_array_node_free_pool[JSON_VALUE_POOL_SIZE - json_array_node_free_count++] = array_node;
-      memset(array_node, 0, sizeof(json_array_node));
+#ifdef USE_ALLOC
+      free(array_node);
+#else
+      if (json_array_node_free_count < JSON_VALUE_POOL_SIZE) {
+        json_array_node_free_pool[JSON_VALUE_POOL_SIZE - json_array_node_free_count++] = array_node;
+      }
+#endif
       v->u.array.items = NULL;
       return false;
     }
@@ -440,19 +430,45 @@ static bool parse_object_value(const char **s, json_value *v) {
       object_items = next;
     }
     if (object_items == NULL) {
-      object_node = new_json_object_node();
+#ifdef USE_ALLOC
+      object_node = calloc(1, sizeof(json_object_node));
+      if (object_node == NULL) {
+        return false;
+      }
+#else
+      object_node = json_object_node_free_pool[JSON_VALUE_POOL_SIZE - --json_object_node_free_count];
+      if (json_object_node_free_count == 0) {
+        return false;
+      }
+#endif
       object_node->item.key.ptr = ref.ptr;
       object_node->item.key.len = ref.len;
-      // node->item.value = v;
-      json_object_push(v, object_node);
+      do {
+        if (v->u.object.items == NULL) {
+          v->u.object.items = object_node;
+          break;
+        }
+        if (v->u.object.last == NULL) {
+          v->u.object.last = object_node;
+          v->u.object.items->next = object_node;
+          break;
+        }
+        json_object_node *last = v->u.object.last;
+        v->u.object.last = object_node;
+        last->next = object_node;
+      } while (0);
     } else {
       object_node = object_items;
     }
     if (!parse_value_build(s, &object_node->item.value)) {
       free_json_value_contents(v);
-      // free(object_node);
-      json_object_node_free_pool[JSON_VALUE_POOL_SIZE - json_object_node_free_count++] = object_node;
-      memset(object_node, 0, sizeof(json_object_node));
+#ifdef USE_ALLOC
+      free(object_node);
+#else
+      if (json_object_node_free_count < JSON_VALUE_POOL_SIZE) {
+        json_object_node_free_pool[JSON_VALUE_POOL_SIZE - json_object_node_free_count++] = object_node;
+      }
+#endif
       v->u.object.items = NULL;
       return false;
     }
@@ -977,12 +993,15 @@ void json_free(json_value *v) {
 }
 
 void json_initialize(void) {
+#ifdef USE_ALLOC
+#else
   for (size_t i = 0; i < JSON_VALUE_POOL_SIZE; i++) {
     json_array_node_free_pool[i] = &json_array_node_pool[i];
     json_object_node_free_pool[i] = &json_object_node_pool[i];
   }
   json_array_node_free_count = JSON_VALUE_POOL_SIZE;
   json_object_node_free_count = JSON_VALUE_POOL_SIZE;
+#endif
 }
 
 void json_print(const json_value *v, FILE *out) {

@@ -1,12 +1,14 @@
-#ifdef USE_JSON_C
-
 #include "../test/test.h"
 
-#include "../libs/include/json-c/json.h"
+#include "../libs/include/json-c/json_tokener.h"
 
+#ifdef LONG_TEST
+#define TEST_COUNT 1000000UL
+#else
 #define TEST_COUNT 100000UL
+#endif
 
-TEST(test_json_c_parser) {
+TEST(test_json_c) {
   char *json = utils_get_test_json_data("test/test.json");
   ASSERT_PTR_NOT_NULL(json);
 
@@ -25,4 +27,15 @@ TEST(test_json_c_parser) {
   END_TEST;
 }
 
-#endif
+int main(void) {
+
+  TEST_INITIALIZE;
+
+  TEST_SUITE("performance tests");
+
+  test_json_c();
+
+  TEST_FINALIZE;
+
+  return 0;
+}

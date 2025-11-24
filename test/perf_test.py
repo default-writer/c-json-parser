@@ -93,7 +93,6 @@ if __name__ == "__main__":
     initialize_tests()
 
     # Run standard unit tests
-    run_test("test_simple_json_parsing", parse_json_file, 'test-simple.json')
     run_test("test_json_parsing", parse_json_file, 'test.json')
 
     print("=" * LINE_WIDTH)

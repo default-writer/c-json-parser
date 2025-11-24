@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 23, 2025 at 2:44:23 AM GMT+3
+ *   November 23, 2025 at 10:28:35 PM GMT+3
  *
  */
 /*
@@ -47,6 +47,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifndef JSON_EXPORT
+#if defined(_MSC_VER) && defined(JSON_C_DLL)
+#define JSON_EXPORT __declspec(dllexport)
+#else
+#define JSON_EXPORT extern
+#endif
+#endif
 
 #define MAX_BUFFER_SIZE 0xFFFF
 
@@ -197,5 +209,9 @@ bool json_next_token(const char **s);
 //  * This should be called before a series of parsing operations to ensure a clean state.
 //  */
 // void json_pool_reset(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* JSON_H */
