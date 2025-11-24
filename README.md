@@ -1,7 +1,7 @@
 # C JSON parser
 
 - lightning-fast implementation of a JSON parser
-- performance improvement rate of x4/x10 for speed/memory compared to alternatives: [json-c](https://github.com/json-c/json-c)
+- performance improvement rate of x4/x4 for speed/memory compared to alternatives: [json-c](https://github.com/json-c/json-c)
 
 ## badges
 
@@ -9,7 +9,7 @@
 
 ## Speed comparison
 
-| Metric                                  |    c-json-parser(*) |   c-json-parser(**) |          json-c |
+| Metric                                  |      json-parser(*) |       c-json-parser |          json-c |
 | :---------------------------------------| ------------------: | ------------------: | --------------: |
 | execution time (100K run)               |        00:00:00.881 |        00:00:01.182 |    00:00:04.156 |
 | execution time (1M runs)                |        00:00:08.808 |        00:00:11.838 |    00:00:42.702 |
@@ -18,8 +18,7 @@
 | total heap usage (100K runs)            |                   0 |         806,400,000 |   4,179,600,000 |
 | total heap usage (1M runs)              |                   0 |       8,064,000,000 |  41,796,000,000 |
 
-(*) - alloc-free linked-list version
-(**) - linked-list version
+(*) - alloc-free version (fixed buffer size)
 
 ## docs
 
