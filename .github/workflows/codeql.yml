@@ -71,10 +71,7 @@ jobs:
     - name: Build project
       run: |
         cd $GITHUB_WORKSPACE
-        ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja
-        ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o2
-        ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja o3
-        ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf
+        ./build.sh
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
