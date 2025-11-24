@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 23, 2025 at 10:28:35 PM GMT+3
+ *   November 24, 2025 at 6:58:46 AM GMT+3
  *
  */
 /*
@@ -40,10 +40,8 @@
 #define JSON_H
 
 #include <ctype.h>
-#include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
