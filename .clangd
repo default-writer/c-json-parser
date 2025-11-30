@@ -1,6 +1,7 @@
 ---
 CompileFlags:
-  Add: [-Wall, -Wextra]
+  Compiler: "/usr/local/bin/clang++"
+  Add: [-Wall, -Wextra, -I/usr/include/c++"]
 
 Diagnostics:
   ClangTidy:
