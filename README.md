@@ -33,7 +33,15 @@
 
 Ninja + Clang
 
-## prerequisites (json-c)
+## prerequisites
+
+Debian/Linux
+
+```bash
+sudo apt install -y clang lld
+```
+
+## json-c
 
 ```bash
 mkdir build
