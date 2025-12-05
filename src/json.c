@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 24, 2025 at 6:51:26 AM GMT+3
+ *   December 5, 2025 at 10:06:38 PM GMT+3
  *
  */
 /*
@@ -143,7 +143,7 @@ static void free_json_value_contents(json_value *v) {
       if (json_array_node_free_count < JSON_VALUE_POOL_SIZE) {
         json_array_node_free_pool[JSON_VALUE_POOL_SIZE - json_array_node_free_count++] = array_node;
       }
-      array_node->item.type = 0;
+      array_node->item.type = J_NULL;
       array_node->item.u.array.items = NULL;
       array_node->item.u.array.last = NULL;
       array_node->next = NULL;
@@ -162,7 +162,7 @@ static void free_json_value_contents(json_value *v) {
       if (json_object_node_free_count < JSON_VALUE_POOL_SIZE) {
         json_object_node_free_pool[JSON_VALUE_POOL_SIZE - json_object_node_free_count++] = object_node;
       }
-      object_node->item.value.type = 0;
+      object_node->item.value.type = J_NULL;
       object_node->item.value.u.object.items = NULL;
       object_node->item.value.u.object.last = NULL;
       object_node->next = NULL;
@@ -174,7 +174,7 @@ static void free_json_value_contents(json_value *v) {
   default:
     break;
   }
-  v->type = 0;
+  v->type = J_NULL;
 }
 
 bool json_next_token(const char **s) {
@@ -921,7 +921,7 @@ const char *json_source(const json_value *v) {
 
 bool json_parse(const char *json, json_value *root) {
   if (!json)
-    return NULL;
+    return false;
   const char *p = json;
 
   NEXT_TOKEN(&p);
@@ -944,12 +944,12 @@ bool json_parse(const char *json, json_value *root) {
 char *json_stringify(const json_value *v) {
   if (!v)
     return NULL;
-  char *buf = calloc(1, (size_t)MAX_BUFFER_SIZE);
+  char *buf = (char *)calloc(1, (size_t)MAX_BUFFER_SIZE);
   if (!buf)
     return NULL;
   int rc = json_stringify_to_buffer(v, buf, MAX_BUFFER_SIZE);
   if (rc >= 0) {
-    char *shr = realloc(buf, (size_t)rc + 1);
+    char *shr = (char *)realloc(buf, (size_t)rc + 1);
     if (shr) {
       buf = shr;
       buf[rc] = '\0';
