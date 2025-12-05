@@ -13,11 +13,14 @@
   "markdownlint.lintWorkspaceGlobs": [
     "**/*.{md,mkd,mdwn,mdown,markdown,markdn,mdtxt,mdtext,workbook}",
     "!**/*.*",
-    "!**/bower_components",
+    "!**/src",
+    "!**/test",
+    "!**/libs",
+    "!**/build",
+    "!**/bin",
     "!**/node_modules",
     "!**/.git",
-    "!**/vendor",
-    "!*/LICENSE"
+    "!**/LICENSE"
   ],
   "editor.fontSize": 12,
   "editor.fontFamily": "'Ubuntu Mono', 'JetBrains Mono', 'ProggyVector', 'Monoid', 'Fira Code', monospace",
