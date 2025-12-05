@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   November 24, 2025 at 6:58:46 AM GMT+3
+ *   December 5, 2025 at 10:46:42 PM GMT+3
  *
  */
 /*
@@ -86,12 +86,12 @@ static inline FILE *safe_fopen(const char *filename, const char *mode) {
  * @brief Enumeration of JSON value types.
  */
 typedef enum {
-  J_NULL = 1,    // null value
-  J_BOOLEAN = 2, // boolean value (true or false)
-  J_NUMBER = 3,  // number value (integer or floating-point)
-  J_STRING = 4,  // string value
-  J_ARRAY = 5,   // array value
-  J_OBJECT = 6   // object value
+  J_NULL = 1,    
+  J_BOOLEAN = 2, 
+  J_NUMBER = 3,  
+  J_STRING = 4,  
+  J_ARRAY = 5,   
+  J_OBJECT = 6   
 } json_token;
 
 /**
@@ -99,34 +99,34 @@ typedef enum {
  * This is used to avoid allocating new memory for strings, numbers, and booleans.
  */
 typedef struct {
-  const char *ptr; // Pointer to the start of the value in the source JSON string.
-  size_t len;      // Length of the value.
+  const char *ptr; 
+  size_t len;      
 } reference;
 
 /* Forward declarations */
-typedef struct json_value json_value;
-typedef struct json_object json_object;
-typedef struct json_array_node json_array_node;
-typedef struct json_object_node json_object_node;
+typedef struct json_value json_value_decl;
+typedef struct json_object json_object_decl;
+typedef struct json_array_node json_array_node_decl;
+typedef struct json_object_node json_object_node_decl;
 
 /**
  * @brief Represents a JSON value.
  * The type of the value is determined by the `type` field.
  */
 typedef struct json_value {
-  json_token type; // The type of the JSON value.
+  json_token type; 
   union {
-    reference string;  // J_STRING.
-    reference boolean; // J_BOOLEAN.
-    reference number;  // J_NUMBER.
+    reference string;  
+    reference boolean; 
+    reference number;  
     struct {
-      json_array_node *last;
-      json_array_node *items; // Array of JSON values.
-    } array;                  // J_ARRAY.
+      json_array_node_decl *last;
+      json_array_node_decl *items;
+    } array;                  
     struct {
-      json_object_node *last;
-      json_object_node *items; // Array of key-value pairs.
-    } object;                  // J_OBJECT.
+      json_object_node_decl *last;
+      json_object_node_decl *items;
+    } object;                  
   } u;
 } json_value;
 
@@ -134,21 +134,21 @@ typedef struct json_value {
  * @brief Represents a key-value pair in a JSON object.
  */
 typedef struct json_object {
-  reference key;     // Key of the object.
-  json_value value; // Pointer to the JSON value.
+  reference key;     
+  json_value_decl value;
 } json_object;
 
 /**
  * @brief Represents a node in a linked list of JSON values.
  */
 typedef struct json_object_node {
-  json_object item;
-  json_object_node *next; // Pointer to the JSON value.
+  json_object_decl item;
+  json_object_node_decl *next;
 } json_object_node;
 
 typedef struct json_array_node {
-  json_value item;
-  json_array_node *next; // Pointer to the JSON value.
+  json_value_decl item;
+  json_array_node_decl *next;
 } json_array_node;
 
 /**
@@ -201,12 +201,6 @@ void json_print(const json_value *v, FILE *out);
  * @return true if next token can be read from input string, of false otherwise.
  */
 bool json_next_token(const char **s);
-
-// /**
-//  * @brief Resets the internal memory pool used for JSON value allocation.
-//  * This should be called before a series of parsing operations to ensure a clean state.
-//  */
-// void json_pool_reset(void);
 
 #ifdef __cplusplus
 }

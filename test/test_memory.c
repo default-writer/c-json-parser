@@ -3,7 +3,7 @@
 TEST(test_memory_leaks, char *json) {
   const char *source = "[{\"key\": \"value\"}]";
 
-  json_value v; // = new_json_value();
+  json_value v;
   memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */

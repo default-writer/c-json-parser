@@ -132,8 +132,8 @@ bool utils_test_json_equal(const char *a, const char *b) {
 
   fprintf(stderr, "mismatch: first diff byte offsets a=%zu b=%zu\n", off_a, off_b);
   fprintf(stderr, "a context: \"");
-
-  for (size_t i = start_a; i < off_a + ctx_after && pa[i] != '\0'; ++i) {
+  unsigned long i;
+  for (i = start_a; i < off_a + ctx_after && pa[i] != '\0'; ++i) {
     char c = pa[i];
     fputc(c, stderr);
   }
@@ -141,7 +141,7 @@ bool utils_test_json_equal(const char *a, const char *b) {
   fprintf(stderr, "\"\n");
   fprintf(stderr, "b context: \"");
 
-  for (size_t i = start_b; i < off_b + ctx_after && pb[i] != '\0'; ++i) {
+  for (i = start_b; i < off_b + ctx_after && pb[i] != '\0'; ++i) {
     char c = pb[i];
     fputc(c, stderr);
   }

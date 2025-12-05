@@ -53,7 +53,7 @@
       json_initialize();                         \
       tests_run++;                               \
       int passed = 1;                            \
-      char *test_name = #name;                   \
+      const char *test_name = #name;                   \
       printf("running test: %65s\n", test_name); \
       do
 
@@ -140,4 +140,4 @@
 
 TEST_SETUP();
 
-#endif // TEST_H
+#endif

@@ -2,7 +2,7 @@
 
 # Variables
 cc = clang
-cflags = -Wall -Wextra -std=c11 -g
+cflags = -Wall -Wextra -std=c89 -g
 ldflags = -fuse-ld=lld -lrt
 
 # Rule for compiling .c files to .o
@@ -30,7 +30,7 @@ build main: phony main.stamp
 default main
 
 # --- memory target ---
-test_memory_cflags_perf = -Wall -Wextra -std=c11 -g
+test_memory_cflags_perf = -Wall -Wextra -std=c89 -g
 test_memory_ldflags_perf = $ldflags
 build test_memory_test_memory.o.perf: cc test/test_memory.c
   cflags = $test_memory_cflags_perf
@@ -47,7 +47,7 @@ build test_memory.stamp: link test_memory_test_memory.o.perf test_memory_json.o.
 build memory: phony test_memory.stamp
 
 # --- perf target ---
-cflags_perf = -Wall -Wextra -std=c11 -O3 -march=native -flto -flto=thin 
+cflags_perf = -Wall -Wextra -std=c89 -O3 -march=native -flto -flto=thin 
 ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops
 build main.o.perf: cc test/test_performance.c
   cflags = $cflags_perf
@@ -93,7 +93,7 @@ build perf_long_alloc.stamp: link main.o.perf_long json.o.perf_long_alloc utils.
 build perf-alloc-long: phony perf_long_alloc.stamp
 
 # --- perf-json-c target ---
-cflags_perf_json_c = -Wall -Wextra -std=c11 -Ilibs/include -O3 -march=native -flto
+cflags_perf_json_c = -Wall -Wextra -std=c89 -Ilibs/include -O3 -march=native -flto
 ldflags_perf_json_c = $ldflags -flto -flto=thin -fvectorize -funroll-loops -Llibs/lib -ljson-c
 build test_json_c_perf_json_c.o.perf: cc test/test_json_c.c
   cflags = $cflags_perf_json_c

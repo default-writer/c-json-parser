@@ -11,7 +11,7 @@
 
 | Metric                                  |      json-parser(*) |       c-json-parser |          json-c |
 | :---------------------------------------| ------------------: | ------------------: | --------------: |
-| execution time (100K run)               |        00:00:00.881 |        00:00:01.182 |    00:00:04.156 |
+| execution time (100K run)               |        00:00:00.881 |        00:00:01.182 |    00:00:04.093 |
 | execution time (1M runs)                |        00:00:08.808 |        00:00:11.838 |    00:00:42.702 |
 | allocation calls (100K runs)            |                   0 |          20,000,000 |      52,900,000 |
 | allocation calls (1M runs)              |                   0 |         200,000,000 |     529,000,000 |
@@ -62,6 +62,10 @@ or just run (linux-based)
 
 ```bash
 ./build.sh
+```
+
+```bash
+./build-json-c.sh
 ```
 
 or

@@ -19,7 +19,8 @@ TEST(test_c_json_parser) {
 
   /* parse into internal json_value* */
   long long start_time = utils_get_time();
-  for (size_t i = 0; i < TEST_COUNT; i++) {
+  unsigned long i;
+  for (i = 0; i < TEST_COUNT; i++) {
     memset(&v, 0, sizeof(json_value));
     json_parse(json, &v);
     json_free(&v);

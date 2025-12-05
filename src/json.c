@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 5, 2025 at 10:06:38 PM GMT+3
+ *   December 5, 2025 at 10:42:49 PM GMT+3
  *
  */
 /*
@@ -542,7 +542,8 @@ static bool parse_value_build(const char **s, json_value *v) {
 static void print_string_escaped(FILE *out, const char *s, size_t len) {
   fputc('"', out);
   size_t i = 0;
-  for (const unsigned char *p = (const unsigned char *)s; *p && i < len; ++i, ++p) {
+  const unsigned char *p;
+  for (p = (const unsigned char *)s; *p && i < len; ++i, ++p) {
     unsigned char c = *p;
     fputc(c, out);
   }
@@ -550,7 +551,8 @@ static void print_string_escaped(FILE *out, const char *s, size_t len) {
 }
 
 static void print_indent(FILE *out, int indent) {
-  for (int i = 0; i < indent; ++i)
+  int i;
+  for (i = 0; i < indent; ++i)
     fputs("    ", out); /* 4 spaces */
 }
 
@@ -662,7 +664,8 @@ static void print_value(const json_value *v, int indent, FILE *out) {
 }
 
 static int print_indent_buf(bs *b, int indent) {
-  for (int i = 0; i < indent; ++i) {
+  int i;
+  for (i = 0; i < indent; ++i) {
     if (bs_write(b, "    ", 4) < 0)
       return -1;
   }
@@ -673,7 +676,8 @@ static int print_string_escaped_buf(bs *b, const char *s, size_t len) {
   if (bs_putc(b, '"') < 0)
     return -1;
   size_t i = 0;
-  for (const unsigned char *p = (const unsigned char *)s; *p && i < len; ++i, ++p) {
+  const unsigned char *p;
+  for (p = (const unsigned char *)s; *p && i < len; ++i, ++p) {
     unsigned char c = *p;
     if (bs_putc(b, c) < 0)
       return -1;
@@ -826,7 +830,8 @@ static int bs_write(bs *b, const char *data, int len) {
   if (b->pos + len >= b->cap)
     return -1;
   char *buf = &b->buf[b->pos];
-  for (int i = 0; i < len; i++) {
+  int i;
+  for (i = 0; i < len; i++) {
     *buf++ = *data++;
     b->pos++;
   }
@@ -995,7 +1000,8 @@ void json_free(json_value *v) {
 void json_initialize(void) {
 #ifdef USE_ALLOC
 #else
-  for (size_t i = 0; i < JSON_VALUE_POOL_SIZE; i++) {
+  int i=0;
+  for (i = 0; i < JSON_VALUE_POOL_SIZE; i++) {
     json_array_node_free_pool[i] = &json_array_node_pool[i];
     json_object_node_free_pool[i] = &json_object_node_pool[i];
   }

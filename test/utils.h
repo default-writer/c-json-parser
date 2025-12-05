@@ -25,4 +25,4 @@ void utils_output(const char *s);
       return false;                        \
   } while (0)
 
-#endif // UTILS_H
+#endif

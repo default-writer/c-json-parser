@@ -14,7 +14,8 @@ TEST(test_json_c) {
 
   /* parse into internal json_value* */
   long long start_time = utils_get_time();
-  for (size_t i = 0; i < TEST_COUNT; i++) {
+  unsigned long i;
+  for (i = 0; i < TEST_COUNT; i++) {
     struct json_object *jobj = json_tokener_parse(json);
     json_object_put(jobj);
   }
