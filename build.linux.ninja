@@ -18,7 +18,7 @@ rule link
 # Build statements for object files
 build json.o: cc src/json.c
 build test.o: cc test/test.c
-build utils.o: cc test/utils.c
+build utils.o: cc utils/utils.c
 
 # Build statement for the executable
 build main.stamp: link test.o json.o utils.o
@@ -35,7 +35,7 @@ build test_memory_test_memory.o.perf: cc test/test_memory.c
   cflags = $test_memory_cflags_perf
 build test_memory_json.o.perf: cc src/json.c
   cflags = $test_memory_cflags_perf
-build test_memory_utils.o.perf: cc test/utils.c
+build test_memory_utils.o.perf: cc utils/utils.c
   cflags = $test_memory_cflags_perf
 build test_memory.stamp: link test_memory_test_memory.o.perf test_memory_json.o.perf test_memory_utils.o.perf
   name = test-memory
@@ -50,7 +50,7 @@ build main.o.perf: cc test/test_performance.c
   cflags = $cflags_perf
 build json.o.perf: cc src/json.c
   cflags = $cflags_perf
-build utils.o.perf: cc test/utils.c
+build utils.o.perf: cc utils/utils.c
   cflags = $cflags_perf
 build perf.stamp: link main.o.perf json.o.perf utils.o.perf
   name = test-perf

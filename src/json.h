@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 8, 2025 at 12:27:39 AM GMT+3
+ *   December 8, 2025 at 1:20:52 AM GMT+3
  *
  */
 /*
@@ -39,47 +39,10 @@
 #ifndef JSON_H
 #define JSON_H
 
-#include <ctype.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "macros.h"
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef JSON_EXPORT
-#if defined(_MSC_VER) && defined(JSON_C_DLL)
-#define JSON_EXPORT __declspec(dllexport)
-#else
-#define JSON_EXPORT extern
-#endif
-#endif
-
-#define MAX_BUFFER_SIZE 0x100
-
-#ifdef _WIN32
-#include <windows.h>
-/* Provide a safe wrapper around fopen on Windows to avoid deprecation warnings.
- * The wrapper uses fopen_s internally and returns the FILE* pointer.
- * Existing code using fopen stays unchanged.
- */
-static inline FILE *safe_fopen(const char *filename, const char *mode) {
-  FILE *fp = NULL;
-  errno_t err = fopen_s(&fp, filename, mode);
-  if (err != 0) {
-    return NULL;
-  }
-  return fp;
-}
-/* Redirect calls to fopen to the safe wrapper. */
-#define fopen(filename, mode) safe_fopen(filename, mode)
-#define fprintf(stream, format, ...)            \
-  do {                                          \
-    fprintf_s((stream), (format), __VA_ARGS__); \
-  } while (0)
 #endif
 
 /**
@@ -187,13 +150,6 @@ void json_free(json_value *v);
  * @param out The standard output FILE handle.
  */
 void json_print(const json_value *v, FILE *out);
-
-/**
- * @brief Returns next token from input string,
- * @param s Null-terminated input string.
- * @return true if next token can be read from input string, of false otherwise.
- */
-bool json_next_token(const char **s);
 
 #ifdef __cplusplus
 }

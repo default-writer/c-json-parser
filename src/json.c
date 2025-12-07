@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 8, 2025 at 12:27:31 AM GMT+3
+ *   December 8, 2025 at 12:53:15 AM GMT+3
  *
  */
 /*
@@ -38,23 +38,6 @@
 
 #include "json.h"
 
-#define DICTIONARY_SIZE 16
-#define JSON_VALUE_POOL_SIZE 0xFFFF
-
-#define STATE_INITIAL 1
-#define STATE_ESCAPE_START 2
-#define STATE_ESCAPE_UNICODE_BYTE1 3
-#define STATE_ESCAPE_UNICODE_BYTE2 4
-#define STATE_ESCAPE_UNICODE_BYTE3 5
-#define STATE_ESCAPE_UNICODE_BYTE4 6
-#define TEXT_SIZE(name) sizeof(name) - 1
-#define TOKEN(value) value, TEXT_SIZE(value)
-#define NEXT_TOKEN(s)          \
-  do {                         \
-    if (!json_next_token((s))) \
-      return false;            \
-  } while (0)
-
 /* small buffer state (used by buffer-based printers) */
 typedef struct {
   char *buf;
@@ -62,8 +45,7 @@ typedef struct {
   int pos;
 } buffer;
 
-#ifdef USE_ALLOC
-#else
+#ifndef USE_ALLOC
 /* json_array_node pool */
 static json_array_node json_array_node_pool[JSON_VALUE_POOL_SIZE];
 static json_array_node *json_array_node_free_pool[JSON_VALUE_POOL_SIZE];
@@ -176,14 +158,6 @@ static void free_json_value_contents(json_value *v) {
     break;
   }
   v->type = J_NULL;
-}
-
-bool json_next_token(const char **s) {
-  if (**s == '\0')
-    return false;
-  while (**s != '\0' && isspace((unsigned char)**s))
-    (*s)++;
-  return true;
 }
 
 /* --- parser helpers --- */

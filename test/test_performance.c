@@ -21,7 +21,10 @@ TEST(test_c_json_parser) {
   long long start_time = utils_get_time();
   unsigned long i;
   for (i = 0; i < TEST_COUNT; i++) {
-    json_parse(json, &v);
+    if (!json_parse(json, &v))
+    {
+      break;
+    }
     json_free(&v);
   }
   long long end_time = utils_get_time();
