@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 7, 2025 at 9:46:54 AM GMT+3
+ *   December 8, 2025 at 12:12:42 AM GMT+3
  *
  */
 /*
@@ -47,7 +47,8 @@
 #define STATE_ESCAPE_UNICODE_BYTE2 4
 #define STATE_ESCAPE_UNICODE_BYTE3 5
 #define STATE_ESCAPE_UNICODE_BYTE4 6
-#define TEXT_SIZE(name) (sizeof((name)) - 1)
+#define TEXT_SIZE(name) sizeof(name) - 1
+#define TOKEN(value) value, TEXT_SIZE(value)
 #define NEXT_TOKEN(s)          \
   do {                         \
     if (!json_next_token((s))) \
@@ -93,13 +94,13 @@ static void print_object_compact(const json_value *v, FILE *out);
 static void print_value_compact(const json_value *v, FILE *out);
 static void print_value(const json_value *v, int indent, FILE *out);
 
-static int print_indent_buf(buffer *b, int indent);
-static int print_string_escaped_buf(buffer *b, const char *s, size_t len);
-static int print_array_compact_buf(const json_value *v, buffer *b);
-static int print_object_buf(const json_value *v, buffer *b, int indent);
-static int print_object_compact_buf(const json_value *v, buffer *b);
-static int print_value_compact_buf(const json_value *v, buffer *b);
-static int print_value_buf(const json_value *v, int indent, buffer *b);
+static int buffer_write_indent(buffer *b, int indent);
+static int buffer_write_string(buffer *b, const char *s, size_t len);
+static int buffer_write_array(buffer *b, const json_value *v);
+static int buffer_write_object_indent(buffer *b, const json_value *v, int indent);
+static int buffer_write_object(buffer *b, const json_value *v);
+static int buffer_write_value_indent(buffer *b, const json_value *v, int indent);
+static int buffer_write_value(buffer *b, const json_value *v);
 
 /* --- buffer helpers --- */
 static int buffer_write(buffer *b, const char *data, int len);
@@ -638,12 +639,10 @@ static void print_value(const json_value *v, int indent, FILE *out) {
     print_string_escaped(out, v->u.string.ptr, v->u.string.len);
     break;
   case J_ARRAY:
-    /* arrays printed single-line */
     print_array_compact(v, out);
     break;
   case J_OBJECT: {
-    fputs("{\n", out); /* keep object starting symbol on its own line with
-                          properties below */
+    fputs("{\n", out);
     json_object_node *object_items = v->u.object.items;
     while (object_items) {
       json_object_node *next = object_items->next;
@@ -663,16 +662,16 @@ static void print_value(const json_value *v, int indent, FILE *out) {
   }
 }
 
-static int print_indent_buf(buffer *b, int indent) {
+static int buffer_write_indent(buffer *b, int indent) {
   int i;
   for (i = 0; i < indent; ++i) {
-    if (buffer_write(b, "    ", 4) < 0)
+    if (buffer_write(b, TOKEN("    ")) < 0)
       return -1;
   }
   return 0;
 }
 
-static int print_string_escaped_buf(buffer *b, const char *s, size_t len) {
+static int buffer_write_string(buffer *b, const char *s, size_t len) {
   if (buffer_putc(b, '"') < 0)
     return -1;
   size_t i = 0;
@@ -687,19 +686,16 @@ static int print_string_escaped_buf(buffer *b, const char *s, size_t len) {
   return 0;
 }
 
-static int print_array_compact_buf(const json_value *v, buffer *b) {
-  if (!v || v->type != J_ARRAY) {
-    return buffer_write(b, "[]", 2);
-  }
+static int buffer_write_array(buffer *b, const json_value *v) {
   if (buffer_putc(b, '[') < 0)
     return -1;
   json_array_node *array_items = v->u.array.items;
   while (array_items) {
     json_array_node *next = array_items->next;
-    if (print_value_compact_buf(&array_items->item, b) < 0)
+    if (buffer_write_value(b, &array_items->item) < 0)
       return -1;
     if (next) {
-      if (buffer_write(b, ", ", 2) < 0)
+      if (buffer_write(b, TOKEN(", ")) < 0)
         return -1;
     }
     array_items = next;
@@ -709,68 +705,63 @@ static int print_array_compact_buf(const json_value *v, buffer *b) {
   return 0;
 }
 
-static int print_object_buf(const json_value *v, buffer *b, int indent) {
-  if (!v || v->type != J_OBJECT) {
-    return buffer_write(b, "{\n}", 3);
-  }
+static int buffer_write_object_indent(buffer *b, const json_value *v, int indent) {
   json_object_node *object_items = v->u.object.items;
   if (object_items == NULL) {
-    if (buffer_write(b, "{\n", 2) < 0)
+    if (buffer_write(b, TOKEN("{\n")) < 0)
       return -1;
-    if (print_indent_buf(b, indent) < 0)
+    if (buffer_write_indent(b, indent) < 0)
       return -1;
     if (buffer_putc(b, '}') < 0)
       return -1;
     return 0;
   }
 
-  if (buffer_write(b, "{\n", 2) < 0)
+  if (buffer_write(b, TOKEN("{\n")) < 0)
     return -1;
   while (object_items) {
     json_object_node *next = object_items->next;
-    if (print_indent_buf(b, indent + 1) < 0)
+    if (buffer_write_indent(b, indent + 1) < 0)
       return -1;
     json_object *ent = &object_items->item;
-    if (print_string_escaped_buf(b, ent->key.ptr, ent->key.len) < 0)
+    if (buffer_write_string(b, ent->key.ptr, ent->key.len) < 0)
       return -1;
-    if (buffer_write(b, ": ", 2) < 0)
+    if (buffer_write(b, TOKEN(": ")) < 0)
       return -1;
-    if (print_value_buf(&ent->value, indent + 1, b) < 0)
+    if (buffer_write_value_indent(b, &ent->value, indent + 1) < 0)
       return -1;
     if (next) {
-      if (buffer_write(b, ",\n", 2) < 0)
+      if (buffer_write(b, TOKEN(",\n")) < 0)
         return -1;
     }
     object_items = next;
   }
   if (buffer_putc(b, '\n') < 0)
     return -1;
-  if (print_indent_buf(b, indent) < 0)
+  if (buffer_write_indent(b, indent) < 0)
     return -1;
   if (buffer_putc(b, '}') < 0)
     return -1;
   return 0;
 }
 
-static int print_object_compact_buf(const json_value *v, buffer *b) {
-  if (!v || v->type != J_OBJECT)
-    return buffer_write(b, "{}", 2);
+static int buffer_write_object(buffer *b, const json_value *v) {
   json_object_node *object_items = v->u.object.items;
   if (object_items == NULL)
-    return buffer_write(b, "{}", 2);
+    return buffer_write(b, TOKEN("{}"));
   if (buffer_putc(b, '{') < 0)
     return -1;
   while (object_items) {
     json_object_node *next = object_items->next;
     json_object *ent = &object_items->item;
-    if (print_string_escaped_buf(b, ent->key.ptr, ent->key.len) < 0)
+    if (buffer_write_string(b, ent->key.ptr, ent->key.len) < 0)
       return -1;
-    if (buffer_write(b, ": ", 2) < 0)
+    if (buffer_write(b, TOKEN(": ")) < 0)
       return -1;
-    if (print_value_compact_buf(&ent->value, b) < 0)
+    if (buffer_write_value(b, &ent->value) < 0)
       return -1;
     if (next) {
-      if (buffer_write(b, ", ", 2) < 0)
+      if (buffer_write(b, TOKEN(", ")) < 0)
         return -1;
     }
     object_items = next;
@@ -780,44 +771,42 @@ static int print_object_compact_buf(const json_value *v, buffer *b) {
   return 0;
 }
 
-static int print_value_compact_buf(const json_value *v, buffer *b) {
+static int buffer_write_value_indent(buffer *b, const json_value *v, int indent) {
   if (!v)
-    return buffer_write(b, "null", TEXT_SIZE("null"));
+    return buffer_write(b, TOKEN("null"));
   switch (v->type) {
   case J_NULL:
-    return buffer_write(b, "null", TEXT_SIZE("null"));
+    return buffer_write(b, TOKEN("null"));
   case J_BOOLEAN:
     return buffer_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
   case J_NUMBER:
-    /* write number into buffer */
     return buffer_write(b, v->u.number.ptr, (int)v->u.number.len);
   case J_STRING:
-    return print_string_escaped_buf(b, v->u.string.ptr, v->u.string.len);
+    return buffer_write_string(b, v->u.string.ptr, v->u.string.len);
   case J_ARRAY:
-    return print_array_compact_buf(v, b);
+    return buffer_write_array(b, v);
   case J_OBJECT:
-    return print_object_compact_buf(v, b);
+    return buffer_write_object_indent(b, v, indent);
   }
   return -1;
 }
 
-static int print_value_buf(const json_value *v, int indent, buffer *b) {
+static int buffer_write_value(buffer *b, const json_value *v) {
   if (!v)
-    return buffer_write(b, "null", TEXT_SIZE("null"));
+    return buffer_write(b, TOKEN("null"));
   switch (v->type) {
   case J_NULL:
-    return buffer_write(b, "null", TEXT_SIZE("null"));
+    return buffer_write(b, TOKEN("null"));
   case J_BOOLEAN:
     return buffer_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
   case J_NUMBER:
     return buffer_write(b, v->u.number.ptr, (int)v->u.number.len);
   case J_STRING:
-    return print_string_escaped_buf(b, v->u.string.ptr, v->u.string.len);
+    return buffer_write_string(b, v->u.string.ptr, v->u.string.len);
   case J_ARRAY:
-    /* arrays printed single-line */
-    return print_array_compact_buf(v, b);
+    return buffer_write_array(b, v);
   case J_OBJECT:
-    return print_object_buf(v, b, indent);
+    return buffer_write_object(b, v);
   }
   return -1;
 }
@@ -863,25 +852,25 @@ char *json_stringify(const json_value *v) {
   if (!v)
     return NULL;
 
-  buffer bstate;
-  bstate.cap = MAX_BUFFER_SIZE;
-  bstate.pos = 0;
-  bstate.buf = (char *)calloc(1, (size_t)bstate.cap);
-  if (!bstate.buf)
+  buffer b;
+  b.cap = MAX_BUFFER_SIZE;
+  b.pos = 0;
+  b.buf = (char *)calloc(1, (size_t)b.cap);
+  if (!b.buf)
     return NULL;
 
-  if (print_value_buf(v, 0, &bstate) < 0) {
-    free(bstate.buf);
+  if (buffer_write_value_indent(&b, v, 0) < 0) {
+    free(b.buf);
     return NULL;
   }
 
   /* Shrink to fit and null terminate. */
-  char *final_buf = (char *)realloc(bstate.buf, (size_t)bstate.pos + 1);
+  char *final_buf = (char *)realloc(b.buf, (size_t)b.pos + 1);
   if (!final_buf) {
-    free(bstate.buf);
+    free(b.buf);
     return NULL;
   }
-  final_buf[bstate.pos] = '\0';
+  final_buf[b.pos] = '\0';
 
   return final_buf;
 }

@@ -8,6 +8,9 @@
         "kind": "build",
         "isDefault": true
       },
+      "dependsOn": [
+        "clean"
+      ],
       "windows": {
         "command": "ninja",
         "args": [
@@ -32,6 +35,9 @@
         "kind": "build",
         "isDefault": true
       },
+      "dependsOn": [
+        "clean"
+      ],
       "windows": {
         "command": "ninja",
         "args": [
