@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 8, 2025 at 12:12:42 AM GMT+3
+ *   December 8, 2025 at 12:14:17 AM GMT+3
  *
  */
 /*
@@ -914,27 +914,6 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
 }
 
 /* --- public API --- */
-
-const char *json_source(const json_value *v) {
-  if (!v)
-    return NULL;
-  switch (v->type) {
-  case J_NULL:
-    return v->u.string.ptr;
-  case J_BOOLEAN:
-    return v->u.boolean.ptr;
-  case J_NUMBER:
-    return v->u.number.ptr;
-  case J_STRING:
-    return v->u.string.ptr;
-  case J_ARRAY:
-    return "array";
-  case J_OBJECT:
-    return "object";
-  default:
-    return NULL;
-  }
-}
 
 bool json_parse(const char *json, json_value *root) {
   if (!json)

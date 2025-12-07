@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 7, 2025 at 9:33:59 AM GMT+3
+ *   December 8, 2025 at 12:14:15 AM GMT+3
  *
  */
 /*
@@ -150,13 +150,6 @@ typedef struct json_array_node {
   json_value_decl item;
   json_array_node_decl *next;
 } json_array_node;
-
-/**
- * @brief Returns a pointer to the original JSON source string.
- * @param v The JSON value object.
- * @return A pointer to the original JSON source string, or NULL on error.
- */
-const char *json_source(const json_value *v);
 
 /**
  * @brief Parses a JSON string and returns a tree of json_value objects.
