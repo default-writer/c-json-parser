@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 8, 2025 at 12:14:17 AM GMT+3
+ *   December 8, 2025 at 12:27:31 AM GMT+3
  *
  */
 /*
@@ -641,7 +641,7 @@ static void print_value(const json_value *v, int indent, FILE *out) {
   case J_ARRAY:
     print_array_compact(v, out);
     break;
-  case J_OBJECT: {
+  case J_OBJECT:
     fputs("{\n", out);
     json_object_node *object_items = v->u.object.items;
     while (object_items) {
@@ -658,7 +658,6 @@ static void print_value(const json_value *v, int indent, FILE *out) {
     print_indent(out, indent);
     fputc('}', out);
     break;
-  }
   }
 }
 
