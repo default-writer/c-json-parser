@@ -37,6 +37,4 @@ int main(void) {
   test_json_c();
 
   TEST_FINALIZE;
-
-  return 0;
 }

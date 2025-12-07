@@ -83,7 +83,7 @@ char *utils_get_test_json_data(const char *filename) {
     return NULL;
   }
 
-  char *json = calloc(1, size + 1);
+  char *json = (char *)calloc(1, size + 1);
   fread(json, 1, size, fp);
   json[size] = '\0';
   fclose(fp);

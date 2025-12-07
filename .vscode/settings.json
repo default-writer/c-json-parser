@@ -115,5 +115,7 @@
     ]
   },
   "terminal.integrated.fontFamily": "'Ubuntu Mono'",
-  "editor.fontWeight": "normal"
+  "editor.fontWeight": "normal",
+  "geminicodeassist.agentYoloMode": true,
+  "geminicodeassist.codeGenerationPaneViewEnabled": true
 }

@@ -37,9 +37,8 @@ int main(void) {
   TEST_INITIALIZE;
 
   TEST_SUITE("unit tests");
+
   test_memory_leaks();
 
   TEST_FINALIZE;
-
-  return 0;
 }

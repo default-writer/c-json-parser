@@ -16,13 +16,12 @@ rule link
   description = Linking $name
 
 # Build statements for object files
-build main.o: cc test/main.c
 build json.o: cc src/json.c
 build test.o: cc test/test.c
 build utils.o: cc test/utils.c
 
 # Build statement for the executable
-build main.stamp: link main.o json.o test.o utils.o
+build main.stamp: link test.o json.o utils.o
   name = test-main
 build main: phony main.stamp
 
@@ -36,11 +35,9 @@ build test_memory_test_memory.o.perf: cc test/test_memory.c
   cflags = $test_memory_cflags_perf
 build test_memory_json.o.perf: cc src/json.c
   cflags = $test_memory_cflags_perf
-build test_memory_test.o.perf: cc test/test.c
-  cflags = $test_memory_cflags_perf
 build test_memory_utils.o.perf: cc test/utils.c
   cflags = $test_memory_cflags_perf
-build test_memory.stamp: link test_memory_test_memory.o.perf test_memory_json.o.perf test_memory_test.o.perf test_memory_utils.o.perf
+build test_memory.stamp: link test_memory_test_memory.o.perf test_memory_json.o.perf test_memory_utils.o.perf
   name = test-memory
   cflags = $test_memory_cflags_perf
   ldflags = $test_memory_ldflags_perf

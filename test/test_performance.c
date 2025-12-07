@@ -42,6 +42,4 @@ int main(void) {
   test_c_json_parser();
 
   TEST_FINALIZE;
-
-  return 0;
 }
