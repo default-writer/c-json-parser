@@ -28,6 +28,7 @@ TEST(test_memory_leaks, char *json) {
   /* cleanup */
   json_free(&v);
   free(json);
+  free(out);
 
   END_TEST;
 }
