@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 7, 2025 at 1:01:25 AM GMT+3
+ *   December 7, 2025 at 9:33:56 AM GMT+3
  *
  */
 /*
@@ -106,7 +106,7 @@ static int bs_write(bs *b, const char *data, int len);
 static int bs_putc(bs *b, char c);
 
 /* --- json helpers --- */
-static int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize);
+
 static bool json_array_equal(const json_value *a, const json_value *b);
 static bool json_object_equal(const json_value *a, const json_value *b);
 
@@ -827,8 +827,14 @@ static int print_value_buf(const json_value *v, int indent, bs *b) {
 static int bs_write(bs *b, const char *data, int len) {
   if (len <= 0)
     return 0;
-  if (b->pos + len >= b->cap)
-    return -1;
+  if (b->pos + 1 >= b->cap) {
+    int new_cap = b->cap * 2;
+    char *new_buf = (char *)realloc(b->buf, new_cap);
+    if (!new_buf)
+      return -1;
+    b->buf = new_buf;
+    b->cap = new_cap;
+  }
   char *buf = &b->buf[b->pos];
   int i;
   for (i = 0; i < len; i++) {
@@ -839,28 +845,45 @@ static int bs_write(bs *b, const char *data, int len) {
 }
 
 static int bs_putc(bs *b, char c) {
-  if (b->pos + 1 >= b->cap)
-    return -1;
+  if (b->pos + 1 >= b->cap) {
+    int new_cap = b->cap * 2;
+    char *new_buf = (char *)realloc(b->buf, new_cap);
+    if (!new_buf)
+      return -1;
+    b->buf = new_buf;
+    b->cap = new_cap;
+  }
   b->buf[b->pos++] = c;
   return 0;
 }
 
 /* --- json helpers --- */
 
-static int json_stringify_to_buffer(const json_value *v, char *buf, int bufsize) {
-  if (!buf || bufsize <= 0)
-    return -1;
-  bs bstate = {buf, bufsize, 0};
+char *json_stringify(const json_value *v) {
+  if (!v)
+    return NULL;
 
-  if (print_value_buf(v, 0, &bstate) < 0)
-    return -1;
+  bs bstate;
+  bstate.cap = MAX_BUFFER_SIZE;
+  bstate.pos = 0;
+  bstate.buf = (char *)calloc(1, (size_t)bstate.cap);
+  if (!bstate.buf)
+    return NULL;
 
-  /* ensure NUL termination if space remains */
-  if (bstate.pos < bstate.cap)
-    bstate.buf[bstate.pos] = '\0';
-  else
-    return -1;
-  return bstate.pos;
+  if (print_value_buf(v, 0, &bstate) < 0) {
+    free(bstate.buf);
+    return NULL;
+  }
+
+  /* Shrink to fit and null terminate. */
+  char *final_buf = (char *)realloc(bstate.buf, (size_t)bstate.pos + 1);
+  if (!final_buf) {
+    free(bstate.buf);
+    return NULL;
+  }
+  final_buf[bstate.pos] = '\0';
+
+  return final_buf;
 }
 
 static bool json_array_equal(const json_value *a, const json_value *b) {
@@ -946,25 +969,6 @@ bool json_parse(const char *json, json_value *root) {
   return true;
 }
 
-char *json_stringify(const json_value *v) {
-  if (!v)
-    return NULL;
-  char *buf = (char *)calloc(1, (size_t)MAX_BUFFER_SIZE);
-  if (!buf)
-    return NULL;
-  int rc = json_stringify_to_buffer(v, buf, MAX_BUFFER_SIZE);
-  if (rc >= 0) {
-    char *shr = (char *)realloc(buf, (size_t)rc + 1);
-    if (shr) {
-      buf = shr;
-      buf[rc] = '\0';
-    }
-    return buf;
-  }
-  free(buf);
-  return NULL;
-}
-
 bool json_equal(const json_value *a, const json_value *b) {
   if (a == b)
     return true;
@@ -1000,7 +1004,7 @@ void json_free(json_value *v) {
 void json_initialize(void) {
 #ifdef USE_ALLOC
 #else
-  int i=0;
+  int i = 0;
   for (i = 0; i < JSON_VALUE_POOL_SIZE; i++) {
     json_array_node_free_pool[i] = &json_array_node_pool[i];
     json_object_node_free_pool[i] = &json_object_node_pool[i];

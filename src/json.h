@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 5, 2025 at 10:46:42 PM GMT+3
+ *   December 7, 2025 at 9:33:59 AM GMT+3
  *
  */
 /*
@@ -58,7 +58,7 @@ extern "C" {
 #endif
 #endif
 
-#define MAX_BUFFER_SIZE 0xFFFF
+#define MAX_BUFFER_SIZE 0x100
 
 #ifdef _WIN32
 #include <windows.h>
@@ -86,12 +86,12 @@ static inline FILE *safe_fopen(const char *filename, const char *mode) {
  * @brief Enumeration of JSON value types.
  */
 typedef enum {
-  J_NULL = 1,    
-  J_BOOLEAN = 2, 
-  J_NUMBER = 3,  
-  J_STRING = 4,  
-  J_ARRAY = 5,   
-  J_OBJECT = 6   
+  J_NULL = 1,
+  J_BOOLEAN = 2,
+  J_NUMBER = 3,
+  J_STRING = 4,
+  J_ARRAY = 5,
+  J_OBJECT = 6
 } json_token;
 
 /**
@@ -99,8 +99,8 @@ typedef enum {
  * This is used to avoid allocating new memory for strings, numbers, and booleans.
  */
 typedef struct {
-  const char *ptr; 
-  size_t len;      
+  const char *ptr;
+  size_t len;
 } reference;
 
 /* Forward declarations */
@@ -114,19 +114,19 @@ typedef struct json_object_node json_object_node_decl;
  * The type of the value is determined by the `type` field.
  */
 typedef struct json_value {
-  json_token type; 
+  json_token type;
   union {
-    reference string;  
-    reference boolean; 
-    reference number;  
+    reference string;
+    reference boolean;
+    reference number;
     struct {
       json_array_node_decl *last;
       json_array_node_decl *items;
-    } array;                  
+    } array;
     struct {
       json_object_node_decl *last;
       json_object_node_decl *items;
-    } object;                  
+    } object;
   } u;
 } json_value;
 
@@ -134,7 +134,7 @@ typedef struct json_value {
  * @brief Represents a key-value pair in a JSON object.
  */
 typedef struct json_object {
-  reference key;     
+  reference key;
   json_value_decl value;
 } json_object;
 
