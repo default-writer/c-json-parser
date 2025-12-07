@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 7, 2025 at 9:33:56 AM GMT+3
+ *   December 7, 2025 at 9:46:54 AM GMT+3
  *
  */
 /*
@@ -59,7 +59,7 @@ typedef struct {
   char *buf;
   int cap;
   int pos;
-} bs;
+} buffer;
 
 #ifdef USE_ALLOC
 #else
@@ -93,17 +93,17 @@ static void print_object_compact(const json_value *v, FILE *out);
 static void print_value_compact(const json_value *v, FILE *out);
 static void print_value(const json_value *v, int indent, FILE *out);
 
-static int print_indent_buf(bs *b, int indent);
-static int print_string_escaped_buf(bs *b, const char *s, size_t len);
-static int print_array_compact_buf(const json_value *v, bs *b);
-static int print_object_buf(const json_value *v, bs *b, int indent);
-static int print_object_compact_buf(const json_value *v, bs *b);
-static int print_value_compact_buf(const json_value *v, bs *b);
-static int print_value_buf(const json_value *v, int indent, bs *b);
+static int print_indent_buf(buffer *b, int indent);
+static int print_string_escaped_buf(buffer *b, const char *s, size_t len);
+static int print_array_compact_buf(const json_value *v, buffer *b);
+static int print_object_buf(const json_value *v, buffer *b, int indent);
+static int print_object_compact_buf(const json_value *v, buffer *b);
+static int print_value_compact_buf(const json_value *v, buffer *b);
+static int print_value_buf(const json_value *v, int indent, buffer *b);
 
 /* --- buffer helpers --- */
-static int bs_write(bs *b, const char *data, int len);
-static int bs_putc(bs *b, char c);
+static int buffer_write(buffer *b, const char *data, int len);
+static int buffer_putc(buffer *b, char c);
 
 /* --- json helpers --- */
 
@@ -663,35 +663,35 @@ static void print_value(const json_value *v, int indent, FILE *out) {
   }
 }
 
-static int print_indent_buf(bs *b, int indent) {
+static int print_indent_buf(buffer *b, int indent) {
   int i;
   for (i = 0; i < indent; ++i) {
-    if (bs_write(b, "    ", 4) < 0)
+    if (buffer_write(b, "    ", 4) < 0)
       return -1;
   }
   return 0;
 }
 
-static int print_string_escaped_buf(bs *b, const char *s, size_t len) {
-  if (bs_putc(b, '"') < 0)
+static int print_string_escaped_buf(buffer *b, const char *s, size_t len) {
+  if (buffer_putc(b, '"') < 0)
     return -1;
   size_t i = 0;
   const unsigned char *p;
   for (p = (const unsigned char *)s; *p && i < len; ++i, ++p) {
     unsigned char c = *p;
-    if (bs_putc(b, c) < 0)
+    if (buffer_putc(b, c) < 0)
       return -1;
   }
-  if (bs_putc(b, '"') < 0)
+  if (buffer_putc(b, '"') < 0)
     return -1;
   return 0;
 }
 
-static int print_array_compact_buf(const json_value *v, bs *b) {
+static int print_array_compact_buf(const json_value *v, buffer *b) {
   if (!v || v->type != J_ARRAY) {
-    return bs_write(b, "[]", 2);
+    return buffer_write(b, "[]", 2);
   }
-  if (bs_putc(b, '[') < 0)
+  if (buffer_putc(b, '[') < 0)
     return -1;
   json_array_node *array_items = v->u.array.items;
   while (array_items) {
@@ -699,32 +699,32 @@ static int print_array_compact_buf(const json_value *v, bs *b) {
     if (print_value_compact_buf(&array_items->item, b) < 0)
       return -1;
     if (next) {
-      if (bs_write(b, ", ", 2) < 0)
+      if (buffer_write(b, ", ", 2) < 0)
         return -1;
     }
     array_items = next;
   }
-  if (bs_putc(b, ']') < 0)
+  if (buffer_putc(b, ']') < 0)
     return -1;
   return 0;
 }
 
-static int print_object_buf(const json_value *v, bs *b, int indent) {
+static int print_object_buf(const json_value *v, buffer *b, int indent) {
   if (!v || v->type != J_OBJECT) {
-    return bs_write(b, "{\n}", 3);
+    return buffer_write(b, "{\n}", 3);
   }
   json_object_node *object_items = v->u.object.items;
   if (object_items == NULL) {
-    if (bs_write(b, "{\n", 2) < 0)
+    if (buffer_write(b, "{\n", 2) < 0)
       return -1;
     if (print_indent_buf(b, indent) < 0)
       return -1;
-    if (bs_putc(b, '}') < 0)
+    if (buffer_putc(b, '}') < 0)
       return -1;
     return 0;
   }
 
-  if (bs_write(b, "{\n", 2) < 0)
+  if (buffer_write(b, "{\n", 2) < 0)
     return -1;
   while (object_items) {
     json_object_node *next = object_items->next;
@@ -733,64 +733,64 @@ static int print_object_buf(const json_value *v, bs *b, int indent) {
     json_object *ent = &object_items->item;
     if (print_string_escaped_buf(b, ent->key.ptr, ent->key.len) < 0)
       return -1;
-    if (bs_write(b, ": ", 2) < 0)
+    if (buffer_write(b, ": ", 2) < 0)
       return -1;
     if (print_value_buf(&ent->value, indent + 1, b) < 0)
       return -1;
     if (next) {
-      if (bs_write(b, ",\n", 2) < 0)
+      if (buffer_write(b, ",\n", 2) < 0)
         return -1;
     }
     object_items = next;
   }
-  if (bs_putc(b, '\n') < 0)
+  if (buffer_putc(b, '\n') < 0)
     return -1;
   if (print_indent_buf(b, indent) < 0)
     return -1;
-  if (bs_putc(b, '}') < 0)
+  if (buffer_putc(b, '}') < 0)
     return -1;
   return 0;
 }
 
-static int print_object_compact_buf(const json_value *v, bs *b) {
+static int print_object_compact_buf(const json_value *v, buffer *b) {
   if (!v || v->type != J_OBJECT)
-    return bs_write(b, "{}", 2);
+    return buffer_write(b, "{}", 2);
   json_object_node *object_items = v->u.object.items;
   if (object_items == NULL)
-    return bs_write(b, "{}", 2);
-  if (bs_putc(b, '{') < 0)
+    return buffer_write(b, "{}", 2);
+  if (buffer_putc(b, '{') < 0)
     return -1;
   while (object_items) {
     json_object_node *next = object_items->next;
     json_object *ent = &object_items->item;
     if (print_string_escaped_buf(b, ent->key.ptr, ent->key.len) < 0)
       return -1;
-    if (bs_write(b, ": ", 2) < 0)
+    if (buffer_write(b, ": ", 2) < 0)
       return -1;
     if (print_value_compact_buf(&ent->value, b) < 0)
       return -1;
     if (next) {
-      if (bs_write(b, ", ", 2) < 0)
+      if (buffer_write(b, ", ", 2) < 0)
         return -1;
     }
     object_items = next;
   }
-  if (bs_putc(b, '}') < 0)
+  if (buffer_putc(b, '}') < 0)
     return -1;
   return 0;
 }
 
-static int print_value_compact_buf(const json_value *v, bs *b) {
+static int print_value_compact_buf(const json_value *v, buffer *b) {
   if (!v)
-    return bs_write(b, "null", TEXT_SIZE("null"));
+    return buffer_write(b, "null", TEXT_SIZE("null"));
   switch (v->type) {
   case J_NULL:
-    return bs_write(b, "null", TEXT_SIZE("null"));
+    return buffer_write(b, "null", TEXT_SIZE("null"));
   case J_BOOLEAN:
-    return bs_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
+    return buffer_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
   case J_NUMBER:
     /* write number into buffer */
-    return bs_write(b, v->u.number.ptr, (int)v->u.number.len);
+    return buffer_write(b, v->u.number.ptr, (int)v->u.number.len);
   case J_STRING:
     return print_string_escaped_buf(b, v->u.string.ptr, v->u.string.len);
   case J_ARRAY:
@@ -801,16 +801,16 @@ static int print_value_compact_buf(const json_value *v, bs *b) {
   return -1;
 }
 
-static int print_value_buf(const json_value *v, int indent, bs *b) {
+static int print_value_buf(const json_value *v, int indent, buffer *b) {
   if (!v)
-    return bs_write(b, "null", TEXT_SIZE("null"));
+    return buffer_write(b, "null", TEXT_SIZE("null"));
   switch (v->type) {
   case J_NULL:
-    return bs_write(b, "null", TEXT_SIZE("null"));
+    return buffer_write(b, "null", TEXT_SIZE("null"));
   case J_BOOLEAN:
-    return bs_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
+    return buffer_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
   case J_NUMBER:
-    return bs_write(b, v->u.number.ptr, (int)v->u.number.len);
+    return buffer_write(b, v->u.number.ptr, (int)v->u.number.len);
   case J_STRING:
     return print_string_escaped_buf(b, v->u.string.ptr, v->u.string.len);
   case J_ARRAY:
@@ -824,7 +824,7 @@ static int print_value_buf(const json_value *v, int indent, bs *b) {
 
 /* --- buffer helpers --- */
 
-static int bs_write(bs *b, const char *data, int len) {
+static int buffer_write(buffer *b, const char *data, int len) {
   if (len <= 0)
     return 0;
   if (b->pos + 1 >= b->cap) {
@@ -844,7 +844,7 @@ static int bs_write(bs *b, const char *data, int len) {
   return 0;
 }
 
-static int bs_putc(bs *b, char c) {
+static int buffer_putc(buffer *b, char c) {
   if (b->pos + 1 >= b->cap) {
     int new_cap = b->cap * 2;
     char *new_buf = (char *)realloc(b->buf, new_cap);
@@ -863,7 +863,7 @@ char *json_stringify(const json_value *v) {
   if (!v)
     return NULL;
 
-  bs bstate;
+  buffer bstate;
   bstate.cap = MAX_BUFFER_SIZE;
   bstate.pos = 0;
   bstate.buf = (char *)calloc(1, (size_t)bstate.cap);
