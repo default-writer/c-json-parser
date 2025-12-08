@@ -53,7 +53,7 @@
       json_initialize();                         \
       tests_run++;                               \
       int passed = 1;                            \
-      const char *test_name = #name;                   \
+      const char *test_name = #name;             \
       printf("running test: %65s\n", test_name); \
       do
 
@@ -63,10 +63,10 @@
     ;                                     \
   if (passed) {                           \
     tests_passed++;                       \
-    printf("status: %65s", "");       \
+    printf("status: %65s", "");           \
     printf("%sPASSED%s\n", GREEN, RESET); \
   } else {                                \
-    printf("status: %65s", "");       \
+    printf("status: %65s", "");           \
     printf("%sFAILED%s\n", RED, RESET);   \
   }                                       \
   }                                       \
