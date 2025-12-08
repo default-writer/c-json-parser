@@ -28,6 +28,9 @@ TEST(test_c_json_parser) {
     json_free(&v);
   }
   long long end_time = utils_get_time();
+
+  ASSERT_EQ(TEST_COUNT, i);
+  
   utils_print_time_diff(start_time, end_time);
 
   /* cleanup */
