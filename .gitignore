@@ -10,3 +10,4 @@ libs/
 test-*
 main-*
 /.ninja_log
+gmon.out

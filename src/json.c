@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 9, 2025 at 8:46:43 AM GMT+3
+ *   December 9, 2025 at 1:55:10 PM GMT+3
  *
  */
 /*
@@ -63,7 +63,6 @@ static void free_json_value_contents(json_value *v);
 
 /* --- parser helpers --- */
 static bool parse_string_value(const char **s, json_value *v);
-static bool parse_string_value_ptr(reference *ref, const char **s);
 static bool parse_array_value(const char **s, json_value *v);
 static bool parse_object_value(const char **s, json_value *v);
 static bool parse_value_build(const char **s, json_value *v);
@@ -234,82 +233,6 @@ static bool parse_string_value(const char **s, json_value *v) {
   return true;
 }
 
-static bool parse_string_value_ptr(reference *ref, const char **s) {
-  if (**s != '"')
-    return false;
-  const char *p = *s + 1;
-  const char *ptr = *s + 1;
-  /* we need to process escapes, we'll build a dynamic buffer */
-  size_t len = 0;
-  /* ensure empty buffer is a valid C string */
-  int state = STATE_INITIAL;
-  while (*p && state) {
-    switch (state) {
-    case STATE_INITIAL:
-      if (*p == '"') {
-        state = 0;
-        continue;
-      } else if (*p == '\\')
-        state = STATE_ESCAPE_START;
-      break;
-    case STATE_ESCAPE_START:
-      if (*p == '\\')
-        state = STATE_INITIAL;
-      else if (*p == '"')
-        state = STATE_INITIAL;
-      else if (*p == 'b')
-        state = STATE_INITIAL;
-      else if (*p == 'f')
-        state = STATE_INITIAL;
-      else if (*p == 'n')
-        state = STATE_INITIAL;
-      else if (*p == 'r')
-        state = STATE_INITIAL;
-      else if (*p == 't')
-        state = STATE_INITIAL;
-      else if (*p == 'u')
-        state = STATE_ESCAPE_UNICODE_BYTE1;
-      else
-        return false;
-      break;
-    case STATE_ESCAPE_UNICODE_BYTE1:
-      if (!isxdigit((unsigned char)*p)) {
-        return false;
-      }
-      state = STATE_ESCAPE_UNICODE_BYTE2;
-      break;
-    case STATE_ESCAPE_UNICODE_BYTE2:
-      if (!isxdigit((unsigned char)*p)) {
-        return false;
-      }
-      state = STATE_ESCAPE_UNICODE_BYTE3;
-      break;
-    case STATE_ESCAPE_UNICODE_BYTE3:
-      if (!isxdigit((unsigned char)*p)) {
-        return false;
-      }
-      state = STATE_ESCAPE_UNICODE_BYTE4;
-      break;
-    case STATE_ESCAPE_UNICODE_BYTE4:
-      if (!isxdigit((unsigned char)*p)) {
-        return false;
-      }
-      state = STATE_INITIAL;
-      break;
-    }
-    len++;
-    p++;
-  }
-  if (*p != '"') {
-    return false;
-  }
-  p++;
-  *s = p;
-  ref->ptr = ptr;
-  ref->len = len;
-  return true;
-}
-
 static bool parse_array_value(const char **s, json_value *v) {
   (*s)++;
   NEXT_TOKEN(s);
@@ -383,11 +306,12 @@ static bool parse_object_value(const char **s, json_value *v) {
       free_json_value_contents(v);
       return false;
     }
-    reference ref = {*s, 0};
-    if (!parse_string_value_ptr(&ref, s)) {
-      free_json_value_contents(v);
-      return false;
-    }
+    json_value key;
+    key.type = J_STRING;
+    if (!parse_string_value(s, &key)) {
+       free_json_value_contents(v);
+       return false;
+     }
     NEXT_TOKEN(s);
     if (**s != ':') {
       free_json_value_contents(v);
@@ -399,7 +323,7 @@ static bool parse_object_value(const char **s, json_value *v) {
     json_object_node *object_items = v->u.object.items;
     while (object_items) {
       json_object_node *next = object_items->next;
-      if (object_items->item.key.ptr && ref.ptr && object_items->item.key.len == ref.len && strncmp(object_items->item.key.ptr, ref.ptr, ref.len) == 0) {
+      if (object_items->item.key.ptr && object_items->item.key.len == key.u.string.len && strncmp(object_items->item.key.ptr, key.u.string.ptr, key.u.string.len) == 0) {
         break;
       }
       object_items = next;
@@ -416,8 +340,8 @@ static bool parse_object_value(const char **s, json_value *v) {
         return false;
       }
 #endif
-      object_node->item.key.ptr = ref.ptr;
-      object_node->item.key.len = ref.len;
+      object_node->item.key.ptr = key.u.string.ptr;
+      object_node->item.key.len = key.u.string.len;
       do {
         if (v->u.object.items == NULL) {
           v->u.object.items = object_node;
