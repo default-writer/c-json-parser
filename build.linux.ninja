@@ -2,7 +2,7 @@
 
 # Variables
 cc = clang
-cflags = -Wall -Wextra -std=c89 -g
+cflags = -Wall -Wextra -std=c89 -g -fomit-frame-pointer
 ldflags = -fuse-ld=lld -lrt
 
 # Rule for compiling .c files to .o
@@ -29,7 +29,7 @@ build main: phony main.stamp
 default main
 
 # --- test-mem target ---
-cflags_mem = -Wall -Wextra -std=c89 -g
+cflags_mem = -Wall -Wextra -std=c89 -g -fomit-frame-pointer
 ldflags_mem = $ldflags
 build main.o.mem: cc test/test_mem.c
   cflags = $cflags_mem
@@ -44,7 +44,7 @@ build test_mem.stamp: link main.o.mem json.o.mem utils.o.mem
 build mem: phony test_mem.stamp
 
 # --- test-perf target ---
-cflags_perf = -Wall -Wextra -std=c89 -O3 -march=native -flto -flto=thin 
+cflags_perf = -Wall -Wextra -std=c89 -O3 -march=native -flto -flto=thin -fomit-frame-pointer
 ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops
 build main.o.perf: cc test/test_perf.c
   cflags = $cflags_perf
@@ -91,11 +91,11 @@ build utils.o.perf_long_alloc: cc utils/utils.c
   cflags = $cflags_perf_long_alloc
 build json.o.perf_long_alloc: cc src/json.c
   cflags = $cflags_perf_long_alloc
-build perf_long_alloc.stamp: link main.o.perf_long_alloc json.o.perf_long_alloc utils.o.perf_long_alloc
+build perf_alloc_long.stamp: link main.o.perf_long_alloc json.o.perf_long_alloc utils.o.perf_long_alloc
   name = test-perf-alloc-long
   cflags = $cflags_perf_long_alloc
   ldflags = $ldflags_perf_long
-build perf-alloc-long: phony perf_long_alloc.stamp
+build perf-alloc-long: phony perf_alloc_long.stamp
 
 # --- test-perf-json-c target ---
 cflags_perf_json_c = -Wall -Wextra -std=c89 -Ilibs/include -O3 -march=native -flto
@@ -144,3 +144,21 @@ build perf_simdjson_long.stamp: link main.o.perf_simdjson_long  json.o.perf util
   cflags = $cflags_simdjson_long
   ldflags = $ldflags_simdjson_long
 build perf-simdjson-long: phony perf_simdjson_long.stamp
+
+# --- gprof target (gcc) ---
+cflags_gprof = -Wall -Wextra -std=c89 -g -pg
+ldflags_gprof = -pg
+build json.o.gprof: cc src/json.c
+  cc = gcc
+  cflags = $cflags_gprof
+build test.o.gprof: cc test/test.c
+  cc = gcc
+  cflags = $cflags_gprof
+build utils.o.gprof: cc utils/utils.c
+  cc = gcc
+  cflags = $cflags_gprof
+build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof
+  cc = gcc
+  name = test-main-gcc
+  ldflags = $ldflags_gprof
+build gprof: phony gprof.stamp
