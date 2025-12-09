@@ -28,25 +28,25 @@ build main: phony main.stamp
 # default target
 default main
 
-# --- memory target ---
-test_memory_cflags_perf = -Wall -Wextra -std=c89 -g
-test_memory_ldflags_perf = $ldflags
-build test_memory_test_memory.o.perf: cc test/test_memory.c
-  cflags = $test_memory_cflags_perf
-build test_memory_json.o.perf: cc src/json.c
-  cflags = $test_memory_cflags_perf
-build test_memory_utils.o.perf: cc utils/utils.c
-  cflags = $test_memory_cflags_perf
-build test_memory.stamp: link test_memory_test_memory.o.perf test_memory_json.o.perf test_memory_utils.o.perf
-  name = test-memory
-  cflags = $test_memory_cflags_perf
-  ldflags = $test_memory_ldflags_perf
-build memory: phony test_memory.stamp
+# --- test-mem target ---
+cflags_mem = -Wall -Wextra -std=c89 -g
+ldflags_mem = $ldflags
+build main.o.mem: cc test/test_mem.c
+  cflags = $cflags_mem
+build json.o.mem: cc src/json.c
+  cflags = $cflags_mem
+build utils.o.mem: cc utils/utils.c
+  cflags = $cflags_mem
+build test_mem.stamp: link main.o.mem json.o.mem utils.o.mem
+  name = test-mem
+  cflags = $cflags_mem
+  ldflags = $ldflags_mem
+build mem: phony test_mem.stamp
 
-# --- perf target ---
+# --- test-perf target ---
 cflags_perf = -Wall -Wextra -std=c89 -O3 -march=native -flto -flto=thin 
 ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops
-build main.o.perf: cc test/test_performance.c
+build main.o.perf: cc test/test_perf.c
   cflags = $cflags_perf
 build json.o.perf: cc src/json.c
   cflags = $cflags_perf
@@ -58,10 +58,10 @@ build perf.stamp: link main.o.perf json.o.perf utils.o.perf
   ldflags = $ldflags_perf
 build perf: phony perf.stamp
 
-# --- perf-long target ---
+# --- test-perf-long target ---
 cflags_perf_long = $cflags_perf -DLONG_TEST
 ldflags_perf_long = $ldflags_perf
-build main.o.perf_long: cc test/test_performance.c
+build main.o.perf_long: cc test/test_perf.c
   cflags = $cflags_perf_long
 build perf_long.stamp: link main.o.perf_long json.o.perf utils.o.perf
   name = test-perf-long
@@ -69,9 +69,9 @@ build perf_long.stamp: link main.o.perf_long json.o.perf utils.o.perf
   ldflags = $ldflags_perf_long
 build perf-long: phony perf_long.stamp
 
-# --- perf-alloc target ---
+# --- test-perf-alloc target ---
 cflags_perf_alloc = $cflags_perf -DUSE_ALLOC
-build main.o.perf_alloc: cc test/test_performance.c
+build main.o.perf_alloc: cc test/test_perf.c
   cflags = $cflags_perf_alloc
 build utils.o.perf_alloc: cc utils/utils.c
   cflags = $cflags_perf_alloc
@@ -83,9 +83,9 @@ build perf_alloc.stamp: link main.o.perf_alloc json.o.perf_alloc utils.o.perf_al
   ldflags = $ldflags_perf_long
 build perf-alloc: phony perf_alloc.stamp
 
-# --- perf-alloc-long target ---
+# --- test-perf-alloc-long target ---
 cflags_perf_long_alloc = $cflags_perf_long -DUSE_ALLOC -DLONG_TEST
-build main.o.perf_long_alloc: cc test/test_performance.c
+build main.o.perf_long_alloc: cc test/test_perf.c
   cflags = $cflags_perf_long_alloc
 build utils.o.perf_long_alloc: cc utils/utils.c
   cflags = $cflags_perf_long_alloc
@@ -97,37 +97,50 @@ build perf_long_alloc.stamp: link main.o.perf_long_alloc json.o.perf_long_alloc 
   ldflags = $ldflags_perf_long
 build perf-alloc-long: phony perf_long_alloc.stamp
 
-# --- perf-json-c target ---
+# --- test-perf-json-c target ---
 cflags_perf_json_c = -Wall -Wextra -std=c89 -Ilibs/include -O3 -march=native -flto
 ldflags_perf_json_c = $ldflags -flto -flto=thin -fvectorize -funroll-loops -Llibs/lib -ljson-c
-build test_json_c_perf_json_c.o.perf: cc test/test_json_c.c
+build main.o.perf_json_c: cc test/test_json_c.c
   cflags = $cflags_perf_json_c
-build perf_json_c.stamp: link test_json_c_perf_json_c.o.perf  json.o.perf utils.o.perf
+build perf_json_c.stamp: link main.o.perf_json_c  json.o.perf utils.o.perf
   name = test-perf-json-c
   cflags = $cflags_perf_json_c
   ldflags = $ldflags_perf_json_c
 build perf-json-c: phony perf_json_c.stamp
 
-# --- perf-json-c-long target ---
+# ---test-perf-json-c-long target ---
 cflags_perf_json_c_long = $cflags_perf_json_c -DLONG_TEST
 ldflags_perf_json_c_long = $ldflags_perf_json_c
-build test_json_c_perf_json_c.o.perf_long: cc test/test_json_c.c
+build main.o.perf_json_c_long: cc test/test_json_c.c
   cflags = $cflags_perf_json_c_long
-build perf_json_c_long.stamp: link test_json_c_perf_json_c.o.perf_long json.o.perf utils.o.perf
+build perf_json_c_long.stamp: link main.o.perf_json_c_long json.o.perf utils.o.perf
   name = test-perf-json-c-long
   cflags = $cflags_perf_json_c_long
   ldflags = $ldflags_perf_json_c_long
 build perf-json-c-long: phony perf_json_c_long.stamp
 
-# --- perf-simdjson target ---
+# --- test-perf-simdjson target ---
 cflags_simdjson = -Wall -Wextra -std=c++17 -O3 -march=native -flto
 ldflags_simdjson = $ldflags -flto -flto=thin -fvectorize -funroll-loops -lstdc++
-build simdjson_o.perf: cc test/simdjson.cpp
+build simdjson.o.perf: cc test/simdjson.cpp
   cflags = $cflags_simdjson
-build test_simdjson.o.perf: cc test/test_simdjson.cpp
+build main.o.perf_simdjson: cc test/test_simdjson.cpp
   cflags = $cflags_simdjson
-build simdjson.stamp: link test_simdjson.o.perf  json.o.perf utils.o.perf simdjson_o.perf
-  name = test-simdjson
+build perf_simdjson.stamp: link main.o.perf_simdjson  json.o.perf utils.o.perf simdjson.o.perf
+  name = test-perf-simdjson
   cflags = $cflags_simdjson
   ldflags = $ldflags_simdjson
-build perf-simdjson: phony simdjson.stamp
+build perf-simdjson: phony perf_simdjson.stamp
+
+# --- test-perf-simdjson-long target ---
+cflags_simdjson_long = $cflags_simdjson -DLONG_TEST
+ldflags_simdjson_long = $ldflags_simdjson
+build simdjson.o.perf_long: cc test/simdjson.cpp
+  cflags = $cflags_simdjson_long
+build main.o.perf_simdjson_long: cc test/test_simdjson.cpp
+  cflags = $cflags_simdjson_long
+build perf_simdjson_long.stamp: link main.o.perf_simdjson_long  json.o.perf utils.o.perf simdjson.o.perf_long
+  name = test-perf-simdjson-long
+  cflags = $cflags_simdjson_long
+  ldflags = $ldflags_simdjson_long
+build perf-simdjson-long: phony perf_simdjson_long.stamp

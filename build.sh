@@ -8,7 +8,7 @@ ninja -f build.linux.ninja
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
 
 # memory target
-ninja -f build.linux.ninja memory
+ninja -f build.linux.ninja mem
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
 
 # perf target
@@ -25,8 +25,4 @@ ninja -f build.linux.ninja -t clean > /dev/null 2>&1
 
 # perf-alloc-long target
 ninja -f build.linux.ninja perf-alloc-long
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
-
-# perf-simdjson
-ninja -f build.linux.ninja perf-simdjson
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
