@@ -1,7 +1,10 @@
 # C JSON parser
 
 - lightning-fast implementation of a JSON parser
-- performance improvement rate of x4/x4 for speed/memory compared to alternatives: [json-c](https://github.com/json-c/json-c)
+- c89 compatible
+- easy to read, learn and implement
+- performance improvement rate of x4/x4 for speed/memory compared to [json-c](https://github.com/json-c/json-c)
+- just a little bit slower (x0.5) than [simdjson](https://github.com/simdjson/simdjson)
 
 ## badges
 
