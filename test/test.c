@@ -1,11 +1,21 @@
 #include "../test/test.h"
 
+#define TEST_COUNT 100000UL
+
 TEST(test_json_parse) {
   char *source = utils_get_test_json_data("test/test.json");
   ASSERT_PTR_NOT_NULL(source);
 
   json_value v;
   memset(&v, 0, sizeof(json_value));
+
+  unsigned long i;
+  for (i = 0; i < TEST_COUNT; i++) {
+    if (!json_parse(source, &v)) {
+      break;
+    }
+    json_free(&v);
+  }
 
   /* parse into internal json_value* */
   json_parse(source, &v);
