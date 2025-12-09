@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 8, 2025 at 1:25:47 AM GMT+3
+ *   December 9, 2025 at 10:29:38 AM GMT+3
  *
  */
 /*
@@ -39,6 +39,7 @@
 #ifndef MACROS_H
 #define MACROS_H
 
+#include <string.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
