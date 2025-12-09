@@ -7,7 +7,7 @@ ninja -f build.linux.ninja -t clean > /dev/null 2>&1
 ninja -f build.linux.ninja
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
 
-# memory target
+# mem target
 ninja -f build.linux.ninja mem
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
 
