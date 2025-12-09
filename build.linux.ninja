@@ -71,19 +71,27 @@ build perf-long: phony perf_long.stamp
 
 # --- perf-alloc target ---
 cflags_perf_alloc = $cflags_perf -DUSE_ALLOC
+build main.o.perf_alloc: cc test/test_performance.c
+  cflags = $cflags_perf_alloc
+build utils.o.perf_alloc: cc utils/utils.c
+  cflags = $cflags_perf_alloc
 build json.o.perf_alloc: cc src/json.c
   cflags = $cflags_perf_alloc
-build perf_alloc.stamp: link main.o.perf json.o.perf_alloc utils.o.perf
+build perf_alloc.stamp: link main.o.perf_alloc json.o.perf_alloc utils.o.perf_alloc
   name = test-perf-alloc
   cflags = $cflags_perf_alloc
   ldflags = $ldflags_perf_long
 build perf-alloc: phony perf_alloc.stamp
 
 # --- perf-alloc-long target ---
-cflags_perf_long_alloc = $cflags_perf_long -DUSE_ALLOC
+cflags_perf_long_alloc = $cflags_perf_long -DUSE_ALLOC -DLONG_TEST
+build main.o.perf_long_alloc: cc test/test_performance.c
+  cflags = $cflags_perf_long_alloc
+build utils.o.perf_long_alloc: cc utils/utils.c
+  cflags = $cflags_perf_long_alloc
 build json.o.perf_long_alloc: cc src/json.c
   cflags = $cflags_perf_long_alloc
-build perf_long_alloc.stamp: link main.o.perf_long json.o.perf_long_alloc utils.o.perf
+build perf_long_alloc.stamp: link main.o.perf_long_alloc json.o.perf_long_alloc utils.o.perf_long_alloc
   name = test-perf-alloc-long
   cflags = $cflags_perf_long_alloc
   ldflags = $ldflags_perf_long
@@ -110,3 +118,16 @@ build perf_json_c_long.stamp: link test_json_c_perf_json_c.o.perf_long json.o.pe
   cflags = $cflags_perf_json_c_long
   ldflags = $ldflags_perf_json_c_long
 build perf-json-c-long: phony perf_json_c_long.stamp
+
+# --- perf-simdjson target ---
+cflags_simdjson = -Wall -Wextra -std=c++17 -O3 -march=native -flto
+ldflags_simdjson = $ldflags -flto -flto=thin -fvectorize -funroll-loops -lstdc++
+build simdjson_o.perf: cc test/simdjson.cpp
+  cflags = $cflags_simdjson
+build test_simdjson.o.perf: cc test/test_simdjson.cpp
+  cflags = $cflags_simdjson
+build simdjson.stamp: link test_simdjson.o.perf  json.o.perf utils.o.perf simdjson_o.perf
+  name = test-simdjson
+  cflags = $cflags_simdjson
+  ldflags = $ldflags_simdjson
+build perf-simdjson: phony simdjson.stamp

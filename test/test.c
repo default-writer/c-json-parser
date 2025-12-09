@@ -28,7 +28,6 @@ TEST(test_json_parse) {
   END_TEST;
 }
 
-
 TEST(test_whitespace) {
   const char *source = " { \t \"key\" \n : \r \"value\" } ";
   const char *expected = "{\"key\":\"value\"}";

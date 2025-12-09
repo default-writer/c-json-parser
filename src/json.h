@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 8, 2025 at 1:20:52 AM GMT+3
+ *   December 9, 2025 at 9:02:57 AM GMT+3
  *
  */
 /*
@@ -67,10 +67,10 @@ typedef struct {
 } reference;
 
 /* Forward declarations */
-typedef struct json_value json_value_decl;
-typedef struct json_object json_object_decl;
-typedef struct json_array_node json_array_node_decl;
-typedef struct json_object_node json_object_node_decl;
+typedef struct json_value json_value_type;
+typedef struct json_object json_object_type;
+typedef struct json_array_node json_array_node_type;
+typedef struct json_object_node json_object_node_type;
 
 /**
  * @brief Represents a JSON value.
@@ -83,12 +83,12 @@ typedef struct json_value {
     reference boolean;
     reference number;
     struct {
-      json_array_node_decl *last;
-      json_array_node_decl *items;
+      json_array_node_type *last;
+      json_array_node_type *items;
     } array;
     struct {
-      json_object_node_decl *last;
-      json_object_node_decl *items;
+      json_object_node_type *last;
+      json_object_node_type *items;
     } object;
   } u;
 } json_value;
@@ -98,20 +98,20 @@ typedef struct json_value {
  */
 typedef struct json_object {
   reference key;
-  json_value_decl value;
+  json_value_type value;
 } json_object;
 
 /**
  * @brief Represents a node in a linked list of JSON values.
  */
 typedef struct json_object_node {
-  json_object_decl item;
-  json_object_node_decl *next;
+  json_object_type item;
+  json_object_node_type *next;
 } json_object_node;
 
 typedef struct json_array_node {
-  json_value_decl item;
-  json_array_node_decl *next;
+  json_value_type item;
+  json_array_node_type *next;
 } json_array_node;
 
 /**
@@ -150,6 +150,13 @@ void json_free(json_value *v);
  * @param out The standard output FILE handle.
  */
 void json_print(const json_value *v, FILE *out);
+
+#ifndef USE_ALLOC
+/**
+ * @brief Initializes a json_array_node_free_pool, json_object_node_free_pool static arrays.
+ */
+void json_initialize(void);
+#endif
 
 #ifdef __cplusplus
 }

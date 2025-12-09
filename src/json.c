@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 8, 2025 at 12:53:15 AM GMT+3
+ *   December 9, 2025 at 8:46:43 AM GMT+3
  *
  */
 /*
@@ -942,9 +942,8 @@ void json_free(json_value *v) {
   free_json_value_contents(v);
 }
 
+#ifndef USE_ALLOC
 void json_initialize(void) {
-#ifdef USE_ALLOC
-#else
   int i = 0;
   for (i = 0; i < JSON_VALUE_POOL_SIZE; i++) {
     json_array_node_free_pool[i] = &json_array_node_pool[i];
@@ -952,8 +951,8 @@ void json_initialize(void) {
   }
   json_array_node_free_count = JSON_VALUE_POOL_SIZE;
   json_object_node_free_count = JSON_VALUE_POOL_SIZE;
-#endif
 }
+#endif
 
 void json_print(const json_value *v, FILE *out) {
   print_value(v, 0, out);

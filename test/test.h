@@ -3,8 +3,15 @@
 
 #include "../utils/utils.h"
 
-#define printf printf
-
+#ifdef USE_ALLOC
+#define TEST_SETUP()                       \
+  JSON_EXPORT void utils_initialize(void); \
+  JSON_EXPORT int tests_run;               \
+  JSON_EXPORT int tests_passed;            \
+  JSON_EXPORT const char *GREEN;           \
+  JSON_EXPORT const char *RED;             \
+  JSON_EXPORT const char *RESET;
+#else
 #define TEST_SETUP()                       \
   JSON_EXPORT void utils_initialize(void); \
   JSON_EXPORT int tests_run;               \
@@ -13,6 +20,7 @@
   JSON_EXPORT const char *RED;             \
   JSON_EXPORT const char *RESET;           \
   JSON_EXPORT void json_initialize(void)
+#endif
 
 #define TEST_DEFINITION(name) \
   JSON_EXPORT void(name)(void)
@@ -46,6 +54,17 @@
     }                                                                                            \
   } while (0)
 
+#ifdef USE_ALLOC
+#define TEST(name, ...)                          \
+  void name() {                                  \
+    __VA_ARGS__;                                 \
+    do {                                         \
+      tests_run++;                               \
+      int passed = 1;                            \
+      const char *test_name = #name;             \
+      printf("running test: %65s\n", test_name); \
+      do
+#else
 #define TEST(name, ...)                          \
   void name() {                                  \
     __VA_ARGS__;                                 \
@@ -56,6 +75,7 @@
       const char *test_name = #name;             \
       printf("running test: %65s\n", test_name); \
       do
+#endif
 
 #define END_TEST                          \
   }                                       \

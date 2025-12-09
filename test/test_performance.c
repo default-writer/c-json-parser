@@ -1,8 +1,5 @@
 #include "../test/test.h"
 
-#include <stdio.h>
-
-#define printf printf
 
 #ifdef LONG_TEST
 #define TEST_COUNT 1000000UL
@@ -21,8 +18,7 @@ TEST(test_c_json_parser) {
   long long start_time = utils_get_time();
   unsigned long i;
   for (i = 0; i < TEST_COUNT; i++) {
-    if (!json_parse(json, &v))
-    {
+    if (!json_parse(json, &v)) {
       break;
     }
     json_free(&v);
@@ -30,7 +26,7 @@ TEST(test_c_json_parser) {
   long long end_time = utils_get_time();
 
   ASSERT_EQ(TEST_COUNT, i);
-  
+
   utils_print_time_diff(start_time, end_time);
 
   /* cleanup */

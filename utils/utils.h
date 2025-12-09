@@ -13,10 +13,19 @@
 
 #include "../src/json.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 long long utils_get_time(void);
 void utils_print_time_diff(long long start_ns, long long end_ns);
 char *utils_get_test_json_data(const char *filename);
 bool utils_test_json_equal(const char *a, const char *b);
 void utils_output(const char *s);
+void utils_initialize();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
