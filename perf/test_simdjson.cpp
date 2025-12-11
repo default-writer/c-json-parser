@@ -27,10 +27,7 @@ TEST(test_simdjson_parser) {
 
 int main(void) {
   TEST_INITIALIZE;
-
   TEST_SUITE("performance tests");
-
   test_simdjson_parser();
-
   TEST_FINALIZE;
 }

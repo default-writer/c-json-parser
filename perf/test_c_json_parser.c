@@ -31,10 +31,7 @@ TEST(test_c_json_parser) {
 
 int main(void) {
   TEST_INITIALIZE;
-
   TEST_SUITE("performance tests");
-
   test_c_json_parser();
-
   TEST_FINALIZE;
 }

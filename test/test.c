@@ -65,13 +65,9 @@ TEST(test_whitespace) {
 }
 
 int main(void) {
-
   TEST_INITIALIZE;
-
   TEST_SUITE("unit tests");
-
   test_json_parse();
   test_whitespace();
-
   TEST_FINALIZE;
 }

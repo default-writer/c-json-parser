@@ -22,12 +22,8 @@ TEST(test_json_c) {
 }
 
 int main(void) {
-
   TEST_INITIALIZE;
-
   TEST_SUITE("performance tests");
-
   test_json_c();
-
   TEST_FINALIZE;
 }
