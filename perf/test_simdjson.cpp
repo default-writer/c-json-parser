@@ -1,13 +1,5 @@
-#include "../src/json.h"
 #include "../test/test.h"
-
 #include "../libs/simdjson/simdjson.h"
-
-#ifdef LONG_TEST
-#define TEST_COUNT 1000000UL
-#else
-#define TEST_COUNT 100000UL
-#endif
 
 TEST(test_simdjson_parser) {
   simdjson::dom::parser parser;

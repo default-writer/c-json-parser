@@ -1,8 +1,6 @@
 #include "../src/json.h"
 #include "../test/test.h"
 
-#include "../src/json.h"
-
 TEST(test_object) {
   char *source = utils_get_test_json_data("data/object.json");
   ASSERT_PTR_NOT_NULL(source);
