@@ -1,7 +1,7 @@
 #ifndef TEST_H
 #define TEST_H
 
-#include "../utils/macros.h"
+#include "../src/json.h"
 #include "../utils/utils.h"
 
 #define TEST_SETUP()             \
