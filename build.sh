@@ -26,3 +26,16 @@ ninja -f build.linux.ninja -t clean > /dev/null 2>&1
 # perf-alloc-long target
 ninja -f build.linux.ninja perf-alloc-long
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
+
+# test-json-parse target
+ninja -f build.linux.ninja test-json-parse
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
+
+# test-simple-array target
+ninja -f build.linux.ninja test-simple-array
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
+
+# test-single-object-array target
+ninja -f build.linux.ninja test-single-object-array
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
+

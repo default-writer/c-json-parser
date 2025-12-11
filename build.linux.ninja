@@ -162,3 +162,22 @@ build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof
   name = test-main-gcc
   ldflags = $ldflags_gprof
 build gprof: phony gprof.stamp
+
+# --- test-json-parse target ---
+build test_json_parse.o: cc test/test_json_parse.c
+build test_json_parse.stamp: link test_json_parse.o json.o utils.o
+  name = test-json-parse
+build test-json-parse: phony test_json_parse.stamp
+
+# --- test-simple-array target ---
+build test_simple_array.o: cc test/test_simple_array.c
+build test_simple_array.stamp: link test_simple_array.o json.o utils.o
+  name = test-simple-array
+build test-simple-array: phony test_simple_array.stamp
+
+# --- test-single-object-array target ---
+build test_single_object_array.o: cc test/test_single_object_array.c
+build test_single_object_array.stamp: link test_single_object_array.o json.o utils.o
+  name = test-single-object-array
+build test-single-object-array: phony test_single_object_array.stamp
+
