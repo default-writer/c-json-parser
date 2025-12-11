@@ -17,6 +17,16 @@
 extern "C" {
 #endif
 
+typedef struct {
+    char *buffer;
+    size_t capacity;
+    size_t size;
+} arena;
+
+arena *arena_create(size_t capacity);
+void *arena_alloc(arena *a, size_t size);
+void arena_destroy(arena *a);
+
 long long utils_get_time(void);
 void utils_print_time_diff(long long start_ns, long long end_ns);
 char *utils_get_test_json_data(const char *filename);

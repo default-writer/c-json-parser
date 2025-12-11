@@ -70,7 +70,7 @@ typedef struct {
 typedef struct json_value json_value_type;
 typedef struct json_object json_object_type;
 typedef struct json_array_node json_array_node_type;
-typedef struct json_object_node json_object_node_type;
+typedef struct json_object_entry json_object_entry_type;
 
 /**
  * @brief Represents a JSON value.
@@ -86,28 +86,27 @@ typedef struct json_value {
       json_array_node_type *last;
       json_array_node_type *items;
     } array;
-    struct {
-      json_object_node_type *last;
-      json_object_node_type *items;
-    } object;
+    json_object_type *object;
   } u;
 } json_value;
 
 /**
- * @brief Represents a key-value pair in a JSON object.
+ * @brief Represents a key-value pair in a JSON object's hash table.
  */
-typedef struct json_object {
+typedef struct json_object_entry {
   reference key;
   json_value_type value;
-} json_object;
+  struct json_object_entry *next; /* For chaining in case of hash collisions */
+} json_object_entry;
 
 /**
- * @brief Represents a node in a linked list of JSON values.
+ * @brief Represents a JSON object, implemented as a hash table.
  */
-typedef struct json_object_node {
-  json_object_type item;
-  json_object_node_type *next;
-} json_object_node;
+typedef struct json_object {
+  json_object_entry_type **entries;
+  size_t capacity;
+  size_t size;
+} json_object;
 
 typedef struct json_array_node {
   json_value_type item;

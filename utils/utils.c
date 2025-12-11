@@ -95,60 +95,30 @@ bool utils_test_json_equal(const char *a, const char *b) {
   if (!a || !b)
     return false;
 
-  const char *pa = a;
-  const char *pb = b;
-  /* find first differing position in the original inputs (skip whitespace) */
-  const char *xa = a;
-  const char *xb = b;
+  json_value va, vb;
+  memset(&va, 0, sizeof(json_value));
+  memset(&vb, 0, sizeof(json_value));
 
-  while (*xa != '\0' && *xb != '\0') {
-    NEXT_TOKEN(&xa);
-    NEXT_TOKEN(&xb);
-    if (*xa != *xb)
-      break;
-    xa++;
-    xb++;
+  if (!json_parse(a, &va)) {
+    return false;
+  }
+  if (!json_parse(b, &vb)) {
+    json_free(&va);
+    return false;
   }
 
-  if (*xa != '\0')
-    while (isspace((unsigned char)*xa))
-      xa++;
-  if (*xb != '\0')
-    while (isspace((unsigned char)*xb))
-      xb++;
+  bool result = json_equal(&va, &vb);
 
-  if (*xa == '\0' && *xb == '\0') {
-    return true;
+  json_free(&va);
+  json_free(&vb);
+
+  if (!result) {
+    fprintf(stderr, "JSON equality check failed.\n");
+    fprintf(stderr, "First JSON:\n%s\n", a);
+    fprintf(stderr, "Second JSON:\n%s\n", b);
   }
 
-  size_t off_a = (size_t)(xa - pa);
-  size_t off_b = (size_t)(xb - pb);
-
-  /* print brief context */
-  size_t ctx_before = PREFIX_CHAR_OFFSET;
-  size_t ctx_after = POSTFIX_CHAR_OFFSET;
-  size_t start_a = (off_a > ctx_before) ? off_a - ctx_before : 0;
-  size_t start_b = (off_b > ctx_before) ? off_b - ctx_before : 0;
-
-  fprintf(stderr, "mismatch: first diff byte offsets a=%zu b=%zu\n", off_a, off_b);
-  fprintf(stderr, "a context: \"");
-  unsigned long i;
-  for (i = start_a; i < off_a + ctx_after && pa[i] != '\0'; ++i) {
-    char c = pa[i];
-    fputc(c, stderr);
-  }
-
-  fprintf(stderr, "\"\n");
-  fprintf(stderr, "b context: \"");
-
-  for (i = start_b; i < off_b + ctx_after && pb[i] != '\0'; ++i) {
-    char c = pb[i];
-    fputc(c, stderr);
-  }
-
-  fprintf(stderr, "\"\n");
-
-  return false;
+  return result;
 }
 
 void utils_output(const char *s) {
@@ -156,4 +126,31 @@ void utils_output(const char *s) {
   fputs(s, stdout);
   fputs("\n", stdout);
   printf("-------------------------------------------------------------------------------\n");
+}
+
+arena *arena_create(size_t capacity) {
+    arena *a = malloc(sizeof(arena));
+    if (!a) return NULL;
+    a->buffer = malloc(capacity);
+    if (!a->buffer) {
+        free(a);
+        return NULL;
+    }
+    a->capacity = capacity;
+    a->size = 0;
+    return a;
+}
+
+void *arena_alloc(arena *a, size_t size) {
+    if (a->size + size > a->capacity) {
+        return NULL;
+    }
+    void *ptr = a->buffer + a->size;
+    a->size += size;
+    return ptr;
+}
+
+void arena_destroy(arena *a) {
+    free(a->buffer);
+    free(a);
 }
