@@ -1,14 +1,5 @@
 #include "../utils/utils.h"
 
-#define NEXT_TOKEN(s)                     \
-  do {                                    \
-    while (**(s) != '\0') {               \
-      if (!isspace((unsigned char)**(s))) \
-        break;                            \
-      (*s)++;                             \
-    }                                     \
-  } while (0)
-  
 #define PREFIX_CHAR_OFFSET 10
 #define POSTFIX_CHAR_OFFSET 10
 
@@ -111,8 +102,16 @@ bool utils_test_json_equal(const char *a, const char *b) {
   const char *xb = b;
 
   while (*xa != '\0' && *xb != '\0') {
-    NEXT_TOKEN(&xa);
-    NEXT_TOKEN(&xb);
+    while (*xa != '\0') {
+      if (!isspace((unsigned char)*xa))
+        break;
+      xa++;
+    }
+    while (*xb != '\0') {
+      if (!isspace((unsigned char)*xb))
+        break;
+      xb++;
+    }
     if (*xa != *xb)
       break;
     xa++;

@@ -1,3 +1,4 @@
+#include "../src/json.h"
 #include "../test/test.h"
 
 #include "../libs/simdjson/simdjson.h"

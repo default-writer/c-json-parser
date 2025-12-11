@@ -1,6 +1,5 @@
 #include "../src/json.h"
 #include "../test/test.h"
-#include "../utils/utils.h"
 
 #ifdef LONG_TEST
 #define TEST_COUNT 1000000UL

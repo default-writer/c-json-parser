@@ -1,8 +1,15 @@
 #ifndef TEST_H
 #define TEST_H
 
-#include "../src/json.h"
 #include "../utils/utils.h"
+
+#ifndef LIBRARY_C_JSON_PARSER_EXPORT
+#if defined(_MSC_VER) && defined(JSON_C_DLL)
+#define LIBRARY_C_JSON_PARSER_EXPORT __declspec(dllexport)
+#else
+#define LIBRARY_C_JSON_PARSER_EXPORT extern
+#endif
+#endif
 
 #define TEST_SETUP()             \
   LIBRARY_C_JSON_PARSER_EXPORT int tests_run;     \

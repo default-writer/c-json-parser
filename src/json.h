@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 11, 2025 at 12:51:50 PM GMT+3
+ *   December 11, 2025 at 1:05:19 PM GMT+3
  *
  */
 /*
@@ -51,25 +51,7 @@
 #define STATE_ESCAPE_UNICODE_BYTE3 5
 #define STATE_ESCAPE_UNICODE_BYTE4 6
 
-#define NEXT_TOKEN(s)                     \
-  do {                                    \
-    while (**(s) != '\0') {               \
-      if (!isspace((unsigned char)**(s))) \
-        break;                            \
-      (*s)++;                             \
-    }                                     \
-  } while (0)
-
-  
 #include "headers.h"
-
-#ifndef LIBRARY_C_JSON_PARSER_EXPORT
-#if defined(_MSC_VER) && defined(JSON_C_DLL)
-#define LIBRARY_C_JSON_PARSER_EXPORT __declspec(dllexport)
-#else
-#define LIBRARY_C_JSON_PARSER_EXPORT extern
-#endif
-#endif
 
 #ifdef _WIN32
 #include <windows.h>

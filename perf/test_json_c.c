@@ -1,5 +1,4 @@
 #include "../test/test.h"
-
 #include "../libs/json-c/include/json-c/json_tokener.h"
 
 #ifdef LONG_TEST
