@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 11, 2025 at 2:30:45 PM GMT+3
+ *   December 11, 2025 at 3:00:59 PM GMT+3
  *
  */
 /*
@@ -59,7 +59,7 @@
  * The wrapper uses fopen_s internally and returns the FILE* pointer.
  * Existing code using fopen stays unchanged.
  */
-static inline FILE *safe_fopen(const char *filename, const char *mode) {
+static FILE *safe_fopen(const char *filename, const char *mode) {
   FILE *fp = NULL;
   errno_t err = fopen_s(&fp, filename, mode);
   if (err != 0) {
@@ -74,7 +74,8 @@ static inline FILE *safe_fopen(const char *filename, const char *mode) {
     fprintf_s((stream), (format), __VA_ARGS__); \
   } while (0)
 #endif
-
+#define INLINE __inline__
+#define INLINE_ATTRIBUTE __attribute__((always_inline))
 #define TEXT_SIZE(name) sizeof(name) - 1
 #define TOKEN(value) value, TEXT_SIZE(value)
 #define NEXT_TOKEN(s)                     \

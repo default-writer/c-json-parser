@@ -2,7 +2,7 @@
 
 # Variables
 cc = clang
-cflags = -Wall -Wextra -std=c89 -g
+cflags = -Wall -Wextra -std=c17 -g
 ldflags = -fuse-ld=lld -lrt
 
 # Rule for compiling .c files to .o
@@ -29,7 +29,7 @@ build main: phony main.stamp
 default main
 
 # --- test-mem target ---
-cflags_mem = -Wall -Wextra -std=c89 -g
+cflags_mem = -Wall -Wextra -std=c17 -g
 ldflags_mem = $ldflags
 build main.o.mem: cc test/test_mem.c
   cflags = $cflags_mem
@@ -44,7 +44,7 @@ build test_mem.stamp: link main.o.mem json.o.mem utils.o.mem
 build mem: phony test_mem.stamp
 
 # --- test-perf-c-json-parser target ---
-cflags_perf = -Wall -Wextra -std=c89 -O3 -march=native -flto -fomit-frame-pointer -ffunction-sections -fdata-sections
+cflags_perf = -Wall -Wextra -std=c17 -O3 -march=native -flto -fomit-frame-pointer -ffunction-sections -fdata-sections
 ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops
 build main.o.perf: cc perf/test_c_json_parser.c
   cflags = $cflags_perf
@@ -70,7 +70,7 @@ build perf_long.stamp: link main.o.perf_long json.o.perf utils.o.perf
 build perf-c-json-parser-long: phony perf_long.stamp
 
 # --- test-perf-json-c target ---
-cflags_perf_json_c = -Wall -Wextra -std=c89 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer
+cflags_perf_json_c = -Wall -Wextra -std=c17 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer
 ldflags_perf_json_c = $ldflags -flto -flto=thin -fvectorize -funroll-loops -Llibs/json-c/lib -ljson-c
 build main.o.perf_json_c: cc perf/test_json_c.c
   cflags = $cflags_perf_json_c
@@ -136,7 +136,7 @@ build test_json_parse.stamp: link test_json_parse.o json.o utils.o
 build json-parse: phony test_json_parse.stamp
 
 # --- gprof target (gcc) ---
-cflags_gprof = -Wall -Wextra -std=c89 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
+cflags_gprof = -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
 ldflags_gprof = -pg
 build json.o.gprof: cc src/json.c
   cc = gcc

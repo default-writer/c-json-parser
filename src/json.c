@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 11, 2025 at 2:45:03 PM GMT+3
+ *   December 11, 2025 at 3:00:13 PM GMT+3
  *
  */
 /*
@@ -148,7 +148,7 @@ static void free_json_value_contents(json_value *v) {
 
 /* --- constructor/destructor helpers --- */
 
-static json_array_node * new_array_node() {
+static INLINE json_array_node * INLINE_ATTRIBUTE  new_array_node() {
 #ifdef USE_ALLOC
   return (json_array_node *)calloc(1, sizeof(json_array_node));
 #else
@@ -160,7 +160,7 @@ static json_array_node * new_array_node() {
 #endif
 }
 
-static bool free_array_node(json_array_node *array_node) {
+static INLINE bool INLINE_ATTRIBUTE free_array_node(json_array_node *array_node) {
 #ifdef USE_ALLOC
   free(array_node);
   return true;
@@ -174,7 +174,7 @@ static bool free_array_node(json_array_node *array_node) {
 #endif
 }
 
-static json_object_node  * new_object_node() {
+static INLINE json_object_node  * INLINE_ATTRIBUTE new_object_node() {
 #ifdef USE_ALLOC
   return (json_object_node *)calloc(1, sizeof(json_object_node));
 #else
@@ -186,7 +186,7 @@ static json_object_node  * new_object_node() {
 #endif
 }
 
-static bool free_object_node(json_object_node *object_node) {
+static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_node) {
 #ifdef USE_ALLOC
   free(object_node);
   return true;
@@ -202,7 +202,7 @@ static bool free_object_node(json_object_node *object_node) {
 
 /* --- parser helpers --- */
 
-static bool __attribute__((always_inline)) parse_string_value(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_string_value(const char **s, json_value *v) {
   const char *p = *s + 1;
   const char *ptr = *s + 1;
   size_t len = 0;
