@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 11, 2025 at 12:27:47 PM GMT+3
+ *   December 11, 2025 at 2:34:12 PM GMT+3
  *
  */
 /*
@@ -92,10 +92,10 @@ static bool json_object_equal(const json_value *a, const json_value *b);
 
 /* --- constructor/destructor helpers --- */
 
-static json_array_node *__attribute__((always_inline)) new_array_node();
-static json_object_node *__attribute__((always_inline)) new_object_node();
-static bool __attribute__((always_inline)) free_array_node(json_array_node *array_node);
-static bool __attribute__((always_inline)) free_object_node(json_object_node *object_node);
+static json_array_node * new_array_node();
+static json_object_node * new_object_node();
+static bool free_array_node(json_array_node *array_node);
+static bool free_object_node(json_object_node *object_node);
 
 /* implementation */
 
@@ -128,6 +128,7 @@ static void free_json_value_contents(json_value *v) {
       array_node = next;
     }
     v->u.array.items = NULL;
+    v->u.array.last = NULL;
     break;
   case J_OBJECT:
     while (object_node) {
@@ -137,6 +138,7 @@ static void free_json_value_contents(json_value *v) {
       object_node = next;
     }
     v->u.object.items = NULL;
+    v->u.object.last = NULL;
     break;
   default:
     break;
@@ -146,7 +148,7 @@ static void free_json_value_contents(json_value *v) {
 
 /* --- constructor/destructor helpers --- */
 
-static json_array_node *__attribute__((always_inline)) new_array_node() {
+static json_array_node * new_array_node() {
 #ifdef USE_ALLOC
   return (json_array_node *)calloc(1, sizeof(json_array_node));
 #else
@@ -158,7 +160,7 @@ static json_array_node *__attribute__((always_inline)) new_array_node() {
 #endif
 }
 
-static bool __attribute__((always_inline)) free_array_node(json_array_node *array_node) {
+static bool free_array_node(json_array_node *array_node) {
 #ifdef USE_ALLOC
   free(array_node);
   return true;
@@ -172,7 +174,7 @@ static bool __attribute__((always_inline)) free_array_node(json_array_node *arra
 #endif
 }
 
-static json_object_node *__attribute__((always_inline)) new_object_node() {
+static json_object_node  * new_object_node() {
 #ifdef USE_ALLOC
   return (json_object_node *)calloc(1, sizeof(json_object_node));
 #else
@@ -184,7 +186,7 @@ static json_object_node *__attribute__((always_inline)) new_object_node() {
 #endif
 }
 
-static bool __attribute__((always_inline)) free_object_node(json_object_node *object_node) {
+static bool free_object_node(json_object_node *object_node) {
 #ifdef USE_ALLOC
   free(object_node);
   return true;
