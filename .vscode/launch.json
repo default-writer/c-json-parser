@@ -70,6 +70,20 @@
       "linux": {
         "program": "${workspaceFolder}/test-json-parse"
       }
+    },
+    {
+      "name": "debug [perf]",
+      "type": "lldb-dap",
+      "program": "",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "cwd": "${workspaceFolder}",
+      "windows": {
+        "program": "${workspaceFolder}/test-perf.exe"
+      },
+      "linux": {
+        "program": "${workspaceFolder}/test-perf"
+      }
     }
   ]
 }

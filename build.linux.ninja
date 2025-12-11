@@ -43,59 +43,31 @@ build test_mem.stamp: link main.o.mem json.o.mem utils.o.mem
   ldflags = $ldflags_mem
 build mem: phony test_mem.stamp
 
-# --- test-perf target ---
+# --- test-perf-c-json-parser target ---
 cflags_perf = -Wall -Wextra -std=c89 -O3 -march=native -flto -fomit-frame-pointer -ffunction-sections -fdata-sections
 ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops
-build main.o.perf: cc perf/test_perf.c
+build main.o.perf: cc perf/test_c_json_parser.c
   cflags = $cflags_perf
 build json.o.perf: cc src/json.c
   cflags = $cflags_perf
 build utils.o.perf: cc utils/utils.c
   cflags = $cflags_perf
 build perf.stamp: link main.o.perf json.o.perf utils.o.perf
-  name = test-perf
+  name = test-perf-c-json-parser
   cflags = $cflags_perf
   ldflags = $ldflags_perf
 build perf: phony perf.stamp
 
-# --- test-perf-long target ---
+# --- test-perf-c-json-parser-long target ---
 cflags_perf_long = $cflags_perf -DLONG_TEST
 ldflags_perf_long = $ldflags_perf
-build main.o.perf_long: cc perf/test_perf.c
+build main.o.perf_long: cc perf/test_c_json_parser.c
   cflags = $cflags_perf_long
 build perf_long.stamp: link main.o.perf_long json.o.perf utils.o.perf
-  name = test-perf-long
+  name = test-perf-c-json-parser-long
   cflags = $cflags_perf_long
   ldflags = $ldflags_perf_long
 build perf-long: phony perf_long.stamp
-
-# --- test-perf-alloc target ---
-cflags_perf_alloc = $cflags_perf -DUSE_ALLOC
-build main.o.perf_alloc: cc perf/test_perf.c
-  cflags = $cflags_perf_alloc
-build utils.o.perf_alloc: cc utils/utils.c
-  cflags = $cflags_perf_alloc
-build json.o.perf_alloc: cc src/json.c
-  cflags = $cflags_perf_alloc
-build perf_alloc.stamp: link main.o.perf_alloc json.o.perf_alloc utils.o.perf_alloc
-  name = test-perf-alloc
-  cflags = $cflags_perf_alloc
-  ldflags = $ldflags_perf_long
-build perf-alloc: phony perf_alloc.stamp
-
-# --- test-perf-alloc-long target ---
-cflags_perf_alloc_long = $cflags_perf_alloc -DLONG_TEST
-build main.o.perf_long_alloc: cc perf/test_perf.c
-  cflags = $cflags_perf_alloc_long
-build utils.o.perf_long_alloc: cc utils/utils.c
-  cflags = $cflags_perf_alloc_long
-build json.o.perf_long_alloc: cc src/json.c
-  cflags = $cflags_perf_alloc_long
-build perf_alloc_long.stamp: link main.o.perf_long_alloc json.o.perf_long_alloc utils.o.perf_long_alloc
-  name = test-perf-alloc-long
-  cflags = $cflags_perf_alloc_long
-  ldflags = $ldflags_perf_long
-build perf-alloc-long: phony perf_alloc_long.stamp
 
 # --- test-perf-json-c target ---
 cflags_perf_json_c = -Wall -Wextra -std=c89 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer
@@ -144,6 +116,34 @@ build perf_perf_simdjson_long.stamp: link main.o.perf_perf_simdjson_long json.o.
   cflags = $cflags_perf_simdjson_long
   ldflags = $ldflags_perf_simdjson_long
 build perf-simdjson-long: phony perf_perf_simdjson_long.stamp
+
+# --- test-perf-alloc target ---
+cflags_perf_alloc = $cflags_perf -DUSE_ALLOC
+build main.o.perf_alloc: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_alloc
+build utils.o.perf_alloc: cc utils/utils.c
+  cflags = $cflags_perf_alloc
+build json.o.perf_alloc: cc src/json.c
+  cflags = $cflags_perf_alloc
+build perf_alloc.stamp: link main.o.perf_alloc json.o.perf_alloc utils.o.perf_alloc
+  name = test-perf-alloc
+  cflags = $cflags_perf_alloc
+  ldflags = $ldflags_perf_long
+build perf-alloc: phony perf_alloc.stamp
+
+# --- test-perf-alloc-long target ---
+cflags_perf_alloc_long = $cflags_perf_alloc -DLONG_TEST
+build main.o.perf_long_alloc: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_alloc_long
+build utils.o.perf_long_alloc: cc utils/utils.c
+  cflags = $cflags_perf_alloc_long
+build json.o.perf_long_alloc: cc src/json.c
+  cflags = $cflags_perf_alloc_long
+build perf_alloc_long.stamp: link main.o.perf_long_alloc json.o.perf_long_alloc utils.o.perf_long_alloc
+  name = test-perf-alloc-long
+  cflags = $cflags_perf_alloc_long
+  ldflags = $ldflags_perf_long
+build perf-alloc-long: phony perf_alloc_long.stamp
 
 # --- gprof target (gcc) ---
 cflags_gprof = -Wall -Wextra -std=c89 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
