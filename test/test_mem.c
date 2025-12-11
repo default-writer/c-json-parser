@@ -71,13 +71,9 @@ TEST(test_printf, char *json) {
 }
 
 int main(void) {
-
   TEST_INITIALIZE;
-
   TEST_SUITE("unit tests");
-
   test_memory_leaks();
   test_printf();
-
   TEST_FINALIZE;
 }

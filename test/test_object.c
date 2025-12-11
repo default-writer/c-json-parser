@@ -31,7 +31,6 @@ TEST(test_object) {
   free(json_iterative);
   free(source);
 
-
   END_TEST;
 }
 
