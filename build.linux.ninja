@@ -56,7 +56,7 @@ build perf.stamp: link main.o.perf json.o.perf utils.o.perf
   name = test-perf-c-json-parser
   cflags = $cflags_perf
   ldflags = $ldflags_perf
-build perf: phony perf.stamp
+build perf-c-json-parser: phony perf.stamp
 
 # --- test-perf-c-json-parser-long target ---
 cflags_perf_long = $cflags_perf -DLONG_TEST
@@ -67,7 +67,7 @@ build perf_long.stamp: link main.o.perf_long json.o.perf utils.o.perf
   name = test-perf-c-json-parser-long
   cflags = $cflags_perf_long
   ldflags = $ldflags_perf_long
-build perf-long: phony perf_long.stamp
+build perf-c-json-parser-long: phony perf_long.stamp
 
 # --- test-perf-json-c target ---
 cflags_perf_json_c = -Wall -Wextra -std=c89 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer
@@ -117,34 +117,6 @@ build perf_perf_simdjson_long.stamp: link main.o.perf_perf_simdjson_long json.o.
   ldflags = $ldflags_perf_simdjson_long
 build perf-simdjson-long: phony perf_perf_simdjson_long.stamp
 
-# --- test-perf-alloc target ---
-cflags_perf_alloc = $cflags_perf -DUSE_ALLOC
-build main.o.perf_alloc: cc perf/test_c_json_parser.c
-  cflags = $cflags_perf_alloc
-build utils.o.perf_alloc: cc utils/utils.c
-  cflags = $cflags_perf_alloc
-build json.o.perf_alloc: cc src/json.c
-  cflags = $cflags_perf_alloc
-build perf_alloc.stamp: link main.o.perf_alloc json.o.perf_alloc utils.o.perf_alloc
-  name = test-perf-alloc
-  cflags = $cflags_perf_alloc
-  ldflags = $ldflags_perf_long
-build perf-alloc: phony perf_alloc.stamp
-
-# --- test-perf-alloc-long target ---
-cflags_perf_alloc_long = $cflags_perf_alloc -DLONG_TEST
-build main.o.perf_long_alloc: cc perf/test_c_json_parser.c
-  cflags = $cflags_perf_alloc_long
-build utils.o.perf_long_alloc: cc utils/utils.c
-  cflags = $cflags_perf_alloc_long
-build json.o.perf_long_alloc: cc src/json.c
-  cflags = $cflags_perf_alloc_long
-build perf_alloc_long.stamp: link main.o.perf_long_alloc json.o.perf_long_alloc utils.o.perf_long_alloc
-  name = test-perf-alloc-long
-  cflags = $cflags_perf_alloc_long
-  ldflags = $ldflags_perf_long
-build perf-alloc-long: phony perf_alloc_long.stamp
-
 # --- gprof target (gcc) ---
 cflags_gprof = -Wall -Wextra -std=c89 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
 ldflags_gprof = -pg
@@ -163,21 +135,20 @@ build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof
   ldflags = $ldflags_gprof
 build gprof: phony gprof.stamp
 
-# --- test-json-parse target ---
-build test_json_parse.o: cc test/test_json_parse.c
-build test_json_parse.stamp: link test_json_parse.o json.o utils.o
-  name = test-json-parse
-build test-json-parse: phony test_json_parse.stamp
-
 # --- test-array target ---
 build test_array.o: cc test/test_array.c
 build test_array.stamp: link test_array.o json.o utils.o
   name = test-array
-build test-array: phony test_array.stamp
+build array: phony test_array.stamp
 
 # --- test-object target ---
 build test_object.o: cc test/test_object.c
 build test_object.stamp: link test_object.o json.o utils.o
   name = test-object
-build test-object: phony test_object.stamp
+build object: phony test_object.stamp
 
+# --- test-json-parse target ---
+build test_json_parse.o: cc test/test_json_parse.c
+build test_json_parse.stamp: link test_json_parse.o json.o utils.o
+  name = test-json-parse
+build json-parse: phony test_json_parse.stamp

@@ -6,7 +6,7 @@
       "type": "lldb-dap",
       "program": "",
       "request": "launch",
-      "preLaunchTask": "build",
+      "preLaunchTask": "build [main]",
       "cwd": "${workspaceFolder}",
       "windows": {
         "program": "${workspaceFolder}/test-main.exe"
@@ -20,7 +20,7 @@
       "type": "lldb-dap",
       "program": "",
       "request": "launch",
-      "preLaunchTask": "build",
+      "preLaunchTask": "build [mem]",
       "cwd": "${workspaceFolder}",
       "windows": {
         "program": "${workspaceFolder}/test-mem.exe"
@@ -34,7 +34,7 @@
       "type": "lldb-dap",
       "program": "",
       "request": "launch",
-      "preLaunchTask": "build",
+      "preLaunchTask": "build [array]",
       "cwd": "${workspaceFolder}",
       "windows": {
         "program": "${workspaceFolder}/test-array.exe"
@@ -48,7 +48,7 @@
       "type": "lldb-dap",
       "program": "",
       "request": "launch",
-      "preLaunchTask": "build",
+      "preLaunchTask": "build [object]",
       "cwd": "${workspaceFolder}",
       "windows": {
         "program": "${workspaceFolder}/test-object.exe"
@@ -62,27 +62,13 @@
       "type": "lldb-dap",
       "program": "",
       "request": "launch",
-      "preLaunchTask": "build",
+      "preLaunchTask": "build [json-parse]",
       "cwd": "${workspaceFolder}",
       "windows": {
         "program": "${workspaceFolder}/test-json-parse.exe"
       },
       "linux": {
         "program": "${workspaceFolder}/test-json-parse"
-      }
-    },
-    {
-      "name": "debug [perf-c-json-parser]",
-      "type": "lldb-dap",
-      "program": "",
-      "request": "launch",
-      "preLaunchTask": "build",
-      "cwd": "${workspaceFolder}",
-      "windows": {
-        "program": "${workspaceFolder}/test-perf-c-json-parser.exe"
-      },
-      "linux": {
-        "program": "${workspaceFolder}/test-perf-c-json-parser"
       }
     }
   ]

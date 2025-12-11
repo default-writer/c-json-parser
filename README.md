@@ -53,16 +53,9 @@ sudo apt install -y git cmake clang clang gcc g++ lld
 
 ```bash
 ./build.sh
-```
-
-```bash
+./build-c-json-parser.sh
 ./build-json-c.sh
-```
-
-or
-
-```bash
-ninja -f build.linux.ninja && ./test-main
+./build-simdjson.sh 
 ```
 
 ## test

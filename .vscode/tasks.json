@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "build",
+      "label": "build [main]",
       "type": "shell",
       "group": {
         "kind": "build",
@@ -29,7 +29,7 @@
       }
     },
     {
-      "label": "build memory",
+      "label": "build [mem]",
       "type": "shell",
       "group": {
         "kind": "build",
@@ -43,7 +43,7 @@
         "args": [
           "-f",
           "build.windows.ninja",
-          "memory"
+          "mem"
         ]
       },
       "linux": {
@@ -51,7 +51,115 @@
         "args": [
           "-f",
           "build.linux.ninja",
-          "memory"
+          "mem"
+        ]
+      }
+    },
+    {
+      "label": "build [mem]",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOn": [
+        "clean"
+      ],
+      "windows": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.windows.ninja",
+          "mem"
+        ]
+      },
+      "linux": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.linux.ninja",
+          "mem"
+        ]
+      }
+    },
+    {
+      "label": "build [array]",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOn": [
+        "clean"
+      ],
+      "windows": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.windows.ninja",
+          "array"
+        ]
+      },
+      "linux": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.linux.ninja",
+          "array"
+        ]
+      }
+    },
+    {
+      "label": "build [object]",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOn": [
+        "clean"
+      ],
+      "windows": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.windows.ninja",
+          "object"
+        ]
+      },
+      "linux": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.linux.ninja",
+          "object"
+        ]
+      }
+    },
+    {
+      "label": "build [json-parse]",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOn": [
+        "clean"
+      ],
+      "windows": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.windows.ninja",
+          "json-parse"
+        ]
+      },
+      "linux": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.linux.ninja",
+          "json-parse"
         ]
       }
     },
