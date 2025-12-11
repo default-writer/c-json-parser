@@ -38,30 +38,18 @@ Ninja + Clang
 
 ## prerequisites
 
-Debian/Linux
-
 ```bash
-sudo apt install -y clang lld
+sudo apt install -y git cmake clang clang gcc g++ lld
 ```
 
-## json-c
+## simdjson / json-c
 
 ```bash
-mkdir build
-cd build
-git clone https://github.com/json-c/json-c.git
-cd json-c
-cmake -DCMAKE_INSTALL_PREFIX=../../libs/ -DCMAKE_BUILD_TYPE=release
-make all install
-```
-
-or just run (linux-based)
-
-```bash
+./bin/install_simdjson.sh
 ./bin/install_json_c.sh
 ```
 
-## building
+## build
 
 ```bash
 ./build.sh
@@ -77,7 +65,7 @@ or
 ninja -f build.linux.ninja && ./test-main
 ```
 
-## testing
+## test
 
 ```bash
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
