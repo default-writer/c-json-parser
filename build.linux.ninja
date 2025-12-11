@@ -117,24 +117,6 @@ build perf_perf_simdjson_long.stamp: link main.o.perf_perf_simdjson_long json.o.
   ldflags = $ldflags_perf_simdjson_long
 build perf-simdjson-long: phony perf_perf_simdjson_long.stamp
 
-# --- gprof target (gcc) ---
-cflags_gprof = -Wall -Wextra -std=c89 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
-ldflags_gprof = -pg
-build json.o.gprof: cc src/json.c
-  cc = gcc
-  cflags = $cflags_gprof
-build test.o.gprof: cc test/test.c
-  cc = gcc
-  cflags = $cflags_gprof
-build utils.o.gprof: cc utils/utils.c
-  cc = gcc
-  cflags = $cflags_gprof
-build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof
-  cc = gcc
-  name = test-main-gcc
-  ldflags = $ldflags_gprof
-build gprof: phony gprof.stamp
-
 # --- test-array target ---
 build test_array.o: cc test/test_array.c
 build test_array.stamp: link test_array.o json.o utils.o
@@ -152,3 +134,21 @@ build test_json_parse.o: cc test/test_json_parse.c
 build test_json_parse.stamp: link test_json_parse.o json.o utils.o
   name = test-json-parse
 build json-parse: phony test_json_parse.stamp
+
+# --- gprof target (gcc) ---
+cflags_gprof = -Wall -Wextra -std=c89 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
+ldflags_gprof = -pg
+build json.o.gprof: cc src/json.c
+  cc = gcc
+  cflags = $cflags_gprof
+build test.o.gprof: cc test/test.c
+  cc = gcc
+  cflags = $cflags_gprof
+build utils.o.gprof: cc utils/utils.c
+  cc = gcc
+  cflags = $cflags_gprof
+build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof
+  cc = gcc
+  name = test-main-gcc
+  ldflags = $ldflags_gprof
+build gprof: phony gprof.stamp

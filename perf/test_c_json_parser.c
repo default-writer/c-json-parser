@@ -12,7 +12,7 @@ TEST(test_c_json_parser) {
   long long start_time = utils_get_time();
   unsigned long i;
   for (i = 0; i < TEST_COUNT; i++) {
-    if (!json_parse(json, &v)) {
+    if (!json_parse_iterative(json, &v)) {
       break;
     }
     json_free(&v);
