@@ -92,6 +92,13 @@ static int buffer_putc(buffer *b, char c);
 static bool json_array_equal(const json_value *a, const json_value *b);
 static bool json_object_equal(const json_value *a, const json_value *b);
 
+/* --- constructor/destructor helpers --- */
+
+static json_array_node *__attribute__((always_inline)) new_array_node();
+static json_object_node *__attribute__((always_inline)) new_object_node();
+static bool __attribute__((always_inline)) free_array_node(json_array_node *array_node);
+static bool __attribute__((always_inline)) free_object_node(json_object_node *object_node);
+
 /* implementation */
 
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len) {
@@ -119,17 +126,7 @@ static void free_json_value_contents(json_value *v) {
     while (array_node) {
       json_array_node *next = array_node->next;
       free_json_value_contents(&array_node->item);
-#ifdef USE_ALLOC
-      free(array_node);
-#else
-      if (json_array_node_free_count < JSON_VALUE_POOL_SIZE) {
-        json_array_node_free_pool[JSON_VALUE_POOL_SIZE - json_array_node_free_count++] = array_node;
-      }
-      array_node->item.type = J_NULL;
-      array_node->item.u.array.items = NULL;
-      array_node->item.u.array.last = NULL;
-      array_node->next = NULL;
-#endif
+      free_array_node(array_node);
       array_node = next;
     }
     v->u.array.items = NULL;
@@ -138,17 +135,7 @@ static void free_json_value_contents(json_value *v) {
     while (object_node) {
       json_object_node *next = object_node->next;
       free_json_value_contents(&object_node->item.value);
-#ifdef USE_ALLOC
-      free(object_node);
-#else
-      if (json_object_node_free_count < JSON_VALUE_POOL_SIZE) {
-        json_object_node_free_pool[JSON_VALUE_POOL_SIZE - json_object_node_free_count++] = object_node;
-      }
-      object_node->item.value.type = J_NULL;
-      object_node->item.value.u.object.items = NULL;
-      object_node->item.value.u.object.last = NULL;
-      object_node->next = NULL;
-#endif
+      free_object_node(object_node);
       object_node = next;
     }
     v->u.object.items = NULL;
@@ -160,6 +147,63 @@ static void free_json_value_contents(json_value *v) {
 }
 
 /* --- parser helpers --- */
+
+
+/* --- constructor/destructor helpers --- */
+
+static json_array_node *__attribute__((always_inline)) new_array_node() {
+#ifdef USE_ALLOC
+  return (json_array_node *)calloc(1, sizeof(json_array_node));
+#else
+  if (json_array_node_free_count == 0)
+    return NULL;
+  json_array_node *node = json_array_node_free_pool[JSON_VALUE_POOL_SIZE - json_array_node_free_count];
+  json_array_node_free_count--;
+  memset(node, 0, sizeof(json_array_node)); /* Ensure the node is zeroed out */
+  return node;
+#endif
+}
+
+static bool __attribute__((always_inline)) free_array_node(json_array_node *array_node) {
+#ifdef USE_ALLOC
+  free(array_node);
+  return true;
+#else
+  if (json_array_node_free_count < JSON_VALUE_POOL_SIZE) {
+    json_array_node_free_pool[JSON_VALUE_POOL_SIZE - json_array_node_free_count] = array_node;
+    json_array_node_free_count++;
+    return true;
+  }
+  return false;
+#endif
+}
+
+static json_object_node *__attribute__((always_inline)) new_object_node() {
+#ifdef USE_ALLOC
+  return (json_object_node *)calloc(1, sizeof(json_object_node));
+#else
+  if (json_object_node_free_count == 0)
+    return NULL;
+  json_object_node *node = json_object_node_free_pool[JSON_VALUE_POOL_SIZE - json_object_node_free_count];
+  json_object_node_free_count--;
+  memset(node, 0, sizeof(json_object_node)); /* Ensure the node is zeroed out */
+  return node;
+#endif
+}
+
+static bool __attribute__((always_inline)) free_object_node(json_object_node *object_node) {
+#ifdef USE_ALLOC
+  free(object_node);
+  return true;
+#else
+  if (json_object_node_free_count < JSON_VALUE_POOL_SIZE) {
+    json_object_node_free_pool[JSON_VALUE_POOL_SIZE - json_object_node_free_count] = object_node;
+    json_object_node_free_count++;
+    return true;
+  }
+  return false;
+#endif
+}
 
 static bool parse_string_value(const char **s, json_value *v) {
   const char *p = *s + 1;
@@ -248,10 +292,7 @@ static bool parse_array_value(const char **s, json_value *v) {
       return false;
     }
 #else
-    json_array_node *array_node = json_array_node_free_pool[JSON_VALUE_POOL_SIZE - --json_array_node_free_count];
-    if (json_array_node_free_count == 0) {
-      return false;
-    }
+    json_array_node *array_node = new_array_node();
 #endif
     do {
       if (v->u.array.items == NULL) {
@@ -269,13 +310,7 @@ static bool parse_array_value(const char **s, json_value *v) {
     } while (0);
     if (!parse_value_build(s, &array_node->item)) {
       free_json_value_contents(v);
-#ifdef USE_ALLOC
-      free(array_node);
-#else
-      if (json_array_node_free_count < JSON_VALUE_POOL_SIZE) {
-        json_array_node_free_pool[JSON_VALUE_POOL_SIZE - json_array_node_free_count++] = array_node;
-      }
-#endif
+      free_array_node(array_node);
       v->u.array.items = NULL;
       return false;
     }
@@ -335,8 +370,8 @@ static bool parse_object_value(const char **s, json_value *v) {
         return false;
       }
 #else
-      object_node = json_object_node_free_pool[JSON_VALUE_POOL_SIZE - --json_object_node_free_count];
-      if (json_object_node_free_count == 0) {
+      object_node = new_object_node();
+      if (object_node == NULL) {
         return false;
       }
 #endif
@@ -361,13 +396,7 @@ static bool parse_object_value(const char **s, json_value *v) {
     }
     if (!parse_value_build(s, &object_node->item.value)) {
       free_json_value_contents(v);
-#ifdef USE_ALLOC
-      free(object_node);
-#else
-      if (json_object_node_free_count < JSON_VALUE_POOL_SIZE) {
-        json_object_node_free_pool[JSON_VALUE_POOL_SIZE - json_object_node_free_count++] = object_node;
-      }
-#endif
+      free_object_node(object_node);
       v->u.object.items = NULL;
       return false;
     }
