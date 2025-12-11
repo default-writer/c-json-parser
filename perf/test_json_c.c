@@ -1,12 +1,6 @@
 #include "../test/test.h"
 #include "../libs/json-c/include/json-c/json_tokener.h"
 
-#ifdef LONG_TEST
-#define TEST_COUNT 1000000UL
-#else
-#define TEST_COUNT 100000UL
-#endif
-
 TEST(test_json_c) {
   char *json = utils_get_test_json_data("data/test.json");
   ASSERT_PTR_NOT_NULL(json);

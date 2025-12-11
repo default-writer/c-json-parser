@@ -72,17 +72,17 @@
       }
     },
     {
-      "name": "debug [perf]",
+      "name": "debug [perf-c-json-parser]",
       "type": "lldb-dap",
       "program": "",
       "request": "launch",
       "preLaunchTask": "build",
       "cwd": "${workspaceFolder}",
       "windows": {
-        "program": "${workspaceFolder}/test-perf.exe"
+        "program": "${workspaceFolder}/test-perf-c-json-parser.exe"
       },
       "linux": {
-        "program": "${workspaceFolder}/test-perf"
+        "program": "${workspaceFolder}/test-perf-c-json-parser"
       }
     }
   ]
