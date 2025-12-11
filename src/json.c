@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 11, 2025 at 2:34:12 PM GMT+3
+ *   December 11, 2025 at 2:45:03 PM GMT+3
  *
  */
 /*
@@ -202,7 +202,7 @@ static bool free_object_node(json_object_node *object_node) {
 
 /* --- parser helpers --- */
 
-static bool parse_string_value(const char **s, json_value *v) {
+static bool __attribute__((always_inline)) parse_string_value(const char **s, json_value *v) {
   const char *p = *s + 1;
   const char *ptr = *s + 1;
   size_t len = 0;

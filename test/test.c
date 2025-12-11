@@ -10,7 +10,7 @@ TEST(test_json_parse) {
 
   unsigned long i;
   for (i = 0; i < TEST_COUNT; i++) {
-    if (!json_parse(source, &v)) {
+    if (!json_parse_iterative(source, &v)) {
       break;
     }
     json_free(&v);
