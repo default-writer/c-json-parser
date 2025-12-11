@@ -1,0 +1,19 @@
+{
+  "null": null,
+  "boolean": false,
+  "number": 1.0,
+  "string": "a text",
+  "array": [
+    null,
+    0,
+    true,
+    "a text",
+    {
+      "key": "value"
+    }
+  ],
+  "object": {
+    "key1": [null],
+    "key2": null
+  }
+}

@@ -117,5 +117,8 @@
   "terminal.integrated.fontFamily": "'Ubuntu Mono'",
   "editor.fontWeight": "normal",
   "geminicodeassist.agentYoloMode": true,
-  "geminicodeassist.codeGenerationPaneViewEnabled": true
+  "geminicodeassist.codeGenerationPaneViewEnabled": true,
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  }
 }
