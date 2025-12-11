@@ -1,5 +1,5 @@
-#include "../src/json.h"
 #include "../test/test.h"
+#include "../src/json.h"
 
 TEST(test_c_json_parser) {
   char *json = utils_get_test_json_data("data/test.json");
