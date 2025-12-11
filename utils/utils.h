@@ -11,7 +11,7 @@
 #include <time.h>
 #endif
 
-#include "../src/json.h"
+#include "../src/headers.h"
 
 #ifdef __cplusplus
 extern "C" {

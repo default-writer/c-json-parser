@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 9, 2025 at 11:47:53 AM GMT+3
+ *   December 11, 2025 at 12:25:01 PM GMT+3
  *
  */
 /*
@@ -39,7 +39,29 @@
 #ifndef JSON_H
 #define JSON_H
 
-#include "macros.h"
+#define DICTIONARY_SIZE 16
+#define MAX_BUFFER_SIZE 0x100
+#define JSON_VALUE_POOL_SIZE 0xFFFF
+#define JSON_STACK_SIZE 0xFFFF
+
+#define STATE_INITIAL 1
+#define STATE_ESCAPE_START 2
+#define STATE_ESCAPE_UNICODE_BYTE1 3
+#define STATE_ESCAPE_UNICODE_BYTE2 4
+#define STATE_ESCAPE_UNICODE_BYTE3 5
+#define STATE_ESCAPE_UNICODE_BYTE4 6
+
+#define NEXT_TOKEN(s)                     \
+  do {                                    \
+    while (**(s) != '\0') {               \
+      if (!isspace((unsigned char)**(s))) \
+        break;                            \
+      (*s)++;                             \
+    }                                     \
+  } while (0)
+
+  
+#include "headers.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,6 +145,14 @@ typedef struct json_array_node {
 bool json_parse(const char *json, json_value *root);
 
 /**
+ * @brief Parses a JSON string and returns a tree of json_value objects.
+ * The caller is responsible for freeing the returned structure by calling json_free().
+ * @param json The JSON string to parse.
+ * @return A pointer to the root json_value, or NULL on error.
+ */
+bool json_parse_iterative(const char *json, json_value *root);
+
+/**
  * @brief Compares two JSON strings for structural equality.
  * @param a The first JSON value.
  * @param b The second JSON value.
@@ -150,13 +180,6 @@ void json_free(json_value *v);
  * @param out The standard output FILE handle.
  */
 void json_print(const json_value *v, FILE *out);
-
-#ifndef USE_ALLOC
-/**
- * @brief Initializes a json_array_node_free_pool, json_object_node_free_pool static arrays.
- */
-void json_initialize(void);
-#endif
 
 #ifdef __cplusplus
 }

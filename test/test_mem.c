@@ -1,5 +1,7 @@
 #include "../test/test.h"
 
+#include "../src/json.h"
+
 TEST(test_memory_leaks, char *json) {
   const char *source = "[{\"key\": \"value\"}]";
 

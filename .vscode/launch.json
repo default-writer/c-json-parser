@@ -2,8 +2,9 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "debug",
+      "name": "debug [main]",
       "type": "lldb-dap",
+      "program": "",
       "request": "launch",
       "preLaunchTask": "build",
       "cwd": "${workspaceFolder}",
@@ -15,16 +16,59 @@
       }
     },
     {
-      "name": "debug memory",
+      "name": "debug [mem]",
       "type": "lldb-dap",
+      "program": "",
       "request": "launch",
       "preLaunchTask": "build",
       "cwd": "${workspaceFolder}",
       "windows": {
-        "program": "${workspaceFolder}/test-memory.exe"
+        "program": "${workspaceFolder}/test-mem.exe"
       },
       "linux": {
-        "program": "${workspaceFolder}/test-memory"
+        "program": "${workspaceFolder}/test-mem"
+      }
+    },
+    {
+      "name": "debug [array]",
+      "type": "lldb-dap",
+      "program": "",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "cwd": "${workspaceFolder}",
+      "windows": {
+        "program": "${workspaceFolder}/test-array.exe"
+      },
+      "linux": {
+        "program": "${workspaceFolder}/test-array"
+      }
+    },
+    {
+      "name": "debug [object]",
+      "type": "lldb-dap",
+      "program": "",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "cwd": "${workspaceFolder}",
+      "windows": {
+        "program": "${workspaceFolder}/test-object.exe"
+      },
+      "linux": {
+        "program": "${workspaceFolder}/test-object"
+      }
+    },
+    {
+      "name": "debug [json-parse]",
+      "type": "lldb-dap",
+      "program": "",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "cwd": "${workspaceFolder}",
+      "windows": {
+        "program": "${workspaceFolder}/test-json-parse.exe"
+      },
+      "linux": {
+        "program": "${workspaceFolder}/test-json-parse"
       }
     }
   ]

@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 9, 2025 at 11:48:26 AM GMT+3
+ *   December 11, 2025 at 12:31:52 PM GMT+3
  *
  */
 /*
@@ -39,24 +39,15 @@
 #ifndef MACROS_H
 #define MACROS_H
 
-#include <math.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "../src/headers.h"
 
-#ifndef JSON_EXPORT
+#ifndef LIBRARY_C_JSON_PARSER_EXPORT
 #if defined(_MSC_VER) && defined(JSON_C_DLL)
-#define JSON_EXPORT __declspec(dllexport)
+#define LIBRARY_C_JSON_PARSER_EXPORT __declspec(dllexport)
 #else
-#define JSON_EXPORT extern
+#define LIBRARY_C_JSON_PARSER_EXPORT extern
 #endif
 #endif
-
-#define MAX_BUFFER_SIZE 0x100
 
 #ifdef _WIN32
 #include <windows.h>
@@ -80,15 +71,6 @@ static inline FILE *safe_fopen(const char *filename, const char *mode) {
   } while (0)
 #endif
 
-#define DICTIONARY_SIZE 16
-#define JSON_VALUE_POOL_SIZE 0xFFFF
-
-#define STATE_INITIAL 1
-#define STATE_ESCAPE_START 2
-#define STATE_ESCAPE_UNICODE_BYTE1 3
-#define STATE_ESCAPE_UNICODE_BYTE2 4
-#define STATE_ESCAPE_UNICODE_BYTE3 5
-#define STATE_ESCAPE_UNICODE_BYTE4 6
 #define TEXT_SIZE(name) sizeof(name) - 1
 #define TOKEN(value) value, TEXT_SIZE(value)
 #define NEXT_TOKEN(s)                     \

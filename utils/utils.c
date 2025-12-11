@@ -1,5 +1,14 @@
 #include "../utils/utils.h"
 
+#define NEXT_TOKEN(s)                     \
+  do {                                    \
+    while (**(s) != '\0') {               \
+      if (!isspace((unsigned char)**(s))) \
+        break;                            \
+      (*s)++;                             \
+    }                                     \
+  } while (0)
+  
 #define PREFIX_CHAR_OFFSET 10
 #define POSTFIX_CHAR_OFFSET 10
 

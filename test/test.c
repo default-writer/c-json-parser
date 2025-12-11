@@ -1,9 +1,11 @@
 #include "../test/test.h"
 
+#include "../src/json.h"
+
 #define TEST_COUNT 100000UL
 
 TEST(test_json_parse) {
-  char *source = utils_get_test_json_data("test/test.json");
+  char *source = utils_get_test_json_data("data/test.json");
   ASSERT_PTR_NOT_NULL(source);
 
   json_value v;

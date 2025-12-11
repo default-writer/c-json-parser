@@ -18,13 +18,14 @@ fi
 cwd=$(cd "$(dirname $(dirname "${BASH_SOURCE[0]}"))" &> /dev/null && pwd)
 BUILD_DIR="${cwd}/build"
 
+rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 git clone https://github.com/json-c/json-c.git
 cd json-c
 
-cmake -DCMAKE_INSTALL_PREFIX=../../libs/ -DCMAKE_BUILD_TYPE=release
+cmake -DCMAKE_INSTALL_PREFIX=../../libs/json-c -DCMAKE_BUILD_TYPE=release
 make all install
 
 cd "${cwd}"

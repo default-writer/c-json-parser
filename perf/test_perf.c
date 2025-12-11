@@ -1,6 +1,6 @@
+#include "../src/json.h"
 #include "../test/test.h"
-
-#include "../libs/include/json-c/json_tokener.h"
+#include "../utils/utils.h"
 
 #ifdef LONG_TEST
 #define TEST_COUNT 1000000UL
@@ -8,18 +8,26 @@
 #define TEST_COUNT 100000UL
 #endif
 
-TEST(test_json_c) {
-  char *json = utils_get_test_json_data("test/test.json");
+TEST(test_c_json_parser) {
+  char *json = utils_get_test_json_data("data/test.json");
   ASSERT_PTR_NOT_NULL(json);
+
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */
   long long start_time = utils_get_time();
   unsigned long i;
   for (i = 0; i < TEST_COUNT; i++) {
-    struct json_object *jobj = json_tokener_parse(json);
-    json_object_put(jobj);
+    if (!json_parse(json, &v)) {
+      break;
+    }
+    json_free(&v);
   }
   long long end_time = utils_get_time();
+
+  ASSERT_EQ(TEST_COUNT, i);
+
   utils_print_time_diff(start_time, end_time);
 
   /* cleanup */
@@ -29,12 +37,11 @@ TEST(test_json_c) {
 }
 
 int main(void) {
-
   TEST_INITIALIZE;
 
   TEST_SUITE("performance tests");
 
-  test_json_c();
+  test_c_json_parser();
 
   TEST_FINALIZE;
 }

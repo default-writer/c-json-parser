@@ -1,29 +1,19 @@
 #ifndef TEST_H
 #define TEST_H
 
+#include "../utils/macros.h"
 #include "../utils/utils.h"
 
-#ifdef USE_ALLOC
-#define TEST_SETUP()                       \
-  JSON_EXPORT void utils_initialize(void); \
-  JSON_EXPORT int tests_run;               \
-  JSON_EXPORT int tests_passed;            \
-  JSON_EXPORT const char *GREEN;           \
-  JSON_EXPORT const char *RED;             \
-  JSON_EXPORT const char *RESET;
-#else
-#define TEST_SETUP()                       \
-  JSON_EXPORT void utils_initialize(void); \
-  JSON_EXPORT int tests_run;               \
-  JSON_EXPORT int tests_passed;            \
-  JSON_EXPORT const char *GREEN;           \
-  JSON_EXPORT const char *RED;             \
-  JSON_EXPORT const char *RESET;           \
-  JSON_EXPORT void json_initialize(void)
-#endif
+#define TEST_SETUP()             \
+  LIBRARY_C_JSON_PARSER_EXPORT int tests_run;     \
+  LIBRARY_C_JSON_PARSER_EXPORT int tests_passed;  \
+  LIBRARY_C_JSON_PARSER_EXPORT const char *GREEN; \
+  LIBRARY_C_JSON_PARSER_EXPORT const char *RED;   \
+  LIBRARY_C_JSON_PARSER_EXPORT const char *RESET; \
+  LIBRARY_C_JSON_PARSER_EXPORT void utils_initialize(void)
 
 #define TEST_DEFINITION(name) \
-  JSON_EXPORT void(name)(void)
+  LIBRARY_C_JSON_PARSER_EXPORT void(name)(void)
 
 #define TEST_INITIALIZE \
   do {                  \
@@ -54,7 +44,6 @@
     }                                                                                            \
   } while (0)
 
-#ifdef USE_ALLOC
 #define TEST(name, ...)                          \
   void name() {                                  \
     __VA_ARGS__;                                 \
@@ -64,18 +53,6 @@
       const char *test_name = #name;             \
       printf("running test: %65s\n", test_name); \
       do
-#else
-#define TEST(name, ...)                          \
-  void name() {                                  \
-    __VA_ARGS__;                                 \
-    do {                                         \
-      json_initialize();                         \
-      tests_run++;                               \
-      int passed = 1;                            \
-      const char *test_name = #name;             \
-      printf("running test: %65s\n", test_name); \
-      do
-#endif
 
 #define END_TEST                          \
   }                                       \
