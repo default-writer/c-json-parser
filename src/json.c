@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 11, 2025 at 3:00:13 PM GMT+3
+ *   December 13, 2025 at 4:09:12 AM GMT+3
  *
  */
 /*
@@ -92,8 +92,8 @@ static bool json_object_equal(const json_value *a, const json_value *b);
 
 /* --- constructor/destructor helpers --- */
 
-static json_array_node * new_array_node();
-static json_object_node * new_object_node();
+static json_array_node *new_array_node();
+static json_object_node *new_object_node();
 static bool free_array_node(json_array_node *array_node);
 static bool free_object_node(json_object_node *object_node);
 
@@ -148,7 +148,7 @@ static void free_json_value_contents(json_value *v) {
 
 /* --- constructor/destructor helpers --- */
 
-static INLINE json_array_node * INLINE_ATTRIBUTE  new_array_node() {
+static INLINE json_array_node *INLINE_ATTRIBUTE new_array_node() {
 #ifdef USE_ALLOC
   return (json_array_node *)calloc(1, sizeof(json_array_node));
 #else
@@ -174,7 +174,7 @@ static INLINE bool INLINE_ATTRIBUTE free_array_node(json_array_node *array_node)
 #endif
 }
 
-static INLINE json_object_node  * INLINE_ATTRIBUTE new_object_node() {
+static INLINE json_object_node *INLINE_ATTRIBUTE new_object_node() {
 #ifdef USE_ALLOC
   return (json_object_node *)calloc(1, sizeof(json_object_node));
 #else
@@ -264,6 +264,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string_value(const char **s, json_valu
     len++;
     p++;
   }
+
   if (*p != '"') {
     return false;
   }
@@ -276,13 +277,21 @@ static INLINE bool INLINE_ATTRIBUTE parse_string_value(const char **s, json_valu
 
 static bool parse_array_value(const char **s, json_value *v) {
   (*s)++;
-  NEXT_TOKEN(s);
+  while (**s != '\0') {
+    if (!isspace((unsigned char)**s))
+      break;
+    (*s)++;
+  }
   if (**s == ']') {
     (*s)++;
     return true;
   }
   while (1) {
-    NEXT_TOKEN(s);
+    while (**s != '\0') {
+      if (!isspace((unsigned char)**s))
+        break;
+      (*s)++;
+    }
     json_array_node *array_node = new_array_node();
     if (array_node == NULL) {
       return false;
@@ -308,7 +317,11 @@ static bool parse_array_value(const char **s, json_value *v) {
       return false;
     }
 
-    NEXT_TOKEN(s);
+    while (**s != '\0') {
+      if (!isspace((unsigned char)**s))
+        break;
+      (*s)++;
+    }
     if (**s == ',') {
       (*s)++;
       continue;
@@ -323,13 +336,21 @@ static bool parse_array_value(const char **s, json_value *v) {
 
 static bool parse_object_value(const char **s, json_value *v) {
   (*s)++;
-  NEXT_TOKEN(s);
+  while (**s != '\0') {
+    if (!isspace((unsigned char)**s))
+      break;
+    (*s)++;
+  }
   if (**s == '}') {
     (*s)++;
     return true;
   }
   while (1) {
-    NEXT_TOKEN(s);
+    while (**s != '\0') {
+      if (!isspace((unsigned char)**s))
+        break;
+      (*s)++;
+    }
     if (**s != '"') {
       free_json_value_contents(v);
       return false;
@@ -340,13 +361,21 @@ static bool parse_object_value(const char **s, json_value *v) {
       free_json_value_contents(v);
       return false;
     }
-    NEXT_TOKEN(s);
+    while (**s != '\0') {
+      if (!isspace((unsigned char)**s))
+        break;
+      (*s)++;
+    }
     if (**s != ':') {
       free_json_value_contents(v);
       return false;
     }
     (*s)++;
-    NEXT_TOKEN(s);
+    while (**s != '\0') {
+      if (!isspace((unsigned char)**s))
+        break;
+      (*s)++;
+    }
     json_object_node *object_node = NULL;
     json_object_node *object_items = v->u.object.items;
     while (object_items) {
@@ -387,7 +416,11 @@ static bool parse_object_value(const char **s, json_value *v) {
       return false;
     }
 
-    NEXT_TOKEN(s);
+    while (**s != '\0') {
+      if (!isspace((unsigned char)**s))
+        break;
+      (*s)++;
+    }
     if (**s == ',') {
       (*s)++;
       continue;
@@ -402,7 +435,11 @@ static bool parse_object_value(const char **s, json_value *v) {
 }
 
 static bool parse_value_build(const char **s, json_value *v) {
-  NEXT_TOKEN(s);
+  while (**s != '\0') {
+    if (!isspace((unsigned char)**s))
+      break;
+    (*s)++;
+  }
   if (**s == 'n' && strncmp(*s, "null", 4) == 0) {
     v->type = J_NULL;
     *s += 4;
@@ -838,7 +875,11 @@ bool json_parse_iterative(const char *json, json_value *root) {
   bool expect_comma = false;
 
   while (*p) {
-    NEXT_TOKEN(&p);
+    while (*p != '\0') {
+      if (!isspace((unsigned char)*p))
+        break;
+      p++;
+    }
     if (current == NULL) {
       /* After popping the root, we might get here. */
       break;
@@ -847,7 +888,11 @@ bool json_parse_iterative(const char *json, json_value *root) {
       if (expect_comma) {
         if (*p == ',') {
           p++;
-          NEXT_TOKEN(&p);
+          while (*p != '\0') {
+            if (!isspace((unsigned char)*p))
+              break;
+            p++;
+          }
         } else if (*p != '}') {
           return false; /* Expected comma or '}' */
         }
@@ -871,12 +916,20 @@ bool json_parse_iterative(const char *json, json_value *root) {
       if (!parse_string_value(&p, &key)) {
         return false;
       }
-      NEXT_TOKEN(&p);
+      while (*p != '\0') {
+        if (!isspace((unsigned char)*p))
+          break;
+        p++;
+      }
       if (*p != ':') {
         return false; /* Expected colon */
       }
       p++;
-      NEXT_TOKEN(&p);
+      while (*p != '\0') {
+        if (!isspace((unsigned char)*p))
+          break;
+        p++;
+      }
       json_object_node *node = (json_object_node *)new_object_node();
       if (!node)
         return false;
@@ -893,7 +946,11 @@ bool json_parse_iterative(const char *json, json_value *root) {
       if (expect_comma) {
         if (*p == ',') {
           p++;
-          NEXT_TOKEN(&p);
+          while (*p != '\0') {
+            if (!isspace((unsigned char)*p))
+              break;
+            p++;
+          }
         } else if (*p != ']') {
           return false; /* Expected comma or ']' */
         }
@@ -943,8 +1000,11 @@ bool json_parse_iterative(const char *json, json_value *root) {
       expect_comma = false;
       continue;
     }
-
-    NEXT_TOKEN(&p);
+    while (*p != '\0') {
+      if (!isspace((unsigned char)*p))
+        break;
+      p++;
+    }
     if (*p == 'n' && strncmp(p, "null", 4) == 0) {
       current->type = J_NULL;
       p += 4;
@@ -992,8 +1052,11 @@ bool json_parse_iterative(const char *json, json_value *root) {
       break;
     }
   }
-
-  NEXT_TOKEN(&p);
+  while (*p != '\0') {
+    if (!isspace((unsigned char)*p))
+      break;
+    p++;
+  }
   return *p == '\0' && top == -1;
 }
 
@@ -1002,14 +1065,22 @@ bool json_parse(const char *json, json_value *root) {
     return false;
   const char *p = json;
 
-  NEXT_TOKEN(&p);
+  while (*p != '\0') {
+    if (!isspace((unsigned char)*p))
+      break;
+    p++;
+  }
 
   /* parse entire JSON into an in-memory json_value tree */
   if (!parse_value_build(&p, root))
     return false;
 
   /* ensure there is no trailing garbage */
-  NEXT_TOKEN(&p);
+  while (*p != '\0') {
+    if (!isspace((unsigned char)*p))
+      break;
+    p++;
+  }
 
   if (*p != '\0') {
     free_json_value_contents(root);

@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 11, 2025 at 3:00:59 PM GMT+3
+ *   December 12, 2025 at 10:51:55 AM GMT+3
  *
  */
 /*
@@ -76,16 +76,6 @@ static FILE *safe_fopen(const char *filename, const char *mode) {
 #endif
 #define INLINE __inline__
 #define INLINE_ATTRIBUTE __attribute__((always_inline))
-#define TEXT_SIZE(name) sizeof(name) - 1
-#define TOKEN(value) value, TEXT_SIZE(value)
-#define NEXT_TOKEN(s)                     \
-  do {                                    \
-    while (**(s) != '\0') {               \
-      if (!isspace((unsigned char)**(s))) \
-        break;                            \
-      (*s)++;                             \
-    }                                     \
-  } while (0)
 
 #ifdef __cplusplus
 extern "C" {
