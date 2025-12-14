@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 14, 2025 at 11:00:31 AM GMT+3
+ *   December 15, 2025 at 2:09:09 AM GMT+3
  *
  */
 /*
@@ -37,6 +37,10 @@
 */
 
 #include "json.h"
+
+#define JSON_NULL_LEN 4
+#define JSON_TRUE_LEN 4
+#define JSON_FALSE_LEN 5
 
 typedef struct {
   char *buf;
@@ -394,25 +398,25 @@ static bool parse_object_value(const char **s, json_value *v) {
 
 static bool parse_value_build(const char **s, json_value *v) {
   skip_whitespace(s);
-  if (**s == 'n' && strncmp(*s, "null", 4) == 0) {
+  if (*(uint32_t *)*s == *(uint32_t *)"null") {
     v->type = J_NULL;
     *s += 4;
-    v->u.string.ptr = "null";
+    v->u.string.ptr = *s;
     v->u.string.len = 4;
     return true;
   }
-  if (**s == 't' && strncmp(*s, "true", 4) == 0) {
+  if (*(uint32_t *)*s == *(uint32_t *)"true") {
     v->type = J_BOOLEAN;
     *s += 4;
-    v->u.string.ptr = "true";
+    v->u.string.ptr = *s;
     v->u.string.len = 4;
     return true;
   }
-  if (**s == 'f' && strncmp(*s, "false", 5) == 0) {
+  if (**s == 'f' && *(uint32_t *)*(s + 1) == *(uint32_t *)"alse") {
     v->type = J_BOOLEAN;
-    *s += 5;
-    v->u.string.ptr = "false";
-    v->u.string.len = 5;
+    *s += JSON_FALSE_LEN;
+    v->u.string.ptr = *s;
+    v->u.string.len = JSON_FALSE_LEN;
     return true;
   }
   if (**s == '-' || isdigit((unsigned char)**s)) {
@@ -926,37 +930,27 @@ bool json_parse_iterative(const char *json, json_value *root) {
     }
     skip_whitespace(&p);
     if (*p == 'n') {
-      uint32_t val;
-      memcpy(&val, p, 4);
-      if (val == *(uint32_t *)"null") {
+      if (*(uint32_t *)p == *(uint32_t *)"null") {
         current->type = J_NULL;
-        p += 4;
-        current->u.string.ptr = "null";
-        current->u.string.len = 4;
+        p += JSON_NULL_LEN;
+        current->u.string.ptr = p;
+        current->u.string.len = JSON_NULL_LEN;
         continue;
       }
     }
-    if (*p == 't') {
-      uint32_t val;
-      memcpy(&val, p, 4);
-      if (val == *(uint32_t *)"true") {
-        current->type = J_BOOLEAN;
-        p += 4;
-        current->u.string.ptr = "true";
-        current->u.string.len = 4;
-        continue;
-      }
+    if (*(uint32_t *)p == *(uint32_t *)"true") {
+      current->type = J_BOOLEAN;
+      p += JSON_TRUE_LEN;
+      current->u.string.ptr = p;
+      current->u.string.len = JSON_TRUE_LEN;
+      continue;
     }
-    if (*p == 'f') {
-      uint32_t val;
-      memcpy(&val, p, 4);
-      if (val == *(uint32_t *)"fals" && p[4] == 'e') {
-        current->type = J_BOOLEAN;
-        p += 5;
-        current->u.string.ptr = "false";
-        current->u.string.len = 5;
-        continue;
-      }
+    if (*p == 'f' && *(uint32_t *)(p + 1) == *(uint32_t *)"alse") {
+      current->type = J_BOOLEAN;
+      p += JSON_FALSE_LEN;
+      current->u.string.ptr = p;
+      current->u.string.len = JSON_FALSE_LEN;
+      continue;
     }
     if (*p == '-' || isdigit((unsigned char)*p)) {
       current->type = J_NUMBER;
@@ -970,7 +964,6 @@ bool json_parse_iterative(const char *json, json_value *root) {
         return false;
       continue;
     }
-
     if (top > -1) {
       current = stack[top];
       expect_comma = true;
