@@ -1,5 +1,5 @@
-#include "../test/test.h"
 #include "../src/json.h"
+#include "../test/test.h"
 
 TEST(test_array) {
   char *source = utils_get_test_json_data("data/array.json");

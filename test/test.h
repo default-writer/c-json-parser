@@ -17,7 +17,6 @@
 #define TEST_COUNT 100000UL
 #endif
 
-
 #define TEST_SETUP()                              \
   LIBRARY_C_JSON_PARSER_EXPORT int tests_run;     \
   LIBRARY_C_JSON_PARSER_EXPORT int tests_passed;  \

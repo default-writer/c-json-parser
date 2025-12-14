@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 14, 2025 at 10:59:08 AM GMT+3
+ *   December 14, 2025 at 11:00:31 AM GMT+3
  *
  */
 /*
@@ -80,16 +80,13 @@ static int buffer_write_value(buffer *b, const json_value *v);
 static int buffer_write(buffer *b, const char *data, int len);
 static int buffer_putc(buffer *b, char c);
 
-
 static bool json_array_equal(const json_value *a, const json_value *b);
 static bool json_object_equal(const json_value *a, const json_value *b);
-
 
 static json_array_node *new_array_node();
 static json_object_node *new_object_node();
 static bool free_array_node(json_array_node *array_node);
 static bool free_object_node(json_object_node *object_node);
-
 
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len) {
   if (!obj || obj->type != J_OBJECT || !key)
@@ -137,7 +134,6 @@ static void free_json_value_contents(json_value *v) {
   }
   v->type = J_NULL;
 }
-
 
 static INLINE json_array_node *INLINE_ATTRIBUTE new_array_node() {
 #ifdef USE_ALLOC
@@ -190,7 +186,6 @@ static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_no
   return false;
 #endif
 }
-
 
 static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
   while (**s && isspace((unsigned char)**s)) {
