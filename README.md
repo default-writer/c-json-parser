@@ -25,8 +25,7 @@
 
 ## docs
 
-- [data structures](docs/data-structures.md)
-- [documentation](docs)
+- [basics](docs/data-structures.md)
 
 ## screenshots
 
@@ -42,7 +41,7 @@ Ninja + Clang
 sudo apt install -y git cmake clang clang gcc g++ lld
 ```
 
-## simdjson / json-c
+## installation [simdjson](https://github.com/simdjson/simdjson) / [json-c](https://github.com/json-c/json-c)
 
 ```bash
 ./bin/install_simdjson.sh
