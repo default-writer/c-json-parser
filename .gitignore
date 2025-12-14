@@ -9,5 +9,6 @@ build/
 libs/
 test-*
 main-*
+**/*.s
 /.ninja_log
 gmon.out

@@ -120,5 +120,9 @@
   "geminicodeassist.codeGenerationPaneViewEnabled": true,
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "disasexpl.associations": {
+    "**/*.c": "${fileDirname}/${fileBasenameNoExtension}.s",
+    "**/*.cpp": "${fileDirname}/${fileBasenameNoExtension}.s"
   }
 }

@@ -15,6 +15,11 @@ rule link
   command = $cc $ldflags -o $name $in
   description = Linking $name
 
+# Rule for compiling .c to .s
+rule asm
+  command = $cc $cflags -S -o $out $in
+  description = Assembling $in
+
 # Build statements for object files
 build json.o: cc src/json.c
 build test.o: cc test/test.c
@@ -134,6 +139,12 @@ build test_json_parse.o: cc test/test_json_parse.c
 build test_json_parse.stamp: link test_json_parse.o json.o utils.o
   name = test-json-parse
 build json-parse: phony test_json_parse.stamp
+
+# --- json-parse-s target ---
+build test/test_json_parse.s: asm test/test_json_parse.c
+build src/json.s: asm src/json.c
+build utils/utils.s: asm utils/utils.c
+build json-parse-s: phony test/test_json_parse.s src/json.s utils/utils.s
 
 # --- gprof target (gcc) ---
 cflags_gprof = -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections

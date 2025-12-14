@@ -8,6 +8,7 @@
         "letmaik.git-tree-compare",
         "exelord.git-commits",
         "donjayamanne.githistory",
-        "mhutchie.git-graph"
+        "mhutchie.git-graph",
+        "dseight.disasexpl"
     ]
 }
