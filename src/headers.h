@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 11, 2025 at 11:47:01 AM GMT+3
+ *   December 14, 2025 at 9:43:18 AM GMT+3
  *
  */
 /*
@@ -43,6 +43,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

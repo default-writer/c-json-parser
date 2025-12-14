@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 13, 2025 at 4:09:12 AM GMT+3
+ *   December 14, 2025 at 9:45:29 AM GMT+3
  *
  */
 /*
@@ -60,6 +60,8 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
 static void free_json_value_contents(json_value *v);
 
 /* --- parser helpers --- */
+static void skip_whitespace(const char **s);
+static bool parse_number(const char **s, json_value *v);
 static bool parse_string_value(const char **s, json_value *v);
 static bool parse_array_value(const char **s, json_value *v);
 static bool parse_object_value(const char **s, json_value *v);
@@ -202,96 +204,109 @@ static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_no
 
 /* --- parser helpers --- */
 
-static INLINE bool INLINE_ATTRIBUTE parse_string_value(const char **s, json_value *v) {
-  const char *p = *s + 1;
-  const char *ptr = *s + 1;
-  size_t len = 0;
-  int state = STATE_INITIAL;
-  while (*p && state) {
-    switch (state) {
-    case STATE_INITIAL:
-      if (*p == '"') {
-        state = 0;
-        continue;
-      } else if (*p == '\\')
-        state = STATE_ESCAPE_START;
-      break;
-    case STATE_ESCAPE_START:
-      if (*p == '\\')
-        state = STATE_INITIAL;
-      else if (*p == '"')
-        state = STATE_INITIAL;
-      else if (*p == 'b')
-        state = STATE_INITIAL;
-      else if (*p == 'f')
-        state = STATE_INITIAL;
-      else if (*p == 'n')
-        state = STATE_INITIAL;
-      else if (*p == 'r')
-        state = STATE_INITIAL;
-      else if (*p == 't')
-        state = STATE_INITIAL;
-      else if (*p == 'u')
-        state = STATE_ESCAPE_UNICODE_BYTE1;
-      else
-        return false;
-      break;
-    case STATE_ESCAPE_UNICODE_BYTE1:
-      if (!isxdigit((unsigned char)*p)) {
-        return false;
-      }
-      state = STATE_ESCAPE_UNICODE_BYTE2;
-      break;
-    case STATE_ESCAPE_UNICODE_BYTE2:
-      if (!isxdigit((unsigned char)*p)) {
-        return false;
-      }
-      state = STATE_ESCAPE_UNICODE_BYTE3;
-      break;
-    case STATE_ESCAPE_UNICODE_BYTE3:
-      if (!isxdigit((unsigned char)*p)) {
-        return false;
-      }
-      state = STATE_ESCAPE_UNICODE_BYTE4;
-      break;
-    case STATE_ESCAPE_UNICODE_BYTE4:
-      if (!isxdigit((unsigned char)*p)) {
-        return false;
-      }
-      state = STATE_INITIAL;
-      break;
-    }
-    len++;
+static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
+  while (**s && isspace((unsigned char)**s)) {
+    (*s)++;
+  }
+}
+
+static bool parse_number(const char **s, json_value *v) {
+  const char *p = *s;
+
+  // The strtod function is thread-safe and reentrant. It is also very slow.
+  // A faster implementation may be required for performance-critical applications.
+  // A custom parser can be faster because it doesn't have to handle all the
+  // edge cases and error conditions that strtod does. For example, a custom
+  // parser can assume that the input is a valid number and doesn't have to
+  // handle "inf" or "nan". It can also avoid the overhead of setting errno.
+  v->u.number.ptr = p;
+  // According to the JSON standard, a number can be an integer, a float, or a
+  // number in scientific notation. It can be negative.
+  if (*p == '-') {
     p++;
   }
-
-  if (*p != '"') {
+  // A number can be a single zero.
+  if (*p == '0') {
+    p++;
+  } else if (*p >= '1' && *p <= '9') {
+    p++;
+    while (*p >= '0' && *p <= '9') {
+      p++;
+    }
+  } else {
     return false;
   }
-  p++;
+  // A number can have a fractional part.
+  if (*p == '.') {
+    p++;
+    if (*p >= '0' && *p <= '9') {
+      p++;
+      while (*p >= '0' && *p <= '9') {
+        p++;
+      }
+    } else {
+      return false;
+    }
+  }
+  // A number can have an exponent.
+  if (*p == 'e' || *p == 'E') {
+    p++;
+    if (*p == '+' || *p == '-') {
+      p++;
+    }
+    if (*p >= '0' && *p <= '9') {
+      p++;
+      while (*p >= '0' && *p <= '9') {
+        p++;
+      }
+    } else {
+      return false;
+    }
+  }
+  v->u.number.len = p - v->u.number.ptr;
   *s = p;
-  v->u.string.ptr = ptr;
-  v->u.string.len = len;
   return true;
+}
+
+static INLINE bool INLINE_ATTRIBUTE parse_string_value(const char **s, json_value *v) {
+  const char *p = *s + 1;
+  v->u.string.ptr = p;
+  const char *end = p;
+
+  while (1) {
+    // Find the next special character
+    size_t span = strcspn(end, "\"\\");
+    end += span;
+
+    if (*end == '"') {
+      // End of string
+      v->u.string.len = end - p;
+      *s = end + 1;
+      return true;
+    }
+
+    if (*end == '\\') {
+      // Escape sequence
+      end++; // Skip '\'
+      if (*end == '\0')
+        return false; // Invalid escape
+      end++;
+    } else {
+      // Should not happen with strcspn, but as a safeguard
+      return false; // Or handle error
+    }
+  }
 }
 
 static bool parse_array_value(const char **s, json_value *v) {
   (*s)++;
-  while (**s != '\0') {
-    if (!isspace((unsigned char)**s))
-      break;
-    (*s)++;
-  }
+  skip_whitespace(s);
   if (**s == ']') {
     (*s)++;
     return true;
   }
   while (1) {
-    while (**s != '\0') {
-      if (!isspace((unsigned char)**s))
-        break;
-      (*s)++;
-    }
+    skip_whitespace(s);
     json_array_node *array_node = new_array_node();
     if (array_node == NULL) {
       return false;
@@ -317,11 +332,7 @@ static bool parse_array_value(const char **s, json_value *v) {
       return false;
     }
 
-    while (**s != '\0') {
-      if (!isspace((unsigned char)**s))
-        break;
-      (*s)++;
-    }
+    skip_whitespace(s);
     if (**s == ',') {
       (*s)++;
       continue;
@@ -336,21 +347,13 @@ static bool parse_array_value(const char **s, json_value *v) {
 
 static bool parse_object_value(const char **s, json_value *v) {
   (*s)++;
-  while (**s != '\0') {
-    if (!isspace((unsigned char)**s))
-      break;
-    (*s)++;
-  }
+  skip_whitespace(s);
   if (**s == '}') {
     (*s)++;
     return true;
   }
   while (1) {
-    while (**s != '\0') {
-      if (!isspace((unsigned char)**s))
-        break;
-      (*s)++;
-    }
+    skip_whitespace(s);
     if (**s != '"') {
       free_json_value_contents(v);
       return false;
@@ -361,21 +364,13 @@ static bool parse_object_value(const char **s, json_value *v) {
       free_json_value_contents(v);
       return false;
     }
-    while (**s != '\0') {
-      if (!isspace((unsigned char)**s))
-        break;
-      (*s)++;
-    }
+    skip_whitespace(s);
     if (**s != ':') {
       free_json_value_contents(v);
       return false;
     }
     (*s)++;
-    while (**s != '\0') {
-      if (!isspace((unsigned char)**s))
-        break;
-      (*s)++;
-    }
+    skip_whitespace(s);
     json_object_node *object_node = NULL;
     json_object_node *object_items = v->u.object.items;
     while (object_items) {
@@ -416,11 +411,7 @@ static bool parse_object_value(const char **s, json_value *v) {
       return false;
     }
 
-    while (**s != '\0') {
-      if (!isspace((unsigned char)**s))
-        break;
-      (*s)++;
-    }
+    skip_whitespace(s);
     if (**s == ',') {
       (*s)++;
       continue;
@@ -435,11 +426,7 @@ static bool parse_object_value(const char **s, json_value *v) {
 }
 
 static bool parse_value_build(const char **s, json_value *v) {
-  while (**s != '\0') {
-    if (!isspace((unsigned char)**s))
-      break;
-    (*s)++;
-  }
+  skip_whitespace(s);
   if (**s == 'n' && strncmp(*s, "null", 4) == 0) {
     v->type = J_NULL;
     *s += 4;
@@ -463,15 +450,7 @@ static bool parse_value_build(const char **s, json_value *v) {
   }
   if (**s == '-' || isdigit((unsigned char)**s)) {
     v->type = J_NUMBER;
-    const char *p = *s;
-    char *end = NULL;
-    strtod(p, &end);
-    if (end == p)
-      return false;
-    *s = end;
-    v->u.number.ptr = p;
-    v->u.number.len = (size_t)(end - p);
-    return true;
+    return parse_number(s, v);
   }
   if (**s == '"') {
     v->type = J_STRING;
@@ -875,11 +854,7 @@ bool json_parse_iterative(const char *json, json_value *root) {
   bool expect_comma = false;
 
   while (*p) {
-    while (*p != '\0') {
-      if (!isspace((unsigned char)*p))
-        break;
-      p++;
-    }
+    skip_whitespace(&p);
     if (current == NULL) {
       /* After popping the root, we might get here. */
       break;
@@ -888,11 +863,7 @@ bool json_parse_iterative(const char *json, json_value *root) {
       if (expect_comma) {
         if (*p == ',') {
           p++;
-          while (*p != '\0') {
-            if (!isspace((unsigned char)*p))
-              break;
-            p++;
-          }
+          skip_whitespace(&p);
         } else if (*p != '}') {
           return false; /* Expected comma or '}' */
         }
@@ -916,20 +887,12 @@ bool json_parse_iterative(const char *json, json_value *root) {
       if (!parse_string_value(&p, &key)) {
         return false;
       }
-      while (*p != '\0') {
-        if (!isspace((unsigned char)*p))
-          break;
-        p++;
-      }
+      skip_whitespace(&p);
       if (*p != ':') {
         return false; /* Expected colon */
       }
       p++;
-      while (*p != '\0') {
-        if (!isspace((unsigned char)*p))
-          break;
-        p++;
-      }
+      skip_whitespace(&p);
       json_object_node *node = (json_object_node *)new_object_node();
       if (!node)
         return false;
@@ -946,11 +909,7 @@ bool json_parse_iterative(const char *json, json_value *root) {
       if (expect_comma) {
         if (*p == ',') {
           p++;
-          while (*p != '\0') {
-            if (!isspace((unsigned char)*p))
-              break;
-            p++;
-          }
+          skip_whitespace(&p);
         } else if (*p != ']') {
           return false; /* Expected comma or ']' */
         }
@@ -1000,42 +959,44 @@ bool json_parse_iterative(const char *json, json_value *root) {
       expect_comma = false;
       continue;
     }
-    while (*p != '\0') {
-      if (!isspace((unsigned char)*p))
-        break;
-      p++;
+    skip_whitespace(&p);
+    if (*p == 'n') {
+      uint32_t val;
+      memcpy(&val, p, 4);
+      if (val == *(uint32_t *)"null") {
+        current->type = J_NULL;
+        p += 4;
+        current->u.string.ptr = "null";
+        current->u.string.len = 4;
+        continue;
+      }
     }
-    if (*p == 'n' && strncmp(p, "null", 4) == 0) {
-      current->type = J_NULL;
-      p += 4;
-      current->u.string.ptr = "null";
-      current->u.string.len = 4;
-      continue;
+    if (*p == 't') {
+      uint32_t val;
+      memcpy(&val, p, 4);
+      if (val == *(uint32_t *)"true") {
+        current->type = J_BOOLEAN;
+        p += 4;
+        current->u.string.ptr = "true";
+        current->u.string.len = 4;
+        continue;
+      }
     }
-    if (*p == 't' && strncmp(p, "true", 4) == 0) {
-      current->type = J_BOOLEAN;
-      p += 4;
-      current->u.string.ptr = "true";
-      current->u.string.len = 4;
-      continue;
-    }
-    if (*p == 'f' && strncmp(p, "false", 5) == 0) {
-      current->type = J_BOOLEAN;
-      p += 5;
-      current->u.string.ptr = "false";
-      current->u.string.len = 5;
-      continue;
+    if (*p == 'f') {
+      uint32_t val;
+      memcpy(&val, p, 4);
+      if (val == *(uint32_t *)"fals" && p[4] == 'e') {
+        current->type = J_BOOLEAN;
+        p += 5;
+        current->u.string.ptr = "false";
+        current->u.string.len = 5;
+        continue;
+      }
     }
     if (*p == '-' || isdigit((unsigned char)*p)) {
       current->type = J_NUMBER;
-      const char *_p = p;
-      char *end = NULL;
-      strtod(_p, &end);
-      if (end == _p)
+      if (!parse_number(&p, current))
         return false;
-      p = end;
-      current->u.number.ptr = _p;
-      current->u.number.len = (size_t)(end - _p);
       continue;
     }
     if (*p == '"') {
@@ -1052,11 +1013,7 @@ bool json_parse_iterative(const char *json, json_value *root) {
       break;
     }
   }
-  while (*p != '\0') {
-    if (!isspace((unsigned char)*p))
-      break;
-    p++;
-  }
+  skip_whitespace(&p);
   return *p == '\0' && top == -1;
 }
 
@@ -1065,22 +1022,14 @@ bool json_parse(const char *json, json_value *root) {
     return false;
   const char *p = json;
 
-  while (*p != '\0') {
-    if (!isspace((unsigned char)*p))
-      break;
-    p++;
-  }
+  skip_whitespace(&p);
 
   /* parse entire JSON into an in-memory json_value tree */
   if (!parse_value_build(&p, root))
     return false;
 
   /* ensure there is no trailing garbage */
-  while (*p != '\0') {
-    if (!isspace((unsigned char)*p))
-      break;
-    p++;
-  }
+  skip_whitespace(&p);
 
   if (*p != '\0') {
     free_json_value_contents(root);
