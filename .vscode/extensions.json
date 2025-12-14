@@ -9,6 +9,24 @@
         "exelord.git-commits",
         "donjayamanne.githistory",
         "mhutchie.git-graph",
-        "dseight.disasexpl"
+        "dseight.disasexpl",
+        "maziac.asm-code-lens",
+        "ms-vscode.cmake-tools",
+        "doi.fileheadercomment",
+        "therepoclub.fileheadergenerator",
+        "github.vscode-github-actions",
+        "github.copilot-chat",
+        "github.vscode-pull-request-github",
+        "ms-vscode.hexeditor",
+        "json-formatter.json-formatter-validator",
+        "xyz.local-history",
+        "davidanson.vscode-markdownlint",
+        "ms-python.vscode-pylance",
+        "ms-python.python",
+        "ms-python.debugpy",
+        "ms-python.vscode-python-envs",
+        "ms-vscode.test-adapter-converter",
+        "cs128.cs128-clang-tidy",
+        "github.copilot"
     ]
 }
