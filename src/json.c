@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 14, 2025 at 9:45:29 AM GMT+3
+ *   December 14, 2025 at 10:59:08 AM GMT+3
  *
  */
 /*
@@ -38,7 +38,6 @@
 
 #include "json.h"
 
-/* small buffer state (used by buffer-based printers) */
 typedef struct {
   char *buf;
   int cap;
@@ -46,20 +45,16 @@ typedef struct {
 } buffer;
 
 #ifndef USE_ALLOC
-/* json_array_node pool */
 static json_array_node json_array_node_pool[JSON_VALUE_POOL_SIZE];
 static size_t json_array_node_free_count = JSON_VALUE_POOL_SIZE;
 
-/* json_object_node pool */
 static json_object_node json_object_node_pool[JSON_VALUE_POOL_SIZE];
 static size_t json_object_node_free_count = JSON_VALUE_POOL_SIZE;
 #endif
 
-/* forward declarations */
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
 static void free_json_value_contents(json_value *v);
 
-/* --- parser helpers --- */
 static void skip_whitespace(const char **s);
 static bool parse_number(const char **s, json_value *v);
 static bool parse_string_value(const char **s, json_value *v);
@@ -67,7 +62,6 @@ static bool parse_array_value(const char **s, json_value *v);
 static bool parse_object_value(const char **s, json_value *v);
 static bool parse_value_build(const char **s, json_value *v);
 
-/* --- pretty-print helpers --- */
 static void print_string_escaped(FILE *out, const char *s, size_t len);
 static void print_indent(FILE *out, int indent);
 static void print_array_compact(const json_value *v, FILE *out);
@@ -83,23 +77,19 @@ static int buffer_write_object(buffer *b, const json_value *v);
 static int buffer_write_value_indent(buffer *b, const json_value *v, int indent);
 static int buffer_write_value(buffer *b, const json_value *v);
 
-/* --- buffer helpers --- */
 static int buffer_write(buffer *b, const char *data, int len);
 static int buffer_putc(buffer *b, char c);
 
-/* --- json helpers --- */
 
 static bool json_array_equal(const json_value *a, const json_value *b);
 static bool json_object_equal(const json_value *a, const json_value *b);
 
-/* --- constructor/destructor helpers --- */
 
 static json_array_node *new_array_node();
 static json_object_node *new_object_node();
 static bool free_array_node(json_array_node *array_node);
 static bool free_object_node(json_object_node *object_node);
 
-/* implementation */
 
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len) {
   if (!obj || obj->type != J_OBJECT || !key)
@@ -148,7 +138,6 @@ static void free_json_value_contents(json_value *v) {
   v->type = J_NULL;
 }
 
-/* --- constructor/destructor helpers --- */
 
 static INLINE json_array_node *INLINE_ATTRIBUTE new_array_node() {
 #ifdef USE_ALLOC
@@ -168,7 +157,7 @@ static INLINE bool INLINE_ATTRIBUTE free_array_node(json_array_node *array_node)
   return true;
 #else
   if (json_array_node_free_count < JSON_VALUE_POOL_SIZE) {
-    memset(array_node, 0, sizeof(json_array_node)); /* Ensure the node is zeroed out */
+    memset(array_node, 0, sizeof(json_array_node));
     json_array_node_free_count++;
     return true;
   }
@@ -194,7 +183,7 @@ static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_no
   return true;
 #else
   if (json_object_node_free_count < JSON_VALUE_POOL_SIZE) {
-    memset(object_node, 0, sizeof(json_object_node)); /* Ensure the node is zeroed out */
+    memset(object_node, 0, sizeof(json_object_node));
     json_object_node_free_count++;
     return true;
   }
@@ -202,7 +191,6 @@ static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_no
 #endif
 }
 
-/* --- parser helpers --- */
 
 static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
   while (**s && isspace((unsigned char)**s)) {
@@ -212,20 +200,10 @@ static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
 
 static bool parse_number(const char **s, json_value *v) {
   const char *p = *s;
-
-  // The strtod function is thread-safe and reentrant. It is also very slow.
-  // A faster implementation may be required for performance-critical applications.
-  // A custom parser can be faster because it doesn't have to handle all the
-  // edge cases and error conditions that strtod does. For example, a custom
-  // parser can assume that the input is a valid number and doesn't have to
-  // handle "inf" or "nan". It can also avoid the overhead of setting errno.
   v->u.number.ptr = p;
-  // According to the JSON standard, a number can be an integer, a float, or a
-  // number in scientific notation. It can be negative.
   if (*p == '-') {
     p++;
   }
-  // A number can be a single zero.
   if (*p == '0') {
     p++;
   } else if (*p >= '1' && *p <= '9') {
@@ -236,7 +214,6 @@ static bool parse_number(const char **s, json_value *v) {
   } else {
     return false;
   }
-  // A number can have a fractional part.
   if (*p == '.') {
     p++;
     if (*p >= '0' && *p <= '9') {
@@ -248,7 +225,6 @@ static bool parse_number(const char **s, json_value *v) {
       return false;
     }
   }
-  // A number can have an exponent.
   if (*p == 'e' || *p == 'E') {
     p++;
     if (*p == '+' || *p == '-') {
@@ -274,26 +250,22 @@ static INLINE bool INLINE_ATTRIBUTE parse_string_value(const char **s, json_valu
   const char *end = p;
 
   while (1) {
-    // Find the next special character
     size_t span = strcspn(end, "\"\\");
     end += span;
 
     if (*end == '"') {
-      // End of string
       v->u.string.len = end - p;
       *s = end + 1;
       return true;
     }
 
     if (*end == '\\') {
-      // Escape sequence
-      end++; // Skip '\'
+      end++;
       if (*end == '\0')
-        return false; // Invalid escape
+        return false;
       end++;
     } else {
-      // Should not happen with strcspn, but as a safeguard
-      return false; // Or handle error
+      return false;
     }
   }
 }
@@ -483,7 +455,7 @@ static void print_string_escaped(FILE *out, const char *s, size_t len) {
 static void print_indent(FILE *out, int indent) {
   int i;
   for (i = 0; i < indent; ++i)
-    fputs("    ", out); /* 4 spaces */
+    fputs("    ", out);
 }
 
 static void print_array_compact(const json_value *v, FILE *out) {
@@ -792,7 +764,6 @@ char *json_stringify(const json_value *v) {
     return NULL;
   }
 
-  /* Shrink to fit and null terminate. */
   char *final_buf = (char *)realloc(b.buf, (size_t)b.pos + 1);
   if (!final_buf) {
     free(b.buf);
@@ -856,7 +827,6 @@ bool json_parse_iterative(const char *json, json_value *root) {
   while (*p) {
     skip_whitespace(&p);
     if (current == NULL) {
-      /* After popping the root, we might get here. */
       break;
     }
     if (current->type == J_OBJECT) {
@@ -865,7 +835,7 @@ bool json_parse_iterative(const char *json, json_value *root) {
           p++;
           skip_whitespace(&p);
         } else if (*p != '}') {
-          return false; /* Expected comma or '}' */
+          return false;
         }
       }
       if (*p == '}') {
@@ -875,12 +845,12 @@ bool json_parse_iterative(const char *json, json_value *root) {
           current = stack[top];
           expect_comma = true;
         } else {
-          current = NULL; /* End of JSON */
+          current = NULL;
         }
         continue;
       }
       if (*p != '"') {
-        return false; /* Expected key */
+        return false;
       }
       json_value key;
       key.type = J_STRING;
@@ -889,7 +859,7 @@ bool json_parse_iterative(const char *json, json_value *root) {
       }
       skip_whitespace(&p);
       if (*p != ':') {
-        return false; /* Expected colon */
+        return false;
       }
       p++;
       skip_whitespace(&p);
@@ -904,14 +874,14 @@ bool json_parse_iterative(const char *json, json_value *root) {
       }
       current->u.object.last = node;
       current = &node->item.value;
-      expect_comma = false; /* Switched from true, we now expect a value */
+      expect_comma = false;
     } else if (current->type == J_ARRAY) {
       if (expect_comma) {
         if (*p == ',') {
           p++;
           skip_whitespace(&p);
         } else if (*p != ']') {
-          return false; /* Expected comma or ']' */
+          return false;
         }
       }
       if (*p == ']') {
@@ -921,7 +891,7 @@ bool json_parse_iterative(const char *json, json_value *root) {
           current = stack[top];
           expect_comma = true;
         } else {
-          current = NULL; /* End of JSON */
+          current = NULL;
         }
         continue;
       }
@@ -935,7 +905,7 @@ bool json_parse_iterative(const char *json, json_value *root) {
       }
       current->u.array.last = node;
       current = &node->item;
-      expect_comma = false; /* Switched from true */
+      expect_comma = false;
     }
 
     if (*p == '{') {
@@ -1024,11 +994,9 @@ bool json_parse(const char *json, json_value *root) {
 
   skip_whitespace(&p);
 
-  /* parse entire JSON into an in-memory json_value tree */
   if (!parse_value_build(&p, root))
     return false;
 
-  /* ensure there is no trailing garbage */
   skip_whitespace(&p);
 
   if (*p != '\0') {
@@ -1074,5 +1042,3 @@ void json_free(json_value *v) {
 void json_print(const json_value *v, FILE *out) {
   print_value(v, 0, out);
 }
-
-/* End of file */
