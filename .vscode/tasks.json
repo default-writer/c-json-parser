@@ -144,7 +144,7 @@
         "isDefault": true
       },
       "dependsOn": [
-        "clean"
+        "build [json-parse-s]"
       ],
       "windows": {
         "command": "ninja",
@@ -160,6 +160,33 @@
           "-f",
           "build.linux.ninja",
           "json-parse"
+        ]
+      }
+    },
+    {
+      "label": "build [json-parse-s]",
+      "type": "shell",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOn": [
+        "clean"
+      ],
+      "windows": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.windows.ninja",
+          "json-parse-s"
+        ]
+      },
+      "linux": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.linux.ninja",
+          "json-parse-s"
         ]
       }
     },
