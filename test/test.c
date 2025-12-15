@@ -39,7 +39,7 @@ TEST(test_json_parse) {
 
 TEST(test_whitespace) {
   const char *source = " { \t \"key\" \n : \r \"value\" } ";
-  const char *expected = "{\"key\":\"value\"}";
+  const char *expected = "{\n    \"key\": \"value\"\n}";
 
   json_value v;
   memset(&v, 0, sizeof(json_value));

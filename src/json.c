@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 15, 2025 at 2:09:09 AM GMT+3
+ *   December 15, 2025 at 11:26:20 PM GMT+3
  *
  */
 /*
@@ -398,25 +398,25 @@ static bool parse_object_value(const char **s, json_value *v) {
 
 static bool parse_value_build(const char **s, json_value *v) {
   skip_whitespace(s);
-  if (*(uint32_t *)*s == *(uint32_t *)"null") {
+  if (**s == 'n' && *(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
     v->type = J_NULL;
-    *s += 4;
     v->u.string.ptr = *s;
     v->u.string.len = 4;
-    return true;
-  }
-  if (*(uint32_t *)*s == *(uint32_t *)"true") {
-    v->type = J_BOOLEAN;
     *s += 4;
-    v->u.string.ptr = *s;
-    v->u.string.len = 4;
     return true;
   }
-  if (**s == 'f' && *(uint32_t *)*(s + 1) == *(uint32_t *)"alse") {
+  if (**s == 't' && *(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
     v->type = J_BOOLEAN;
+    v->u.boolean.ptr = *s;
+    v->u.boolean.len = 4;
+    *s += 4;
+    return true;
+  }
+  if (**s == 'f' && *(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
+    v->type = J_BOOLEAN;
+    v->u.boolean.ptr = *s;
+    v->u.boolean.len = JSON_FALSE_LEN;
     *s += JSON_FALSE_LEN;
-    v->u.string.ptr = *s;
-    v->u.string.len = JSON_FALSE_LEN;
     return true;
   }
   if (**s == '-' || isdigit((unsigned char)**s)) {
@@ -929,27 +929,25 @@ bool json_parse_iterative(const char *json, json_value *root) {
       continue;
     }
     skip_whitespace(&p);
-    if (*p == 'n') {
-      if (*(uint32_t *)p == *(uint32_t *)"null") {
-        current->type = J_NULL;
-        p += JSON_NULL_LEN;
-        current->u.string.ptr = p;
-        current->u.string.len = JSON_NULL_LEN;
-        continue;
-      }
-    }
-    if (*(uint32_t *)p == *(uint32_t *)"true") {
-      current->type = J_BOOLEAN;
-      p += JSON_TRUE_LEN;
+    if (*p == 'n' && p[1] == 'u' && p[2] == 'l' && p[3] == 'l') {
+      current->type = J_NULL;
       current->u.string.ptr = p;
-      current->u.string.len = JSON_TRUE_LEN;
+      current->u.string.len = JSON_NULL_LEN;
+      p += JSON_NULL_LEN;
       continue;
     }
-    if (*p == 'f' && *(uint32_t *)(p + 1) == *(uint32_t *)"alse") {
+    if (*p == 't' && p[1] == 'r' && p[2] == 'u' && p[3] == 'e') {
       current->type = J_BOOLEAN;
+      current->u.boolean.ptr = p;
+      current->u.boolean.len = JSON_TRUE_LEN;
+      p += JSON_TRUE_LEN;
+      continue;
+    }
+    if (*p == 'f' && p[1] == 'a' && p[2] == 'l' && p[3] == 's' && p[4] == 'e') {
+      current->type = J_BOOLEAN;
+      current->u.boolean.ptr = p;
+      current->u.boolean.len = JSON_FALSE_LEN;
       p += JSON_FALSE_LEN;
-      current->u.string.ptr = p;
-      current->u.string.len = JSON_FALSE_LEN;
       continue;
     }
     if (*p == '-' || isdigit((unsigned char)*p)) {

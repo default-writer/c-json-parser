@@ -85,7 +85,7 @@
 #define ASSERT_TRUE(actual)                                                           \
   do {                                                                                \
     if (!((actual) == true)) {                                                        \
-      printf("assertion failed at %s:%d: %s == true\n", __FILE__, __LINE__, #actual); \
+      printf("assertion failed at %s:%d: %s != true\n", __FILE__, __LINE__, #actual); \
       passed = 0;                                                                     \
     }                                                                                 \
   } while (0)
