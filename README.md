@@ -41,30 +41,10 @@ Ninja + Clang
 sudo apt install -y git cmake clang clang gcc g++ lld
 ```
 
-## installation [simdjson](https://github.com/simdjson/simdjson) / [json-c](https://github.com/json-c/json-c)
-
-```bash
-./bin/install_simdjson.sh
-./bin/install_json_c.sh
-```
-
-## build [c-json-parser](https://github.com/default-writer/c-json-parser) / [simdjson](https://github.com/simdjson/simdjson) / [json-c](https://github.com/json-c/json-c)
-
-```bash
-./build-json-c.sh
-./build-simdjson.sh 
-```
-
 ## build
 
 ```bash
 ./build-c-json-parser.sh
-```
-
-## test
-
-```bash
-./build.sh
 ```
 
 ## profiling
@@ -73,7 +53,22 @@ sudo apt install -y git cmake clang clang gcc g++ lld
 ./gprof.sh
 ```
 
+## test
+
 ```bash
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja gprof && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf-json-c && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
+./test.sh
+```
+
+## installation [simdjson](https://github.com/simdjson/simdjson) / [json-c](https://github.com/json-c/json-c)
+
+```bash
+./bin/install_json_c.sh
+./bin/install_simdjson.sh
+```
+
+## build [simdjson](https://github.com/simdjson/simdjson) / [json-c](https://github.com/json-c/json-c)
+
+```bash
+./build-json-c.sh
+./build-simdjson.sh 
 ```

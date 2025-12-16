@@ -160,6 +160,8 @@ bool utils_test_json_equal(const char *a, const char *b) {
 }
 
 void utils_output(const char *s) {
+  if (s == NULL)
+    return;
   printf("-------------------------------------------------------------------------------\n");
   fputs(s, stdout);
   fputs("\n", stdout);
