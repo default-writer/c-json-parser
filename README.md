@@ -48,22 +48,26 @@ sudo apt install -y git cmake clang clang gcc g++ lld
 ./bin/install_json_c.sh
 ```
 
+## build [c-json-parser](https://github.com/default-writer/c-json-parser) / [simdjson](https://github.com/simdjson/simdjson) / [json-c](https://github.com/json-c/json-c)
+
+```bash
+./build-json-c.sh
+./build-simdjson.sh 
+```
+
 ## build
 
 ```bash
-./build.sh
 ./build-c-json-parser.sh
-./build-json-c.sh
-./build-simdjson.sh 
 ```
 
 ## test
 
 ```bash
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
+./build.sh
 ```
 
-## profiling / performance tests (json-c)
+## profiling
 
 ```bash
 ./gprof.sh
