@@ -47,19 +47,19 @@ jobs:
           build-mode: manual
 
     steps:
-    - name: Checkout repository
+    - name: checkout repository
       uses: actions/checkout@v4
 
-    - name: Initialize CodeQL
+    - name: initialize CodeQL
       uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
 
-    - name: Install dependencies
+    - name: install dependencies
       run: sudo apt-get update && sudo apt-get install -y ninja-build cmake
     
-    # - name: Build dependencies (json-c)
+    # - name: build dependencies (json-c)
     #   run: |
     #     mkdir -p build
     #     cd build
@@ -68,12 +68,13 @@ jobs:
     #     cmake -DCMAKE_INSTALL_PREFIX=../../libs/ -DCMAKE_BUILD_TYPE=Release
     #     make all install
     
-    - name: Build project
+    - name: build project
       run: |
         cd $GITHUB_WORKSPACE
         ./test.sh
+        ./gprof.sh
 
-    - name: Perform CodeQL Analysis
+    - name: perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
       with:
         category: "/language:${{matrix.language}}"
