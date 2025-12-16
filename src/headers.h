@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 16, 2025 at 9:38:59 AM GMT+3
+ *   December 17, 2025 at 12:03:18 AM GMT+3
  *
  */
 /*
@@ -47,5 +47,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <sys/types.h>
 
 #endif /* HEADERS_H */

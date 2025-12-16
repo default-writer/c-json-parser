@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 16, 2025 at 9:27:38 PM GMT+3
+ *   December 17, 2025 at 12:07:00 AM GMT+3
  *
  */
 /*
@@ -163,53 +163,53 @@ static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
 }
 
 static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) {
-  const char *start_p = *s;
-  const char *p = *s;
-  if (*p == '-') {
-    p++;
-  }
-  if (*p == '0') {
-    p++;
-    if (*p >= '0' && *p <= '9') {
-      return false;
+    const char *start_p = *s;
+    const char *p = *s;
+    if (*p == '-') {
+        p++;
     }
-  } else if (*p >= '1' && *p <= '9') {
-    p++;
+    if (*p == '0') {
+        p++;
+        if (*p >= '0' && *p <= '9') {
+            return false;
+        }
+    } else if (*p >= '1' && *p <= '9') {
+        p++;
     while (*p >= '0' && *p <= '9') {
       p++;
     }
-  } else {
-    return false;
-  }
-  if (*p == '.') {
-    p++;
+    } else {
+        return false;
+    }
+    if (*p == '.') {
+        p++;
     if (*p >= '0' && *p <= '9') {
       p++;
       while (*p >= '0' && *p <= '9') {
         p++;
       }
     } else {
-      return false;
+            return false;
+        }
     }
-  }
-  if (*p == 'e' || *p == 'E') {
-    p++;
-    if (*p == '+' || *p == '-') {
-      p++;
-    }
+    if (*p == 'e' || *p == 'E') {
+        p++;
+        if (*p == '+' || *p == '-') {
+            p++;
+        }
     if (*p >= '0' && *p <= '9') {
       p++;
       while (*p >= '0' && *p <= '9') {
         p++;
       }
     } else {
-      return false;
+            return false;
+        }
     }
-  }
-  v->u.number.ptr = start_p;
-  v->u.number.len = p - start_p;
-  *s = p;
-  return true;
+    v->u.number.ptr = start_p;
+    v->u.number.len = p - start_p;
+    *s = p;
+    return true;
 }
 
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) {
@@ -820,7 +820,138 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
 /* --- public API --- */
 
 bool json_parse_iterative(const char *s, json_value *root) {
-  return json_parse(s, root);
+    skip_whitespace(&s);
+    if (*s != '{' && *s != '[') {
+        return false;
+    }
+
+    json_value *stack[JSON_STACK_SIZE];
+    int top = -1;
+    json_value *current = root;
+    
+    while (1) {
+        skip_whitespace(&s);
+
+        if (current) {
+            if (*s == '{') {
+                current->type = J_OBJECT;
+                current->u.object.items = NULL;
+                current->u.object.last = NULL;
+                s++;
+                if (++top >= JSON_STACK_SIZE) return false;
+                stack[top] = current;
+                current = NULL;
+            } else if (*s == '[') {
+                current->type = J_ARRAY;
+                current->u.array.items = NULL;
+                current->u.array.last = NULL;
+                s++;
+                if (++top >= JSON_STACK_SIZE) return false;
+                stack[top] = current;
+                current = NULL;
+            } else if (*s == '"') {
+                current->type = J_STRING;
+                if (!parse_string(&s, current)) return false;
+                current = NULL;
+            } else if (strncmp(s, "true", 4) == 0) {
+                current->type = J_BOOLEAN;
+                current->u.boolean.ptr = s;
+                current->u.boolean.len = 4;
+                s += 4;
+                current = NULL;
+            } else if (strncmp(s, "false", 5) == 0) {
+                current->type = J_BOOLEAN;
+                current->u.boolean.ptr = s;
+                current->u.boolean.len = 5;
+                s += 5;
+                current = NULL;
+            } else if (strncmp(s, "null", 4) == 0) {
+                current->type = J_NULL;
+                s += 4;
+                current = NULL;
+            } else if (parse_number(&s, current)) {
+                current->type = J_NUMBER;
+                current = NULL;
+            } else {
+                return false;
+            }
+            continue;
+        }
+
+        if (top == -1) {
+            break;
+        }
+
+        current = stack[top];
+
+        if (current->type == J_OBJECT) {
+            if (*s == '}') {
+                s++;
+                top--;
+                current = NULL;
+                continue;
+            }
+
+            if (current->u.object.items != NULL) {
+                if (*s == ',') {
+                    s++;
+                    skip_whitespace(&s);
+                } else {
+                    return false;
+                }
+            }
+
+            if (*s != '"') return false;
+            json_value key;
+            if (!parse_string(&s, &key)) return false;
+            
+            skip_whitespace(&s);
+            if (*s != ':') return false;
+            s++;
+
+            json_object_node *node = new_object_node();
+            if (!node) return false;
+            node->item.key = key.u.string;
+            
+            if (current->u.object.items == NULL) {
+                current->u.object.items = node;
+            } else {
+                current->u.object.last->next = node;
+            }
+            current->u.object.last = node;
+            current = &node->item.value;
+
+        } else if (current->type == J_ARRAY) {
+            if (*s == ']') {
+                s++;
+                top--;
+                current = NULL;
+                continue;
+            }
+
+            if (current->u.array.items != NULL) {
+                if (*s == ',') {
+                    s++;
+                } else {
+                    return false;
+                }
+            }
+            
+            json_array_node *node = new_array_node();
+            if (!node) return false;
+            
+            if (current->u.array.items == NULL) {
+                current->u.array.items = node;
+            } else {
+                current->u.array.last->next = node;
+            }
+            current->u.array.last = node;
+            current = &node->item;
+        }
+    }
+
+    skip_whitespace(&s);
+    return *s == '\0';
 }
 
 bool json_parse(const char *s, json_value *root) {
