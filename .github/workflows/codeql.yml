@@ -59,19 +59,19 @@ jobs:
     - name: Install dependencies
       run: sudo apt-get update && sudo apt-get install -y ninja-build cmake
     
-    - name: Build dependencies (json-c)
-      run: |
-        mkdir -p build
-        cd build
-        git clone https://github.com/json-c/json-c.git
-        cd json-c
-        cmake -DCMAKE_INSTALL_PREFIX=../../libs/ -DCMAKE_BUILD_TYPE=Release
-        make all install
+    # - name: Build dependencies (json-c)
+    #   run: |
+    #     mkdir -p build
+    #     cd build
+    #     git clone https://github.com/json-c/json-c.git
+    #     cd json-c
+    #     cmake -DCMAKE_INSTALL_PREFIX=../../libs/ -DCMAKE_BUILD_TYPE=Release
+    #     make all install
     
     - name: Build project
       run: |
         cd $GITHUB_WORKSPACE
-        ./build.sh
+        ./test.sh
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
