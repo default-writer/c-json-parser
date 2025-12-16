@@ -216,23 +216,43 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
   const char *p = *s + 1;
   v->u.string.ptr = p;
   const char *end = p;
-  while (1) {
-    size_t span = strcspn(end, "\"\\");
-    end += span;
+  while (*end != '\0') {
     if (*end == '"') {
       v->u.string.len = end - p;
       *s = end + 1;
       return true;
-    }
-    if (*end == '\\') {
+    } else if (*end == '\\') {
       end++;
       if (*end == '\0')
-        return false;
-      end++;
+        return false; // Incomplete escape sequence at end of string
+      switch (*end) {
+        case '"':
+        case '\\':
+        case '/':
+        case 'b':
+        case 'f':
+        case 'n':
+        case 'r':
+        case 't':
+          end++;
+          break;
+        case 'u':
+          end++;
+          for (int i = 0; i < 4; ++i) {
+            if (!isxdigit((unsigned char)*end)) {
+              return false;
+            }
+            end++;
+          }
+          break;
+        default:
+          return false; // Invalid escape character
+      }
     } else {
-      return false;
+      end++;
     }
   }
+  return false; // Reached end of input without closing quote
 }
 
 static bool parse_array_value(const char **s, json_value *v) {
@@ -779,96 +799,13 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
 
 bool json_parse_iterative(const char *s, json_value *root) {
   return json_parse(s, root);
-  json_value *stack[JSON_STACK_SIZE];
-  int top = -1;
-  json_value *current = root;
-  while (1) {
-    skip_whitespace(&s);
-    if (*s == '\0')
-      break;
-    switch (*s) {
-    case '{':
-    case '[':
-      if (top == JSON_STACK_SIZE - 1)
-        return false;
-      stack[++top] = current;
-      if (*s == '{') {
-        current->type = J_OBJECT;
-        current->u.object.items = NULL;
-        current->u.object.last = NULL;
-        s++;
-      } else {
-        current->type = J_ARRAY;
-        current->u.array.items = NULL;
-        current->u.array.last = NULL;
-        s++;
-      }
-      break;
-    case '}':
-    case ']':
-      if (top == -1)
-        return false;
-      current = stack[top--];
-      s++;
-      break;
-    case ':':
-      s++;
-      break;
-    case ',':
-      s++;
-      break;
-    case '"': {
-      json_value key;
-      key.type = J_STRING;
-      if (!parse_string(&s, &key))
-        return false;
-      skip_whitespace(&s);
-      if (*s != ':')
-        return false;
-      s++;
-      skip_whitespace(&s);
-      case 'n':
-        if (strncmp(s, "null", JSON_NULL_LEN) == 0) {
-          current->type = J_NULL;
-          current->u.string.ptr = s;
-          current->u.string.len = JSON_NULL_LEN;
-          s += JSON_NULL_LEN;
-        } else {
-          return false;
-        }
-        break;
-      case 't':
-        if (strncmp(s, "true", JSON_TRUE_LEN) == 0) {
-          current->type = J_BOOLEAN;
-          current->u.boolean.ptr = s;
-          current->u.boolean.len = JSON_TRUE_LEN;
-          s += JSON_TRUE_LEN;
-        } else {
-          return false;
-        }
-        break;
-      case 'f':
-        if (strncmp(s, "false", JSON_FALSE_LEN) == 0) {
-          current->type = J_BOOLEAN;
-          current->u.boolean.ptr = s;
-          current->u.boolean.len = JSON_FALSE_LEN;
-          s += JSON_FALSE_LEN;
-        } else {
-          return false;
-        }
-        break;
-      default:
-        if (!parse_number(&s, current))
-          return false;
-        break;
-    }
-    }
-  }
-  return top == -1 && *s == '\0';
 }
 
 bool json_parse(const char *s, json_value *root) {
   skip_whitespace(&s);
+  if (*s != '{' && *s != '[') {
+    return false;
+  }
   return parse_value_build(&s, root) && *s == '\0';
 }
 

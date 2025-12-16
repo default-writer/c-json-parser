@@ -177,6 +177,388 @@ TEST(test_valid_number_zero_point_zero) {
   END_TEST;
 }
 
+// Additional invalid tests for json_parse_iterative
+TEST(test_invalid_iterative_unclosed_array) {
+  const char *source = "[1, 2,";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_unclosed_object) {
+  const char *source = "{\"key\": 1";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_unquoted_string_key) {
+  const char *source = "{key: \"value\"}";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_missing_colon) {
+  const char *source = "{\"key\" \"value\"}";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_extra_comma_array) {
+  const char *source = "[1, 2,, 3]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_extra_comma_object) {
+  const char *source = "{\"key1\": 1,, \"key2\": 2}";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_invalid_escape_sequence) {
+  const char *source = "[\"hello\\xworld\"]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_truncated_string) {
+  const char *source = "[\"hello";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_truncated_number) {
+  const char *source = "[123.";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_incorrect_boolean) {
+  const char *source = "[tru]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_incorrect_null) {
+  const char *source = "[nul]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_empty_input) {
+  const char *source = "";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_whitespace_only_input) {
+  const char *source = "   \\t\\n  ";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_single_value_no_array_or_object) {
+  const char *source = "123";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_nested_unclosed_array) {
+  const char *source = "{\"key\": [1, {\"subkey\": [true,]}";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_array_of_unclosed_objects) {
+  const char *source = "[{\"a\":1}, {\"b\":2]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_valid_number_zero_point_zero_iterative) {
+  const char *source = "[0.0]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v)); // Testing iterative parser
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+// Additional valid tests for json_parse_iterative
+TEST(test_valid_number_iterative_positive_integer) {
+  const char *source = "[123]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_number_iterative_negative_integer) {
+  const char *source = "[-123]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_number_iterative_positive_float) {
+  const char *source = "[123.45]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_number_iterative_negative_float) {
+  const char *source = "[-123.45]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_number_iterative_scientific_notation) {
+  const char *source = "[1.2e-10]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  // Note: scientific notation might be stringified differently, so a direct string comparison might fail
+  // utils_test_json_equal handles numerical equality
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_string_iterative_empty) {
+  const char *source = "[\"\"]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_string_iterative_with_spaces) {
+  const char *source = "[\"hello world\"]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_string_iterative_with_escaped_chars) {
+  const char *source = "[\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_boolean_iterative_true) {
+  const char *source = "[true]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_boolean_iterative_false) {
+  const char *source = "[false]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_null_iterative) {
+  const char *source = "[null]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_array_iterative_empty) {
+  const char *source = "[]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_array_iterative_mixed_types) {
+  const char *source = "[1, \"two\", true, null, {}, []]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_object_iterative_empty) {
+  const char *source = "{}";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_object_iterative_simple) {
+  const char *source = "{\"key\": \"value\"}";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_object_iterative_nested) {
+  const char *source = "{\"key1\": 1, \"key2\": {\"nestedKey\": true}}";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_nested_array_and_object_iterative) {
+  const char *source = "[{\"a\": [1, 2]}, {\"b\": {\"c\": 3}}]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
 TEST(test_json_parse) {
   char *source = utils_get_test_json_data("data/test.json");
   ASSERT_PTR_NOT_NULL(source);
@@ -5104,7 +5486,41 @@ int main(void) {
   test_array();
   test_object();
   test_invalid_number_leading_zero();
+  test_invalid_iterative_unclosed_array();
+  test_invalid_iterative_unclosed_object();
+  test_invalid_iterative_unquoted_string_key();
+  test_invalid_iterative_missing_colon();
+  test_invalid_iterative_extra_comma_array();
+  test_invalid_iterative_extra_comma_object();
+  test_invalid_iterative_invalid_escape_sequence();
+  test_invalid_iterative_truncated_string();
+  test_invalid_iterative_truncated_number();
+  test_invalid_iterative_incorrect_boolean();
+  test_invalid_iterative_incorrect_null();
+  test_invalid_iterative_empty_input();
+  test_invalid_iterative_whitespace_only_input();
+  test_invalid_iterative_single_value_no_array_or_object();
+  test_invalid_iterative_nested_unclosed_array();
+  test_invalid_iterative_array_of_unclosed_objects();
   test_valid_number_zero_point_zero();
+  test_valid_number_zero_point_zero_iterative();
+  test_valid_number_iterative_positive_integer();
+  test_valid_number_iterative_negative_integer();
+  test_valid_number_iterative_positive_float();
+  test_valid_number_iterative_negative_float();
+  test_valid_number_iterative_scientific_notation();
+  test_valid_string_iterative_empty();
+  test_valid_string_iterative_with_spaces();
+  test_valid_string_iterative_with_escaped_chars();
+  test_valid_boolean_iterative_true();
+  test_valid_boolean_iterative_false();
+  test_valid_null_iterative();
+  test_valid_array_iterative_empty();
+  test_valid_array_iterative_mixed_types();
+  test_valid_object_iterative_empty();
+  test_valid_object_iterative_simple();
+  test_valid_object_iterative_nested();
+  test_valid_nested_array_and_object_iterative();
   test_json_parse();
   test_case_0();
   test_case_1();
