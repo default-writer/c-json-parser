@@ -23,6 +23,7 @@ char *utils_get_test_json_data(const char *filename);
 bool utils_test_json_equal(const char *a, const char *b);
 void utils_output(const char *s);
 void utils_initialize();
+void utils_itoa(int n, char s[]);
 
 #ifdef __cplusplus
 }

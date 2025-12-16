@@ -94,6 +94,14 @@
     }                                                                                 \
   } while (0)
 
+#define ASSERT_FALSE(actual)                                                            \
+  do {                                                                                  \
+    if (!((actual) == false)) {                                                         \
+      printf("assertion failed at %s:%d: %s != false\n", __FILE__, __LINE__, #actual); \
+      passed = 0;                                                                       \
+    }                                                                                   \
+  } while (0)
+
 #define ASSERT(condition)                                                        \
   do {                                                                           \
     if (!(condition)) {                                                          \

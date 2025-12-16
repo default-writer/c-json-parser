@@ -9,6 +9,7 @@
 #define TIME_MINUTES 60UL
 #define TIME_HOURS 24UL
 #define TIME_EPSILON 1000000000UL
+#define BASE 10
 
 int tests_run = 0;
 int tests_passed = 0;
@@ -157,6 +158,30 @@ bool utils_test_json_equal(const char *a, const char *b) {
   fprintf(stderr, "\"\n");
 
   return false;
+}
+
+static void reverse(char s[]) {
+  int i, j;
+  char c;
+  for (i = 0, j = strlen(s) - 1; i < j; i++, j--) {
+    c = s[i];
+    s[i] = s[j];
+    s[j] = c;
+  }
+}
+
+void utils_itoa(int n, char s[]) {
+  int i, sign;
+  if ((sign = n) < 0)
+    n = -n;
+  i = 0;
+  do {
+    s[i++] = n % BASE + '0';
+  } while ((n /= BASE) > 0);
+  if (sign < 0)
+    s[i++] = '-';
+  s[i] = '\0';
+  reverse(s);
 }
 
 void utils_output(const char *s) {

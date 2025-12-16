@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 16, 2025 at 8:43:57 AM GMT+3
+ *   December 16, 2025 at 9:50:34 AM GMT+3
  *
  */
 /*
@@ -385,10 +385,14 @@ static bool parse_value_build(const char **s, json_value *v) {
   }
   if (**s == '[') {
     v->type = J_ARRAY;
+    v->u.array.items = NULL;
+    v->u.array.last = NULL;
     return parse_array_value(s, v);
   }
   if (**s == '{') {
     v->type = J_OBJECT;
+    v->u.object.items = NULL;
+    v->u.object.last = NULL;
     return parse_object_value(s, v);
   }
   return false;
