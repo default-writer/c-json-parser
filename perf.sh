@@ -22,14 +22,17 @@ done
 if [ -s "$temp_file" ]; then
     total_time=$(awk '{sum+=$1} END {print sum}' "$temp_file")
     average_time=$(awk '{sum+=$1} END {print sum/NR}' "$temp_file")
+    min_time=$(awk 'BEGIN {min = -1} {if ($1 < min || min == -1) min = $1} END {print min}' "$temp_file")
 else
     total_time=0
     average_time=0
+    min_time=0
 fi
 
 echo "--------------------------------------------"
 printf "%-26s %9.3f seconds\n" "total elapsed time:" "$total_time"
 printf "%-26s %9.3f seconds\n" "average execution time:" "$average_time"
+printf "%-26s %9.3f seconds\n" "minimum execution time:" "$min_time"
 echo "--------------------------------------------"
 
 rm "$temp_file" # Clean up temp file
