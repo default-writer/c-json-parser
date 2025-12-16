@@ -20,34 +20,6 @@ rule asm
   command = $cc $cflags -S -o $out $in
   description = Assembling $in
 
-# Build statements for object files
-build json.o: cc src/json.c
-build test.o: cc test/test.c
-build utils.o: cc utils/utils.c
-
-# Build statement for the executable
-build main.stamp: link test.o json.o utils.o
-  name = test-main
-build main: phony main.stamp
-
-# default target
-default main
-
-# --- test-mem target ---
-cflags_mem = -Wall -Wextra -std=c17 -g
-ldflags_mem = $ldflags
-build main.o.mem: cc test/test_mem.c
-  cflags = $cflags_mem
-build json.o.mem: cc src/json.c
-  cflags = $cflags_mem
-build utils.o.mem: cc utils/utils.c
-  cflags = $cflags_mem
-build test_mem.stamp: link main.o.mem json.o.mem utils.o.mem
-  name = test-mem
-  cflags = $cflags_mem
-  ldflags = $ldflags_mem
-build mem: phony test_mem.stamp
-
 # --- test-perf-c-json-parser target ---
 cflags_perf = -Wall -Wextra -std=c17 -O3 -march=native -flto -fomit-frame-pointer -ffunction-sections -fdata-sections
 ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops
@@ -122,29 +94,20 @@ build perf_perf_simdjson_long.stamp: link main.o.perf_perf_simdjson_long json.o.
   ldflags = $ldflags_perf_simdjson_long
 build perf-simdjson-long: phony perf_perf_simdjson_long.stamp
 
-# --- test-array target ---
-build test_array.o: cc test/test_array.c
-build test_array.stamp: link test_array.o json.o utils.o
-  name = test-array
-build array: phony test_array.stamp
+# --- test-main target ---
+# Build statements for object files
+build json.o: cc src/json.c
+build test.o: cc test/test.c
+build utils.o: cc utils/utils.c
+build test.stamp: link test.o json.o utils.o
+  name = test-main
+build test-main: phony test.stamp
 
-# --- test-object target ---
-build test_object.o: cc test/test_object.c
-build test_object.stamp: link test_object.o json.o utils.o
-  name = test-object
-build object: phony test_object.stamp
-
-# --- test-json-parse target ---
-build test_json_parse.o: cc test/test_json_parse.c
-build test_json_parse.stamp: link test_json_parse.o json.o utils.o
-  name = test-json-parse
-build json-parse: phony test_json_parse.stamp
-
-# --- json-parse-s target ---
-build test/test_json_parse.s: asm test/test_json_parse.c
+# --- .s target ---
+build test/test.s: asm test/test.c
 build src/json.s: asm src/json.c
 build utils/utils.s: asm utils/utils.c
-build json-parse-s: phony test/test_json_parse.s src/json.s utils/utils.s
+build .s: phony test/test.s src/json.s utils/utils.s
 
 # --- gprof target (gcc) ---
 cflags_gprof = -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
@@ -152,7 +115,7 @@ ldflags_gprof = -pg
 build json.o.gprof: cc src/json.c
   cc = gcc
   cflags = $cflags_gprof
-build test.o.gprof: cc test/test.c
+build test.o.gprof: cc test/test_gprof.c
   cc = gcc
   cflags = $cflags_gprof
 build utils.o.gprof: cc utils/utils.c
@@ -160,6 +123,9 @@ build utils.o.gprof: cc utils/utils.c
   cflags = $cflags_gprof
 build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof
   cc = gcc
-  name = test-main-gcc
+  name = test-gprof
   ldflags = $ldflags_gprof
 build gprof: phony gprof.stamp
+
+# default target
+default test-main

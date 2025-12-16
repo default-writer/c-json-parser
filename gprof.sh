@@ -5,10 +5,10 @@ ninja -f build.linux.ninja -t clean > /dev/null 2>&1
 
 # gprof target
 ninja -f build.linux.ninja gprof
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1
 
-./test-main-gcc
+./test-gprof
 
-gprof ./test-main-gcc gmon.out > test-main-gcc.txt
+gprof ./test-gprof gmon.out > test-gprof.txt
 
 [[ -f gmon.out ]] && rm gmon.out

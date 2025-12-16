@@ -66,12 +66,10 @@ ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.nin
 ## profiling / performance tests (json-c)
 
 ```bash
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
-ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf-json-c && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
+./gprof.sh
 ```
 
-## python
-
 ```bash
-python3 test/perf_test.py
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja gprof && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
+ninja -f build.linux.ninja -t clean > /dev/null 2>&1 && ninja -f build.linux.ninja perf-json-c && ninja -f build.linux.ninja -t clean > /dev/null 2>&1
 ```

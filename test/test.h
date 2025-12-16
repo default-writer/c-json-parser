@@ -57,29 +57,33 @@
     }                                                                                            \
   } while (0)
 
-#define TEST(name, ...)                          \
-  void name() {                                  \
-    __VA_ARGS__;                                 \
-    do {                                         \
-      tests_run++;                               \
-      int passed = 1;                            \
-      const char *test_name = #name;             \
-      printf("running test: %65s\n", test_name); \
+#define TEST(name, ...)              \
+  void name() {                      \
+    __VA_ARGS__;                     \
+    do {                             \
+      tests_run++;                   \
+      int passed = 1;                \
+      const char *test_name = #name; \
       do
 
-#define END_TEST                          \
-  }                                       \
-  while (0)                               \
-    ;                                     \
-  if (passed) {                           \
-    tests_passed++;                       \
-    printf("status: %65s", "");           \
-    printf("%sPASSED%s\n", GREEN, RESET); \
-  } else {                                \
-    printf("status: %65s", "");           \
-    printf("%sFAILED%s\n", RED, RESET);   \
-  }                                       \
-  }                                       \
+#define END_TEST                                            \
+  }                                                         \
+  while (0)                                                 \
+    ;                                                       \
+  do {                                                      \
+    int padding = 72 - strlen(test_name);                   \
+    if (padding < 0) {                                      \
+      padding = 0;                                          \
+    }                                                       \
+    printf("%s:", test_name);                               \
+    if (passed) {                                           \
+      tests_passed++;                                       \
+      printf("%*s%sPASSED%s\n", padding, "", GREEN, RESET); \
+    } else {                                                \
+      printf("%*s%sFAILED%s\n", padding, "", RED, RESET);   \
+    }                                                       \
+  } while (0);                                              \
+  }                                                         \
   while (0)
 
 #define ASSERT_TRUE(actual)                                                           \
