@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 17, 2025 at 2:14:44 AM GMT+3
+ *   December 17, 2025 at 2:29:47 AM GMT+3
  *
  */
 /*
@@ -827,7 +827,9 @@ bool json_parse_iterative(const char *s, json_value *root) {
   json_value *stack[JSON_STACK_SIZE];
   int top = -1;
   json_value *current = root;
-  while (1) {
+  while (true) {
+    if (*s == '\0')
+      break;
     skip_whitespace(&s);
     if (current) {
       if (*s == '{') {
