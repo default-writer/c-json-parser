@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 16, 2025 at 8:14:13 AM GMT+3
+ *   December 16, 2025 at 8:43:57 AM GMT+3
  *
  */
 /*
@@ -60,7 +60,7 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
 
 static void skip_whitespace(const char **s);
 static bool parse_number(const char **s, json_value *v);
-static bool parse_string_value(const char **s, json_value *v);
+static bool parse_string(const char **s, json_value *v);
 static bool parse_array_value(const char **s, json_value *v);
 static bool parse_object_value(const char **s, json_value *v);
 static bool parse_value_build(const char **s, json_value *v);
@@ -162,7 +162,7 @@ static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
   }
 }
 
-static bool parse_number(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) {
   const char *p = *s;
   v->u.number.ptr = p;
   if (*p == '-') {
@@ -208,20 +208,18 @@ static bool parse_number(const char **s, json_value *v) {
   return true;
 }
 
-static INLINE bool INLINE_ATTRIBUTE parse_string_value(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) {
   const char *p = *s + 1;
   v->u.string.ptr = p;
   const char *end = p;
   while (1) {
     size_t span = strcspn(end, "\"\\");
     end += span;
-
     if (*end == '"') {
       v->u.string.len = end - p;
       *s = end + 1;
       return true;
     }
-
     if (*end == '\\') {
       end++;
       if (*end == '\0')
@@ -293,7 +291,7 @@ static bool parse_object_value(const char **s, json_value *v) {
     }
     json_value key;
     key.type = J_STRING;
-    if (!parse_string_value(s, &key)) {
+    if (!parse_string(s, &key)) {
       return false;
     }
     skip_whitespace(s);
@@ -383,7 +381,7 @@ static bool parse_value_build(const char **s, json_value *v) {
   }
   if (**s == '"') {
     v->type = J_STRING;
-    return parse_string_value(s, v);
+    return parse_string(s, v);
   }
   if (**s == '[') {
     v->type = J_ARRAY;
@@ -806,7 +804,7 @@ bool json_parse_iterative(const char *s, json_value *root) {
       }
       json_value key;
       key.type = J_STRING;
-      if (!parse_string_value(&s, &key)) {
+      if (!parse_string(&s, &key)) {
         return false;
       }
       skip_whitespace(&s);
@@ -911,7 +909,7 @@ bool json_parse_iterative(const char *s, json_value *root) {
     }
     if (*s == '"') {
       current->type = J_STRING;
-      if (!parse_string_value(&s, current))
+      if (!parse_string(&s, current))
         return false;
       continue;
     }
