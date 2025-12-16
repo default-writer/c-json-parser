@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 16, 2025 at 7:26:59 PM GMT+3
+ *   December 16, 2025 at 7:38:12 PM GMT+3
  *
  */
 /*
@@ -60,6 +60,7 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
 
 static void skip_whitespace(const char **s);
 static bool parse_number(const char **s, json_value *v);
+// static bool parse_string_fast(const char **s, json_value *v);
 static bool parse_string(const char **s, json_value *v);
 static bool parse_array_value(const char **s, json_value *v);
 static bool parse_object_value(const char **s, json_value *v);
@@ -212,47 +213,77 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
   return true;
 }
 
+// static INLINE bool INLINE_ATTRIBUTE parse_string_fast(const char **s, json_value *v) {
+//   const char *p = *s + 1;
+//   v->u.string.ptr = p;
+//   const char *end = p;
+//   while (1) {
+//     size_t span = strcspn(end, "\"\\");
+//     end += span;
+//     if (*end == '"') {
+//       v->u.string.len = end - p;
+//       *s = end + 1;
+//       return true;
+//     }
+//     if (*end == '\\') {
+//       end++;
+//       if (*end == '\0')
+//         return false;
+//       end++;
+//     } else {
+//       return false;
+//     }
+//   }
+// }
+
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) {
   const char *p = *s + 1;
   v->u.string.ptr = p;
   const char *end = p;
-  while (*end != '\0') {
+  while (true) { // Use true since inner breaks/returns handle termination
+    size_t span = strcspn(end, "\"\\"); // Find next quote or backslash
+    end += span;
+
     if (*end == '"') {
       v->u.string.len = end - p;
       *s = end + 1;
       return true;
     } else if (*end == '\\') {
-      end++;
+      end++; // Move past the backslash
       if (*end == '\0')
-        return false;
+        return false; // Incomplete escape sequence at end of string
+
       switch (*end) {
-      case '"':
-      case '\\':
-      case '/':
-      case 'b':
-      case 'f':
-      case 'n':
-      case 'r':
-      case 't':
-        end++;
-        break;
-      case 'u':
-        end++;
-        for (int i = 0; i < 4; ++i) {
-          if (!isxdigit((unsigned char)*end)) {
-            return false;
-          }
+        case '"':
+        case '\\':
+        case '/':
+        case 'b':
+        case 'f':
+        case 'n':
+        case 'r':
+        case 't':
+          // Valid single-character escape, just advance
           end++;
-        }
-        break;
-      default:
-        return false;
+          break;
+        case 'u':
+          // Unicode escape sequence \uXXXX
+          end++;
+          for (int i = 0; i < 4; ++i) {
+            if (!isxdigit((unsigned char)*end)) { // Check for 4 hex digits
+              return false; // Invalid unicode escape
+            }
+            end++;
+          }
+          break;
+        default:
+          return false; // Invalid escape character
       }
     } else {
-      end++;
+      // If *end is not '"' or '\', it must be '\0'
+      // This means strcspn reached the end of the string without finding a delimiter
+      return false; // Reached end of input without closing quote
     }
   }
-  return false;
 }
 
 static bool parse_array_value(const char **s, json_value *v) {
