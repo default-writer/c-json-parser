@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 16, 2025 at 7:38:12 PM GMT+3
+ *   December 16, 2025 at 7:58:35 PM GMT+3
  *
  */
 /*
@@ -60,7 +60,6 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
 
 static void skip_whitespace(const char **s);
 static bool parse_number(const char **s, json_value *v);
-// static bool parse_string_fast(const char **s, json_value *v);
 static bool parse_string(const char **s, json_value *v);
 static bool parse_array_value(const char **s, json_value *v);
 static bool parse_object_value(const char **s, json_value *v);
@@ -212,29 +211,6 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
   *s = p;
   return true;
 }
-
-// static INLINE bool INLINE_ATTRIBUTE parse_string_fast(const char **s, json_value *v) {
-//   const char *p = *s + 1;
-//   v->u.string.ptr = p;
-//   const char *end = p;
-//   while (1) {
-//     size_t span = strcspn(end, "\"\\");
-//     end += span;
-//     if (*end == '"') {
-//       v->u.string.len = end - p;
-//       *s = end + 1;
-//       return true;
-//     }
-//     if (*end == '\\') {
-//       end++;
-//       if (*end == '\0')
-//         return false;
-//       end++;
-//     } else {
-//       return false;
-//     }
-//   }
-// }
 
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) {
   const char *p = *s + 1;
