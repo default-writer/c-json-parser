@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 16, 2025 at 7:58:35 PM GMT+3
+ *   December 16, 2025 at 7:59:13 PM GMT+3
  *
  */
 /*
@@ -216,7 +216,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
   const char *p = *s + 1;
   v->u.string.ptr = p;
   const char *end = p;
-  while (true) { // Use true since inner breaks/returns handle termination
+  while (true) {                        // Use true since inner breaks/returns handle termination
     size_t span = strcspn(end, "\"\\"); // Find next quote or backslash
     end += span;
 
@@ -230,29 +230,29 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
         return false; // Incomplete escape sequence at end of string
 
       switch (*end) {
-        case '"':
-        case '\\':
-        case '/':
-        case 'b':
-        case 'f':
-        case 'n':
-        case 'r':
-        case 't':
-          // Valid single-character escape, just advance
-          end++;
-          break;
-        case 'u':
-          // Unicode escape sequence \uXXXX
-          end++;
-          for (int i = 0; i < 4; ++i) {
-            if (!isxdigit((unsigned char)*end)) { // Check for 4 hex digits
-              return false; // Invalid unicode escape
-            }
-            end++;
+      case '"':
+      case '\\':
+      case '/':
+      case 'b':
+      case 'f':
+      case 'n':
+      case 'r':
+      case 't':
+        // Valid single-character escape, just advance
+        end++;
+        break;
+      case 'u':
+        // Unicode escape sequence \uXXXX
+        end++;
+        for (int i = 0; i < 4; ++i) {
+          if (!isxdigit((unsigned char)*end)) { // Check for 4 hex digits
+            return false;                       // Invalid unicode escape
           }
-          break;
-        default:
-          return false; // Invalid escape character
+          end++;
+        }
+        break;
+      default:
+        return false; // Invalid escape character
       }
     } else {
       // If *end is not '"' or '\', it must be '\0'

@@ -5816,6 +5816,6 @@ int main(void) {
   test_invalid_char_case_iterative_68();
   test_invalid_char_case_iterative_69();
   test_invalid_char_case_iterative_70();
-  test_error_case_iterative_truncated_input();  
+  test_error_case_iterative_truncated_input();
   TEST_FINALIZE;
 }
