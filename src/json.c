@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 16, 2025 at 8:03:48 AM GMT+3
+ *   December 16, 2025 at 8:14:13 AM GMT+3
  *
  */
 /*
@@ -57,7 +57,6 @@ static size_t json_object_node_free_count = JSON_VALUE_POOL_SIZE;
 #endif
 
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
-static void free_json_value_contents(json_value *v);
 
 static void skip_whitespace(const char **s);
 static bool parse_number(const char **s, json_value *v);
@@ -103,38 +102,6 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
     object_items = next;
   }
   return NULL;
-}
-
-static void free_json_value_contents(json_value *v) {
-  json_array_node *array_node = v->u.array.items;
-  json_object_node *object_node = v->u.object.items;
-  switch (v->type) {
-  case J_STRING:
-    break;
-  case J_ARRAY:
-    while (array_node) {
-      json_array_node *next = array_node->next;
-      free_json_value_contents(&array_node->item);
-      free_array_node(array_node);
-      array_node = next;
-    }
-    v->u.array.items = NULL;
-    v->u.array.last = NULL;
-    break;
-  case J_OBJECT:
-    while (object_node) {
-      json_object_node *next = object_node->next;
-      free_json_value_contents(&object_node->item.value);
-      free_object_node(object_node);
-      object_node = next;
-    }
-    v->u.object.items = NULL;
-    v->u.object.last = NULL;
-    break;
-  default:
-    break;
-  }
-  v->type = J_NULL;
 }
 
 static INLINE json_array_node *INLINE_ATTRIBUTE new_array_node() {
@@ -992,7 +959,35 @@ bool json_equal(const json_value *a, const json_value *b) {
 }
 
 void json_free(json_value *v) {
-  free_json_value_contents(v);
+  json_array_node *array_node = v->u.array.items;
+  json_object_node *object_node = v->u.object.items;
+  switch (v->type) {
+  case J_STRING:
+    break;
+  case J_ARRAY:
+    while (array_node) {
+      json_array_node *next = array_node->next;
+      json_free(&array_node->item);
+      free_array_node(array_node);
+      array_node = next;
+    }
+    v->u.array.items = NULL;
+    v->u.array.last = NULL;
+    break;
+  case J_OBJECT:
+    while (object_node) {
+      json_object_node *next = object_node->next;
+      json_free(&object_node->item.value);
+      free_object_node(object_node);
+      object_node = next;
+    }
+    v->u.object.items = NULL;
+    v->u.object.last = NULL;
+    break;
+  default:
+    break;
+  }
+  v->type = J_NULL;
 }
 
 void json_print(const json_value *v, FILE *out) {

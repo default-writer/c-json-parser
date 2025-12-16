@@ -55,8 +55,6 @@ TEST(test_printf, char *json) {
   json_print(&v, stdout);
   fputc('\n', stdout);
 
-  json_free(&v);
-
   /* compare structurally (order-insensitive) */
   ASSERT_TRUE(utils_test_json_equal(json, source));
 
