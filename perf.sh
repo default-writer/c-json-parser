@@ -23,7 +23,7 @@ for i in $(seq 1 $num_runs); do
     # This specifically targets the 'real' time in seconds.
     # Example: real    0m0.003s -> 0.003
     # Example: real    0m1.234s -> 1.234
-    real_time=$( { time ./test-perf-c-json-parser > /dev/null; } 2>&1 | grep real | awk '{print $2}' | sed 's/m/:/g' | awk -F: '{print ($1*60)+$2}' )
+    real_time=$( { time ./test-perf-c-json-parser > /dev/null; } 2>&1 | grep real | sed 's/m/:/g' | awk -F: '{printf "%.3f", ($1*60)+$2}' )
     
     # Handle potential empty real_time if grep/awk fails
     if [ -z "$real_time" ]; then
