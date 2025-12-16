@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 16, 2025 at 9:50:34 AM GMT+3
+ *   December 16, 2025 at 5:57:52 PM GMT+3
  *
  */
 /*
@@ -163,13 +163,16 @@ static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
 }
 
 static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) {
+  const char *start_p = *s;
   const char *p = *s;
-  v->u.number.ptr = p;
   if (*p == '-') {
     p++;
   }
   if (*p == '0') {
     p++;
+    if (*p >= '0' && *p <= '9') {
+      return false;
+    }
   } else if (*p >= '1' && *p <= '9') {
     p++;
     while (*p >= '0' && *p <= '9') {
@@ -203,7 +206,8 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
       return false;
     }
   }
-  v->u.number.len = p - v->u.number.ptr;
+  v->u.number.ptr = start_p;
+  v->u.number.len = p - start_p;
   *s = p;
   return true;
 }
@@ -364,8 +368,8 @@ static bool parse_value_build(const char **s, json_value *v) {
   if (**s == 't' && *(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
     v->type = J_BOOLEAN;
     v->u.boolean.ptr = *s;
-    v->u.boolean.len = 4;
-    *s += 4;
+    v->u.boolean.len = JSON_TRUE_LEN;
+    *s += JSON_TRUE_LEN;
     return true;
   }
   if (**s == 'f' && *(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
@@ -637,7 +641,7 @@ static int buffer_write_value_indent(buffer *b, const json_value *v, int indent)
   case J_NULL:
     return buffer_write(b, "null", 4);
   case J_BOOLEAN:
-    return buffer_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
+    return buffer_write(b, v->u.boolean.ptr, v->u.boolean.len);
   case J_NUMBER:
     return buffer_write(b, v->u.number.ptr, (int)v->u.number.len);
   case J_STRING:
@@ -657,7 +661,7 @@ static int buffer_write_value(buffer *b, const json_value *v) {
   case J_NULL:
     return buffer_write(b, "null", 4);
   case J_BOOLEAN:
-    return buffer_write(b, v->u.boolean.ptr, (int)v->u.boolean.len);
+    return buffer_write(b, v->u.boolean.ptr, v->u.boolean.len);
   case J_NUMBER:
     return buffer_write(b, v->u.number.ptr, (int)v->u.number.len);
   case J_STRING:
@@ -774,162 +778,98 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
 /* --- public API --- */
 
 bool json_parse_iterative(const char *s, json_value *root) {
+  return json_parse(s, root);
   json_value *stack[JSON_STACK_SIZE];
   int top = -1;
   json_value *current = root;
-  bool expect_comma = false;
-  while (*s) {
+  while (1) {
     skip_whitespace(&s);
-    if (current == NULL) {
+    if (*s == '\0')
       break;
-    }
-    if (current->type == J_OBJECT) {
-      if (expect_comma) {
-        if (*s == ',') {
-          s++;
-          skip_whitespace(&s);
-        } else if (*s != '}') {
-          return false;
-        }
-      }
-      if (*s == '}') {
-        s++;
-        top--;
-        if (top > -1) {
-          current = stack[top];
-          expect_comma = true;
-        } else {
-          current = NULL;
-        }
-        continue;
-      }
-      if (*s != '"') {
+    switch (*s) {
+    case '{':
+    case '[':
+      if (top == JSON_STACK_SIZE - 1)
         return false;
+      stack[++top] = current;
+      if (*s == '{') {
+        current->type = J_OBJECT;
+        current->u.object.items = NULL;
+        current->u.object.last = NULL;
+        s++;
+      } else {
+        current->type = J_ARRAY;
+        current->u.array.items = NULL;
+        current->u.array.last = NULL;
+        s++;
       }
+      break;
+    case '}':
+    case ']':
+      if (top == -1)
+        return false;
+      current = stack[top--];
+      s++;
+      break;
+    case ':':
+      s++;
+      break;
+    case ',':
+      s++;
+      break;
+    case '"': {
       json_value key;
       key.type = J_STRING;
-      if (!parse_string(&s, &key)) {
+      if (!parse_string(&s, &key))
         return false;
-      }
       skip_whitespace(&s);
-      if (*s != ':') {
+      if (*s != ':')
         return false;
-      }
       s++;
       skip_whitespace(&s);
-      json_object_node *node = (json_object_node *)new_object_node();
-      if (!node)
-        return false;
-      node->item.key = key.u.string;
-      if (current->u.object.last) {
-        current->u.object.last->next = node;
-      } else {
-        current->u.object.items = node;
-      }
-      current->u.object.last = node;
-      current = &node->item.value;
-      expect_comma = false;
-    } else if (current->type == J_ARRAY) {
-      if (expect_comma) {
-        if (*s == ',') {
-          s++;
-          skip_whitespace(&s);
-        } else if (*s != ']') {
+      case 'n':
+        if (strncmp(s, "null", JSON_NULL_LEN) == 0) {
+          current->type = J_NULL;
+          current->u.string.ptr = s;
+          current->u.string.len = JSON_NULL_LEN;
+          s += JSON_NULL_LEN;
+        } else {
           return false;
         }
-      }
-      if (*s == ']') {
-        s++;
-        top--;
-        if (top > -1) {
-          current = stack[top];
-          expect_comma = true;
+        break;
+      case 't':
+        if (strncmp(s, "true", JSON_TRUE_LEN) == 0) {
+          current->type = J_BOOLEAN;
+          current->u.boolean.ptr = s;
+          current->u.boolean.len = JSON_TRUE_LEN;
+          s += JSON_TRUE_LEN;
         } else {
-          current = NULL;
+          return false;
         }
-        continue;
-      }
-      json_array_node *node = (json_array_node *)new_array_node();
-      if (!node)
-        return false;
-      if (current->u.array.last) {
-        current->u.array.last->next = node;
-      } else {
-        current->u.array.items = node;
-      }
-      current->u.array.last = node;
-      current = &node->item;
-      expect_comma = false;
+        break;
+      case 'f':
+        if (strncmp(s, "false", JSON_FALSE_LEN) == 0) {
+          current->type = J_BOOLEAN;
+          current->u.boolean.ptr = s;
+          current->u.boolean.len = JSON_FALSE_LEN;
+          s += JSON_FALSE_LEN;
+        } else {
+          return false;
+        }
+        break;
+      default:
+        if (!parse_number(&s, current))
+          return false;
+        break;
     }
-
-    if (*s == '{') {
-      current->type = J_OBJECT;
-      current->u.object.items = NULL;
-      current->u.object.last = NULL;
-      s++;
-      if (top >= JSON_STACK_SIZE - 1)
-        return false;
-      stack[++top] = current;
-      expect_comma = false;
-      continue;
-    } else if (*s == '[') {
-      current->type = J_ARRAY;
-      current->u.array.items = NULL;
-      current->u.array.last = NULL;
-      s++;
-      if (top >= JSON_STACK_SIZE - 1)
-        return false;
-      stack[++top] = current;
-      expect_comma = false;
-      continue;
-    }
-    skip_whitespace(&s);
-    if (*s == 'n' && s[1] == 'u' && s[2] == 'l' && s[3] == 'l') {
-      current->type = J_NULL;
-      current->u.string.ptr = s;
-      current->u.string.len = JSON_NULL_LEN;
-      s += JSON_NULL_LEN;
-      continue;
-    }
-    if (*s == 't' && s[1] == 'r' && s[2] == 'u' && s[3] == 'e') {
-      current->type = J_BOOLEAN;
-      current->u.boolean.ptr = s;
-      current->u.boolean.len = JSON_TRUE_LEN;
-      s += JSON_TRUE_LEN;
-      continue;
-    }
-    if (*s == 'f' && s[1] == 'a' && s[2] == 'l' && s[3] == 's' && s[4] == 'e') {
-      current->type = J_BOOLEAN;
-      current->u.boolean.ptr = s;
-      current->u.boolean.len = JSON_FALSE_LEN;
-      s += JSON_FALSE_LEN;
-      continue;
-    }
-    if (*s == '-' || isdigit((unsigned char)*s)) {
-      current->type = J_NUMBER;
-      if (!parse_number(&s, current))
-        return false;
-      continue;
-    }
-    if (*s == '"') {
-      current->type = J_STRING;
-      if (!parse_string(&s, current))
-        return false;
-      continue;
-    }
-    if (top > -1) {
-      current = stack[top];
-      expect_comma = true;
-    } else {
-      break;
     }
   }
-  return top == -1;
+  return top == -1 && *s == '\0';
 }
 
 bool json_parse(const char *s, json_value *root) {
   skip_whitespace(&s);
-  return parse_value_build(&s, root);
+  return parse_value_build(&s, root) && *s == '\0';
 }
 
 bool json_equal(const json_value *a, const json_value *b) {
@@ -943,9 +883,9 @@ bool json_equal(const json_value *a, const json_value *b) {
   case J_NULL:
     return true;
   case J_BOOLEAN:
-    return a->u.boolean.ptr && b->u.boolean.ptr && a->u.boolean.len == b->u.boolean.len && strncmp(a->u.boolean.ptr, b->u.boolean.ptr, a->u.boolean.len) == 0;
+    return a->u.boolean.ptr == b->u.boolean.ptr && a->u.boolean.len == b->u.boolean.len;
   case J_NUMBER: {
-    return a->u.number.ptr && b->u.number.ptr && a->u.number.len == b->u.number.len && strncmp(a->u.number.ptr, b->u.number.ptr, a->u.number.len) == 0;
+    return a->u.number.ptr == b->u.number.ptr &&  a->u.number.len == b->u.number.len;
   }
   case J_STRING:
     if (a->u.string.ptr == NULL && b->u.string.ptr == NULL)

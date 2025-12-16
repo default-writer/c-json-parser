@@ -85,8 +85,17 @@ char *utils_get_test_json_data(const char *filename) {
   }
 
   char *json = (char *)calloc(1, size + 1);
-  fread(json, 1, size, fp);
-  json[size] = '\0';
+  size_t bytes = fread(json, 1, size, fp);
+  if (!bytes) {
+    free(json);
+    fclose(fp);
+    return NULL;
+  }
+
+  int i = size;
+  while (i > 0 && isspace(json[i - 1]))
+    i--;
+  json[i] = '\0';
   fclose(fp);
 
   return json;
