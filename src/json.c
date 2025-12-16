@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 16, 2025 at 7:59:13 PM GMT+3
+ *   December 16, 2025 at 9:27:38 PM GMT+3
  *
  */
 /*
@@ -216,19 +216,17 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
   const char *p = *s + 1;
   v->u.string.ptr = p;
   const char *end = p;
-  while (true) {                        // Use true since inner breaks/returns handle termination
-    size_t span = strcspn(end, "\"\\"); // Find next quote or backslash
+  while (true) {
+    size_t span = strcspn(end, "\"\\");
     end += span;
-
     if (*end == '"') {
       v->u.string.len = end - p;
       *s = end + 1;
       return true;
     } else if (*end == '\\') {
-      end++; // Move past the backslash
+      end++;
       if (*end == '\0')
-        return false; // Incomplete escape sequence at end of string
-
+        return false;
       switch (*end) {
       case '"':
       case '\\':
@@ -238,26 +236,28 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
       case 'n':
       case 'r':
       case 't':
-        // Valid single-character escape, just advance
         end++;
+        if (*end == '\0')
+          return false;
         break;
       case 'u':
-        // Unicode escape sequence \uXXXX
         end++;
+        if (*end == '\0')
+          return false;
         for (int i = 0; i < 4; ++i) {
-          if (!isxdigit((unsigned char)*end)) { // Check for 4 hex digits
-            return false;                       // Invalid unicode escape
+          if (!isxdigit((unsigned char)*end)) {
+            return false;
           }
           end++;
+          if (*end == '\0')
+            return false;
         }
         break;
       default:
-        return false; // Invalid escape character
+        return false;
       }
     } else {
-      // If *end is not '"' or '\', it must be '\0'
-      // This means strcspn reached the end of the string without finding a delimiter
-      return false; // Reached end of input without closing quote
+      return false;
     }
   }
 }
@@ -265,12 +265,16 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
 static bool parse_array_value(const char **s, json_value *v) {
   (*s)++;
   skip_whitespace(s);
+  if (**s == '\0')
+    return false;
   if (**s == ']') {
     (*s)++;
     return true;
   }
-  while (1) {
+  while (true) {
     skip_whitespace(s);
+    if (**s == '\0')
+      return false;
     json_array_node *array_node = new_array_node();
     if (array_node == NULL) {
       return false;
@@ -295,6 +299,8 @@ static bool parse_array_value(const char **s, json_value *v) {
       return false;
     }
     skip_whitespace(s);
+    if (**s == '\0')
+      return false;
     if (**s == ',') {
       (*s)++;
       continue;
@@ -310,12 +316,16 @@ static bool parse_array_value(const char **s, json_value *v) {
 static bool parse_object_value(const char **s, json_value *v) {
   (*s)++;
   skip_whitespace(s);
+  if (**s == '\0')
+    return false;
   if (**s == '}') {
     (*s)++;
     return true;
   }
-  while (1) {
+  while (true) {
     skip_whitespace(s);
+    if (**s == '\0')
+      return false;
     if (**s != '"') {
       return false;
     }
@@ -325,11 +335,15 @@ static bool parse_object_value(const char **s, json_value *v) {
       return false;
     }
     skip_whitespace(s);
+    if (**s == '\0')
+      return false;
     if (**s != ':') {
       return false;
     }
     (*s)++;
     skip_whitespace(s);
+    if (**s == '\0')
+      return false;
     json_object_node *object_node = NULL;
     json_object_node *object_items = v->u.object.items;
     while (object_items) {
@@ -370,6 +384,8 @@ static bool parse_object_value(const char **s, json_value *v) {
     }
 
     skip_whitespace(s);
+    if (**s == '\0')
+      return false;
     if (**s == ',') {
       (*s)++;
       continue;
@@ -809,6 +825,8 @@ bool json_parse_iterative(const char *s, json_value *root) {
 
 bool json_parse(const char *s, json_value *root) {
   skip_whitespace(&s);
+  if (*s == '\0')
+    return false;
   if (*s != '{' && *s != '[') {
     return false;
   }
