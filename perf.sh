@@ -8,7 +8,7 @@ echo "building test-perf-c-json-parser..."
 echo "running performance tests 100 times..."
 
 temp_file=$(mktemp)
-num_runs=100
+num_runs=200
 
 for i in $(seq 1 $num_runs); do
     real_time=$( { time ./test-perf-c-json-parser > /dev/null; } 2>&1 | grep real | sed 's/m/:/g' | awk -F: '{printf "%.3f", ($1*60)+$2}' )
