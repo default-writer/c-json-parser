@@ -1,0 +1,26 @@
+# Ninja build file for Linux
+
+# Variables
+cc = clang
+cflags = -Wall -Wextra -std=c17 -g
+ldflags = -fuse-ld=lld -lrt
+
+# Rule for compiling .c files to .o
+rule cc
+  command = $cc $cflags -c -o $out $in
+  description = Compiling $in
+
+# Rule for linking .o files with a specific name
+rule link
+  command = $cc $ldflags -o $name $in
+  description = Linking $name
+
+# --- test-equal target ---
+build json.o: cc src/json.c
+build test_equal.o: cc test/test_equal.c
+build utils.o: cc utils/utils.c
+build test_equal.stamp: link test_equal.o json.o utils.o
+  name = test-equal
+build test-equal: phony test_equal.stamp
+
+default test-equal

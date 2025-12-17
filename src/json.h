@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 17, 2025 at 5:32:38 PM GMT+3
+ *   December 17, 2025 at 10:08:12 PM GMT+3
  *
  */
 /*
@@ -165,6 +165,14 @@ bool json_parse(const char *json, json_value *root);
  * @return A pointer to the root json_value, or NULL on error.
  */
 bool json_parse_iterative(const char *json, json_value *root);
+
+/**
+ * @brief Validates a JSON string.
+ * The caller is responsible for freeing the returned structure by calling json_free().
+ * @param len Length of the JSON string to validate.
+ * @return true if the JSON contains valid character set, false otherwize
+ */
+bool json_validate(const char *s, size_t len);
 
 /**
  * @brief Compares two JSON strings for structural equality.

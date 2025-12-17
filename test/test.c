@@ -5476,6 +5476,407 @@ TEST(test_case_iterative__2) {
   END_TEST;
 }
 
+static unsigned int g_seed = 0;
+
+static void lcprng_srand(unsigned int seed) {
+  g_seed = seed;
+}
+
+static unsigned int lcprng_rand() {
+  g_seed = 1664525 * g_seed + 1013904223;
+  return g_seed;
+}
+
+TEST(test_randomization) {
+  const char *test_cases[] = {
+      "[]",
+      "[null]",
+      "[null, null]",
+      "[true]",
+      "[true, true]",
+      "[false]",
+      "[false, false]",
+      "[true, false]",
+      "[0]",
+      "[0, 0]",
+      "[1]",
+      "[1, 1]",
+      "[0, 1]",
+      "[0, 1, null]",
+      "[0.0, 0.1, 2.1, 1e12, 1234567890]",
+      "[{}]",
+      "[{\"key\": null}]",
+      "[{\"key\": []}]",
+      "[{\"key\": [null]}]",
+      "[{\"key\": [null, null]}]",
+      "[{\"key1\": null, \"key2\":[]}]",
+      "[{\"key1\": null, \"key2\":[null]}]",
+      "[{\"key1\": null, \"key2\":[null,null]}]",
+      "{}",
+      "{\"key\": null}",
+      "{\"key1\": null, \"key2\": null}",
+      "{\"key\": []}",
+      "{\"key\": [null]}",
+      "{\"key\": [null, null]}",
+      "{\"key\": true}",
+      "{\"key\": false}",
+      "{\"key\": 0}",
+      "{\"key\": 1}",
+      "{\"key\": 0.5}",
+      "{\"key\": \"value\"}",
+      "{\"key\": {}}",
+      "{\"key1\": {}, \"key2\": {}}",
+      "{\"key\": [{\"subkey\": []}]}",
+      "{\"key\": [{\"subkey\": [null]}]}",
+      "{\"key\": [{\"subkey\": [null, null]}]}",
+      "{\"key\": [{\"subkey\": [true]}]}",
+      "{\"key\": [{\"subkey\": [true, false]}]}",
+      "{\"key\": [{\"subkey\": [0]}]}",
+      "{\"key\": [{\"subkey\": [0, 0]}]}",
+      "{\"key\": [{\"subkey\": [1]}]}",
+      "{\"key\": [{\"subkey\": [1, 1]}]}",
+      "{\"key\": [{\"subkey\": [0, 1]}]}",
+      "{\"key\": [{\"subkey\": [0, 1, null]}]}",
+      "{\"key\": [{\"subkey\": [0.0, 0.1, 2.1, 1e12, 1234567890]}]}",
+      "{\"key\": [{\"subkey\": [{}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key\": null}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key\": []}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key\": [null]}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key\": [null, null]}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[]}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null]}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null,null]}]}]}",
+      "{\"key\": [{\"subkey\": {}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": null}}]}",
+      "{\"key\": [{\"subkey\": {\"key1\": null, \"key2\": null}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": []}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": [null]}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": [null, null]}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": true}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": false}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": 0}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": 1}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": 0.5}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": \"value\"}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": {}}}]}",
+      "{\"key\": [{\"subkey\": {\"key1\": {}, \"key2\": {}}}]}",
+  };
+  int num_tests = sizeof(test_cases) / sizeof(test_cases[0]);
+  const char non_visible_chars[] = {
+      0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 127};
+  lcprng_srand(0);
+
+  for (int j = 0; j < num_tests; j++) {
+    const char *original_source = test_cases[j];
+    size_t len = strlen(original_source);
+    char *source = (char *)calloc(1, len + 1);
+
+    for (size_t i = 0; i < len; i++) {
+      memcpy(source, original_source, len + 1);
+      char new_char = non_visible_chars[lcprng_rand() % sizeof(non_visible_chars)];
+      source[i] = new_char;
+
+      json_value v;
+      memset(&v, 0, sizeof(json_value));
+      ASSERT_FALSE(json_parse(source, &v));
+      json_free(&v);
+
+      memset(&v, 0, sizeof(json_value));
+      ASSERT_FALSE(json_validate(source, len));
+      json_free(&v);
+    }
+    free(source);
+  }
+  END_TEST;
+}
+
+TEST(test_replacement) {
+  const char *test_cases[] = {
+      "[]",
+      "[null]",
+      "[null, null]",
+      "[true]",
+      "[true, true]",
+      "[false]",
+      "[false, false]",
+      "[true, false]",
+      "[0]",
+      "[0, 0]",
+      "[1]",
+      "[1, 1]",
+      "[0, 1]",
+      "[0, 1, null]",
+      "[0.0, 0.1, 2.1, 1e12, 1234567890]",
+      "[{}]",
+      "[{\"key\": null}]",
+      "[{\"key\": []}]",
+      "[{\"key\": [null]}]",
+      "[{\"key\": [null, null]}]",
+      "[{\"key1\": null, \"key2\":[]}]",
+      "[{\"key1\": null, \"key2\":[null]}]",
+      "[{\"key1\": null, \"key2\":[null,null]}]",
+      "{}",
+      "{\"key\": null}",
+      "{\"key1\": null, \"key2\": null}",
+      "{\"key\": []}",
+      "{\"key\": [null]}",
+      "{\"key\": [null, null]}",
+      "{\"key\": true}",
+      "{\"key\": false}",
+      "{\"key\": 0}",
+      "{\"key\": 1}",
+      "{\"key\": 0.5}",
+      "{\"key\": \"value\"}",
+      "{\"key\": {}}",
+      "{\"key1\": {}, \"key2\": {}}",
+      "{\"key\": [{\"subkey\": []}]}",
+      "{\"key\": [{\"subkey\": [null]}]}",
+      "{\"key\": [{\"subkey\": [null, null]}]}",
+      "{\"key\": [{\"subkey\": [true]}]}",
+      "{\"key\": [{\"subkey\": [true, false]}]}",
+      "{\"key\": [{\"subkey\": [0]}]}",
+      "{\"key\": [{\"subkey\": [0, 0]}]}",
+      "{\"key\": [{\"subkey\": [1]}]}",
+      "{\"key\": [{\"subkey\": [1, 1]}]}",
+      "{\"key\": [{\"subkey\": [0, 1]}]}",
+      "{\"key\": [{\"subkey\": [0, 1, null]}]}",
+      "{\"key\": [{\"subkey\": [0.0, 0.1, 2.1, 1e12, 1234567890]}]}",
+      "{\"key\": [{\"subkey\": [{}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key\": null}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key\": []}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key\": [null]}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key\": [null, null]}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[]}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null]}]}]}",
+      "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null,null]}]}]}",
+      "{\"key\": [{\"subkey\": {}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": null}}]}",
+      "{\"key\": [{\"subkey\": {\"key1\": null, \"key2\": null}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": []}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": [null]}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": [null, null]}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": true}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": false}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": 0}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": 1}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": 0.5}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": \"value\"}}]}",
+      "{\"key\": [{\"subkey\": {\"key\": {}}}]}",
+      "{\"key\": [{\"subkey\": {\"key1\": {}, \"key2\": {}}}]}",
+  };
+  int num_tests = sizeof(test_cases) / sizeof(test_cases[0]);
+  const char replacements[] = {' ', ',', '}', '{', '[', ']'};
+  lcprng_srand(0);
+
+  for (int j = 0; j < num_tests; j++) {
+    const char *original_source = test_cases[j];
+    size_t len = strlen(original_source);
+    char *source = (char *)calloc(1, len + 1);
+
+    json_value original_v;
+    memset(&original_v, 0, sizeof(json_value));
+    ASSERT_TRUE(json_parse(original_source, &original_v));
+
+    for (size_t i = 0; i < len; i++) {
+      char original_char = original_source[i];
+      if (strchr("{}[], ", original_char) != NULL) {
+        memcpy(source, original_source, len + 1);
+
+        char new_char;
+        do {
+          new_char = replacements[lcprng_rand() % (sizeof(replacements))];
+        } while (new_char == original_char);
+        source[i] = new_char;
+
+        json_value v;
+        memset(&v, 0, sizeof(json_value));
+        if (json_parse(source, &v)) {
+          ASSERT_FALSE(json_equal(&original_v, &v));
+          json_free(&v);
+        }
+
+        memset(&v, 0, sizeof(json_value));
+        if (json_parse_iterative(source, &v)) {
+          ASSERT_FALSE(json_equal(&original_v, &v));
+          json_free(&v);
+        }
+      }
+    }
+    json_free(&original_v);
+    free(source);
+  }
+  END_TEST;
+}
+
+void generate_random_json_value(json_value *v, int depth);
+
+void json_free_generated(json_value *v) {
+  if (!v)
+    return;
+
+  if (v->type == J_ARRAY) {
+    json_array_node *curr = v->u.array.items;
+    while (curr) {
+      json_array_node *next = curr->next;
+      json_free_generated(&curr->item);
+      free(curr);
+      curr = next;
+    }
+  } else if (v->type == J_OBJECT) {
+    json_object_node *curr = v->u.object.items;
+    while (curr) {
+      json_object_node *next = curr->next;
+      free((void *)curr->item.key.ptr);
+      json_free_generated(&curr->item.value);
+      free(curr);
+      curr = next;
+    }
+  } else if (v->type == J_STRING) {
+    free((void *)v->u.string.ptr);
+  } else if (v->type == J_NUMBER) {
+    free((void *)v->u.number.ptr);
+  }
+}
+
+static const char *greek_alphabet[] = {
+    "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa",
+    "lambda", "mu", "nu", "xi", "omicron", "pi", "rho", "sigma", "tau", "upsilon",
+    "phi", "chi", "psi", "omega"};
+static const int num_greek_letters = sizeof(greek_alphabet) / sizeof(char *);
+
+void generate_random_json_value(json_value *v, int depth) {
+  int type = lcprng_rand() % 6;
+
+  if (depth <= 0 && (type == 4 || type == 5)) {
+    type = lcprng_rand() % 4;
+  }
+
+  switch (type) {
+  case 0: // J_NULL
+    v->type = J_NULL;
+    break;
+  case 1: // J_BOOLEAN
+    v->type = J_BOOLEAN;
+    v->u.boolean.ptr = (lcprng_rand() % 2) ? "true" : "false";
+    v->u.boolean.len = strlen(v->u.boolean.ptr);
+    break;
+  case 2: // J_NUMBER
+  {
+    v->type = J_NUMBER;
+    char *num_str = (char *)calloc(1, 16);
+    if (!num_str) {
+      v->type = J_NULL;
+      break;
+    }
+    sprintf(num_str, "%d", (lcprng_rand() % 1999) + 1);
+    v->u.number.ptr = num_str;
+    v->u.number.len = strlen(num_str);
+    break;
+  }
+  case 3: // J_STRING
+  {
+    v->type = J_STRING;
+    const char *random_greek_letter = greek_alphabet[lcprng_rand() % num_greek_letters];
+    char *str = strdup(random_greek_letter);
+    if (!str) {
+      v->type = J_NULL;
+      break;
+    }
+    v->u.string.ptr = str;
+    v->u.string.len = strlen(str);
+    break;
+  }
+  case 4: // J_ARRAY
+  {
+    v->type = J_ARRAY;
+    v->u.array.items = NULL;
+    v->u.array.last = NULL;
+    int num_children = lcprng_rand() % 5;
+    for (int i = 0; i < num_children; ++i) {
+      json_array_node *node = (json_array_node *)calloc(1, sizeof(json_array_node));
+      generate_random_json_value(&node->item, depth - 1);
+      node->next = NULL;
+      if (!v->u.array.items) {
+        v->u.array.items = node;
+        v->u.array.last = node;
+      } else {
+        v->u.array.last->next = node;
+        v->u.array.last = node;
+      }
+    }
+    break;
+  }
+  case 5: // J_OBJECT
+  {
+    v->type = J_OBJECT;
+    v->u.object.items = NULL;
+    v->u.object.last = NULL;
+    int num_children = lcprng_rand() % 5;
+    for (int i = 0; i < num_children; ++i) {
+      json_object_node *node = (json_object_node *)calloc(1, sizeof(json_object_node));
+
+      const char *random_greek_letter = greek_alphabet[lcprng_rand() % num_greek_letters];
+      char *key = strdup(random_greek_letter);
+      if (!key) {
+        free(node);
+        continue;
+      }
+
+      node->item.key.ptr = key;
+      node->item.key.len = strlen(key);
+
+      generate_random_json_value(&node->item.value, depth - 1);
+      node->next = NULL;
+      if (!v->u.object.items) {
+        v->u.object.items = node;
+        v->u.object.last = node;
+      } else {
+        v->u.object.last->next = node;
+        v->u.object.last = node;
+      }
+    }
+    break;
+  }
+  }
+}
+
+TEST(test_generation) {
+  lcprng_srand(0);
+  for (int i = 0; i < 100; i++) {
+    json_value v;
+    memset(&v, 0, sizeof(json_value));
+    generate_random_json_value(&v, 5);
+
+    char *json_str = json_stringify(&v);
+    ASSERT_PTR_NOT_NULL(json_str);
+
+    // Wrap the generated string in an array to ensure it's a valid JSON document
+    char *wrapped_str = (char *)calloc(1, strlen(json_str) + 3);
+    sprintf(wrapped_str, "[%s]", json_str);
+
+    json_value parsed_v;
+    memset(&parsed_v, 0, sizeof(json_value));
+    if (!json_parse(wrapped_str, &parsed_v)) {
+      printf("Failed to parse: %s\n", wrapped_str);
+      ASSERT_TRUE(false);
+    }
+    json_free(&parsed_v);
+
+    memset(&parsed_v, 0, sizeof(json_value));
+    if (!json_parse_iterative(wrapped_str, &parsed_v)) {
+      printf("Failed to parse iterative: %s\n", wrapped_str);
+      ASSERT_TRUE(false);
+    }
+    json_free(&parsed_v);
+
+    free(wrapped_str);
+    free(json_str);
+    json_free_generated(&v);
+  }
+  END_TEST;
+}
+
 int main(void) {
   TEST_INITIALIZE;
   TEST_SUITE("unit tests");
@@ -5816,5 +6217,8 @@ int main(void) {
   test_invalid_char_case_iterative_69();
   test_invalid_char_case_iterative_70();
   test_error_case_iterative_truncated_input();
+  test_randomization();
+  test_replacement();
+  test_generation();
   TEST_FINALIZE;
 }

@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 17, 2025 at 5:32:54 PM GMT+3
+ *   December 17, 2025 at 9:27:50 PM GMT+3
  *
  */
 /*
@@ -48,5 +48,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <time.h>
 
 #endif /* HEADERS_H */

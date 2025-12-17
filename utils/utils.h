@@ -10,7 +10,6 @@
 #else
 #include <time.h>
 #endif
-
 #include "../src/headers.h"
 
 #ifdef __cplusplus
