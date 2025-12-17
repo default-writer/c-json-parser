@@ -177,7 +177,6 @@ TEST(test_valid_number_zero_point_zero) {
   END_TEST;
 }
 
-// Additional invalid tests for json_parse_iterative
 TEST(test_invalid_iterative_unclosed_array) {
   const char *source = "[1, 2,";
   json_value v;
