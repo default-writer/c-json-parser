@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 17, 2025 at 7:34:25 AM GMT+3
+ *   December 17, 2025 at 5:32:23 PM GMT+3
  *
  */
 /*
@@ -832,71 +832,71 @@ bool json_parse_iterative(const char *s, json_value *root) {
       break;
     skip_whitespace(&s);
     if (current) {
-      switch(*s) {
-        case '{':
-          current->type = J_OBJECT;
-          current->u.object.items = NULL;
-          current->u.object.last = NULL;
-          s++;
-          if (++top >= JSON_STACK_SIZE)
-            return false;
-          stack[top] = current;
+      switch (*s) {
+      case '{':
+        current->type = J_OBJECT;
+        current->u.object.items = NULL;
+        current->u.object.last = NULL;
+        s++;
+        if (++top >= JSON_STACK_SIZE)
+          return false;
+        stack[top] = current;
+        current = NULL;
+        break;
+      case '[':
+        current->type = J_ARRAY;
+        current->u.array.items = NULL;
+        current->u.array.last = NULL;
+        s++;
+        if (++top >= JSON_STACK_SIZE)
+          return false;
+        stack[top] = current;
+        current = NULL;
+        break;
+      case '"':
+        current->type = J_STRING;
+        if (!parse_string(&s, current))
+          return false;
+        current = NULL;
+        break;
+      case 't':
+        if (*(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e') {
+          current->type = J_BOOLEAN;
+          current->u.boolean.ptr = s;
+          current->u.boolean.len = 4;
+          s += 4;
           current = NULL;
-          break;
-        case '[':
-          current->type = J_ARRAY;
-          current->u.array.items = NULL;
-          current->u.array.last = NULL;
-          s++;
-          if (++top >= JSON_STACK_SIZE)
-            return false;
-          stack[top] = current;
+        } else {
+          return false;
+        }
+        break;
+      case 'f':
+        if (*(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e') {
+          current->type = J_BOOLEAN;
+          current->u.boolean.ptr = s;
+          current->u.boolean.len = 5;
+          s += 5;
           current = NULL;
-          break;
-        case '"':
-          current->type = J_STRING;
-          if (!parse_string(&s, current))
-            return false;
+        } else {
+          return false;
+        }
+        break;
+      case 'n':
+        if (*(s + 1) == 'u' && *(s + 2) == 'l' && *(s + 3) == 'l') {
+          current->type = J_NULL;
+          s += 4;
           current = NULL;
-          break;
-        case 't':
-          if (*(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e') {
-            current->type = J_BOOLEAN;
-            current->u.boolean.ptr = s;
-            current->u.boolean.len = 4;
-            s += 4;
-            current = NULL;
-          } else {
-            return false;
-          }
-          break;
-        case 'f':
-          if (*(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e') {
-            current->type = J_BOOLEAN;
-            current->u.boolean.ptr = s;
-            current->u.boolean.len = 5;
-            s += 5;
-            current = NULL;
-          } else {
-            return false;
-          }
-          break;
-        case 'n':
-          if (*(s + 1) == 'u' && *(s + 2) == 'l' && *(s + 3) == 'l') {
-            current->type = J_NULL;
-            s += 4;
-            current = NULL;
-          } else {
-            return false;
-          }
-          break;
-        default:
-          if (parse_number(&s, current)) {
-            current->type = J_NUMBER;
-            current = NULL;
-          } else {
-            return false;
-          }
+        } else {
+          return false;
+        }
+        break;
+      default:
+        if (parse_number(&s, current)) {
+          current->type = J_NUMBER;
+          current = NULL;
+        } else {
+          return false;
+        }
       }
       continue;
     }
