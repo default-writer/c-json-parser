@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 17, 2025 at 10:08:12 PM GMT+3
+ *   December 18, 2025 at 1:30:09 AM GMT+3
  *
  */
 /*
@@ -55,10 +55,6 @@
 
 #ifdef _WIN32
 #include <windows.h>
-/* Provide a safe wrapper around fopen on Windows to avoid deprecation warnings.
- * The wrapper uses fopen_s internally and returns the FILE* pointer.
- * Existing code using fopen stays unchanged.
- */
 static FILE *safe_fopen(const char *filename, const char *mode) {
   FILE *fp = NULL;
   errno_t err = fopen_s(&fp, filename, mode);
@@ -67,7 +63,6 @@ static FILE *safe_fopen(const char *filename, const char *mode) {
   }
   return fp;
 }
-/* Redirect calls to fopen to the safe wrapper. */
 #define fopen(filename, mode) safe_fopen(filename, mode)
 #define fprintf(stream, format, ...)            \
   do {                                          \

@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 17, 2025 at 10:11:59 PM GMT+3
+ *   December 18, 2025 at 1:44:34 AM GMT+3
  *
  */
 /*
@@ -212,26 +212,72 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
   return true;
 }
 
+#ifdef STRING_VALIDATION
+// Returns true if the string is valid (contains no control characters < 0x20).
+static INLINE bool validate_string_chunk(const char *s, size_t len) {
+#if defined(__SSE2__)
+  const __m128i limit = _mm_set1_epi8(0x20);
+  const __m128i high_bit = _mm_set1_epi8(0x80);
+  const __m128i limit_shifted = _mm_xor_si128(limit, high_bit);
+
+  size_t i = 0;
+  // Process 16-byte chunks.
+  for (; i + 15 < len; i += 16) {
+    __m128i chunk = _mm_loadu_si128((const __m128i *)(s + i));
+    __m128i chunk_shifted = _mm_xor_si128(chunk, high_bit);
+    __m128i result_mask = _mm_cmplt_epi8(chunk_shifted, limit_shifted);
+    if (_mm_movemask_epi8(result_mask) != 0) {
+      return false;
+    }
+  }
+#else
+  size_t i = 0;
+#endif
+
+  // Process remaining bytes.
+  for (; i < len; i++) {
+    if ((unsigned char)s[i] < 0x20) {
+      return false;
+    }
+  }
+
+  return true;
+}
+#endif
+
+static bool parse_hex4(const char **s, uint16_t *result) {
+  *result = 0;
+  for (int i = 0; i < 4; ++i) {
+    char c = (*s)[i];
+    if (c == '\0')
+      return false;
+    if (!isxdigit((unsigned char)c))
+      return false;
+    *result <<= 4;
+    if (c >= '0' && c <= '9') {
+      *result |= c - '0';
+    } else if (c >= 'a' && c <= 'f') {
+      *result |= c - 'a' + 10;
+    } else {
+      *result |= c - 'A' + 10;
+    }
+  }
+  *s += 4;
+  return true;
+}
+
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) {
   const char *p = *s + 1;
   v->u.string.ptr = p;
   const char *end = p;
   while (true) {
-#ifndef STRING_VALIDATION
     size_t span = strcspn(end, "\"\\");
-    end += span;
-#else
-    size_t span = strcspn(end, "\"\\");
-    const char *start = *s;
-    for (const char *c = start; c < end; c++) {
-      if (*c == '\n' || *c == '\r' || *c == '\t') {
-        continue;
-      }
-      if ((unsigned char)*c < 0x20 || (unsigned char)*c == 127) {
-        return false;
-      }
+#ifdef STRING_VALIDATION
+    if (!validate_string_chunk(end, span)) {
+      return false;
     }
 #endif
+    end += span;
     if (*end == '"') {
       v->u.string.len = end - p;
       *s = end + 1;
@@ -257,13 +303,24 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
         end++;
         if (*end == '\0')
           return false;
-        for (int i = 0; i < 4; ++i) {
-          if (!isxdigit((unsigned char)*end)) {
+        uint16_t codepoint;
+        if (!parse_hex4(&end, &codepoint)) {
+          return false;
+        }
+        if (codepoint >= 0xD800 && codepoint <= 0xDBFF) { // High surrogate
+          if (end[0] != '\\' || end[1] != 'u') {
+            return false; // Expected low surrogate
+          }
+          end += 2;
+          uint16_t low_surrogate;
+          if (!parse_hex4(&end, &low_surrogate)) {
             return false;
           }
-          end++;
-          if (*end == '\0')
-            return false;
+          if (low_surrogate < 0xDC00 || low_surrogate > 0xDFFF) {
+            return false; // Invalid low surrogate
+          }
+        } else if (codepoint >= 0xDC00 && codepoint <= 0xDFFF) {
+          return false; // Low surrogate without high surrogate
         }
         break;
       default:
@@ -862,7 +919,6 @@ bool json_validate(const char *s, size_t len) {
 }
 
 bool json_parse_iterative(const char *s, json_value *root) {
-  skip_whitespace(&s);
   if (*s == '\0')
     return false;
   if (*s != '{' && *s != '[') {

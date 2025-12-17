@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 17, 2025 at 9:27:50 PM GMT+3
+ *   December 18, 2025 at 1:30:05 AM GMT+3
  *
  */
 /*
@@ -49,5 +49,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
+
+#if defined(__SSE2__)
+#include <emmintrin.h>
+#endif
 
 #endif /* HEADERS_H */

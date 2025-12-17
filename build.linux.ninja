@@ -21,7 +21,7 @@ rule asm
   description = Assembling $in
 
 # --- test-perf-c-json-parser target ---
-cflags_perf = -Wall -Wextra -std=c17 -O3 -march=native -flto -fomit-frame-pointer -ffunction-sections -fdata-sections
+cflags_perf = -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION
 ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops
 build main.o.perf: cc perf/test_c_json_parser.c
   cflags = $cflags_perf
