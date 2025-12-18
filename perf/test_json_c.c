@@ -1,5 +1,5 @@
-#include "../test/test.h"
 #include "../libs/json-c/include/json-c/json_tokener.h"
+#include "../test/test.h"
 
 TEST(test_json_c) {
   char *json = utils_get_test_json_data("data/test.json");

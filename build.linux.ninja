@@ -20,7 +20,7 @@ rule asm
   command = $cc $cflags -S -o $out $in
   description = Assembling $in
 
-cflags_perf = -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION
+cflags_perf = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION
 ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops
 
 # --- test-perf-c-json-parser target ---

@@ -1,5 +1,5 @@
-#include "../test/test.h"
 #include "../libs/simdjson/simdjson.h"
+#include "../test/test.h"
 
 TEST(test_simdjson_parser) {
   simdjson::dom::parser parser;
@@ -18,7 +18,7 @@ TEST(test_simdjson_parser) {
 
   long long end_time = utils_get_time();
 
-  ASSERT_EQ(TEST_COUNT, i);
+  ASSERT_EQUAL(TEST_COUNT, i);
 
   utils_print_time_diff(start_time, end_time);
 
