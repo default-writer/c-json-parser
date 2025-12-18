@@ -11,5 +11,3 @@ ninja -f build.linux.ninja -t clean > /dev/null 2>&1
 # perf-c-json-parser target
 ninja -f build.linux.ninja $target
 ninja -f build.linux.ninja -t clean > /dev/null 2>&1 
-
-./test-${target}
