@@ -30,7 +30,6 @@ TEST(test_json_parse) {
   utils_output(json);
 
   /* cleanup */
-  json_free(&v);
   free(json);
   free(source);
 

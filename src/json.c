@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 18, 2025 at 1:44:34 AM GMT+3
+ *   December 18, 2025 at 12:36:43 PM GMT+3
  *
  */
 /*
@@ -41,6 +41,13 @@
 #define JSON_NULL_LEN 4
 #define JSON_TRUE_LEN 4
 #define JSON_FALSE_LEN 5
+#define HEX_OFFSET 10
+#define HIGH_SURROGATE_START 0xD800
+#define HIGH_SURROGATE_END 0xDBFF
+#define LOW_SURROGATE_START 0xDC00
+#define LOW_SURROGATE_END 0xDFFF
+#define SPACE_CHAR 0x20
+#define MASK_CHAR 0x80
 
 typedef struct {
   char *buf;
@@ -213,15 +220,12 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
 }
 
 #ifdef STRING_VALIDATION
-// Returns true if the string is valid (contains no control characters < 0x20).
 static INLINE bool validate_string_chunk(const char *s, size_t len) {
+  size_t i = 0;
 #if defined(__SSE2__)
   const __m128i limit = _mm_set1_epi8(0x20);
   const __m128i high_bit = _mm_set1_epi8(0x80);
   const __m128i limit_shifted = _mm_xor_si128(limit, high_bit);
-
-  size_t i = 0;
-  // Process 16-byte chunks.
   for (; i + 15 < len; i += 16) {
     __m128i chunk = _mm_loadu_si128((const __m128i *)(s + i));
     __m128i chunk_shifted = _mm_xor_si128(chunk, high_bit);
@@ -230,17 +234,12 @@ static INLINE bool validate_string_chunk(const char *s, size_t len) {
       return false;
     }
   }
-#else
-  size_t i = 0;
 #endif
-
-  // Process remaining bytes.
   for (; i < len; i++) {
     if ((unsigned char)s[i] < 0x20) {
       return false;
     }
   }
-
   return true;
 }
 #endif
@@ -257,9 +256,9 @@ static bool parse_hex4(const char **s, uint16_t *result) {
     if (c >= '0' && c <= '9') {
       *result |= c - '0';
     } else if (c >= 'a' && c <= 'f') {
-      *result |= c - 'a' + 10;
+      *result |= c - 'a' + HEX_OFFSET;
     } else {
-      *result |= c - 'A' + 10;
+      *result |= c - 'A' + HEX_OFFSET;
     }
   }
   *s += 4;
@@ -307,7 +306,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
         if (!parse_hex4(&end, &codepoint)) {
           return false;
         }
-        if (codepoint >= 0xD800 && codepoint <= 0xDBFF) { // High surrogate
+        if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) { // High surrogate
           if (end[0] != '\\' || end[1] != 'u') {
             return false; // Expected low surrogate
           }
@@ -316,10 +315,10 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
           if (!parse_hex4(&end, &low_surrogate)) {
             return false;
           }
-          if (low_surrogate < 0xDC00 || low_surrogate > 0xDFFF) {
+          if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END) {
             return false; // Invalid low surrogate
           }
-        } else if (codepoint >= 0xDC00 && codepoint <= 0xDFFF) {
+        } else if (codepoint >= LOW_SURROGATE_START && codepoint <= LOW_SURROGATE_END) {
           return false; // Low surrogate without high surrogate
         }
         break;
@@ -333,14 +332,6 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
 }
 
 static bool parse_array_value(const char **s, json_value *v) {
-  (*s)++;
-  skip_whitespace(s);
-  if (**s == '\0')
-    return false;
-  if (**s == ']') {
-    (*s)++;
-    return true;
-  }
   while (true) {
     skip_whitespace(s);
     if (**s == '\0')
@@ -384,14 +375,6 @@ static bool parse_array_value(const char **s, json_value *v) {
 }
 
 static bool parse_object_value(const char **s, json_value *v) {
-  (*s)++;
-  skip_whitespace(s);
-  if (**s == '\0')
-    return false;
-  if (**s == '}') {
-    (*s)++;
-    return true;
-  }
   while (true) {
     skip_whitespace(s);
     if (**s == '\0')
@@ -465,7 +448,6 @@ static bool parse_object_value(const char **s, json_value *v) {
     }
     return false;
   }
-  v->type = J_NULL;
 }
 
 static bool parse_value_build(const char **s, json_value *v) {
@@ -473,12 +455,28 @@ static bool parse_value_build(const char **s, json_value *v) {
     v->type = J_OBJECT;
     v->u.object.items = NULL;
     v->u.object.last = NULL;
+    (*s)++;
+    skip_whitespace(s);
+    if (**s == '\0')
+      return false;
+    if (**s == '}') {
+      (*s)++;
+      return true;
+    }
     return parse_object_value(s, v);
   }
   if (**s == '[') {
     v->type = J_ARRAY;
     v->u.array.items = NULL;
     v->u.array.last = NULL;
+    (*s)++;
+    skip_whitespace(s);
+    if (**s == '\0')
+      return false;
+    if (**s == ']') {
+      (*s)++;
+      return true;
+    }
     return parse_array_value(s, v);
   }
   if (**s == '"') {
@@ -898,24 +896,177 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
 
 /* --- public API --- */
 
-bool json_validate(const char *s, size_t len) {
-  skip_whitespace(&s);
-  if (*s == '\0')
-    return false;
-  if (*s != '{' && *s != '[') {
-    return false;
+json_error json_validate(const char **s) {
+  if (**s == '\0')
+    return E_INVALID_JSON;
+  if (**s != '{' && **s != '[') {
+    return E_INVALID_JSON;
   }
-  const char *end = s + len;
-  const char *start = s;
-  for (const char *c = start; c < end; c++) {
-    if (*c == '\n' || *c == '\r' || *c == '\t') {
+  json_value *stack[JSON_STACK_SIZE];
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  int top = -1;
+  json_value *current = &v;
+  while (true) {
+    if (**s == '\0')
+      break;
+    skip_whitespace(s);
+    if (**s == '\0')
+      break;
+    if (current) {
+      switch (**s) {
+      case '{':
+        current->type = J_OBJECT;
+        current->u.object.items = NULL;
+        current->u.object.last = NULL;
+        if (++top >= JSON_STACK_SIZE)
+          return E_STACK_OVERFLOW;
+        (*s)++;
+        stack[top] = current;
+        current = NULL;
+        break;
+      case '[':
+        current->type = J_ARRAY;
+        current->u.array.items = NULL;
+        current->u.array.last = NULL;
+        (*s)++;
+        if (++top >= JSON_STACK_SIZE)
+          return E_STACK_OVERFLOW;
+        stack[top] = current;
+        current = NULL;
+        break;
+      case '"':
+        current->type = J_STRING;
+        if (!parse_string(s, current))
+          return E_EXPECTED_STRING;
+        current = NULL;
+        break;
+      case 't':
+        if (*(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
+          current->type = J_BOOLEAN;
+          current->u.boolean.ptr = *s;
+          current->u.boolean.len = 4;
+          *s += 4;
+          current = NULL;
+        } else {
+          return E_EXPECTED_TRUE;
+        }
+        break;
+      case 'f':
+        if (*(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
+          current->type = J_BOOLEAN;
+          current->u.boolean.ptr = *s;
+          current->u.boolean.len = JSON_FALSE_LEN;
+          *s += JSON_FALSE_LEN;
+          current = NULL;
+        } else {
+          return E_EXPECTED_FALSE;
+        }
+        break;
+      case 'n':
+        if (*(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
+          current->type = J_NULL;
+          *s += 4;
+          current = NULL;
+        } else {
+          return E_EXPECTED_NULL;
+        }
+        break;
+      default:
+        if (parse_number(s, current)) {
+          current->type = J_NUMBER;
+          current = NULL;
+        } else {
+          return E_EXPECTED_NUMBER;
+        }
+      }
       continue;
     }
-    if ((unsigned char)*c < 0x20 || (unsigned char)*c == 127) {
-      return false;
+    if (top == -1) {
+      break;
+    }
+    current = stack[top];
+    if (current->type == J_OBJECT) {
+      if (**s == '}') {
+        top--;
+        (*s)++;
+        if (**s == '\0') {
+          break;
+        }
+        current = NULL;
+        continue;
+      }
+      if (current->u.object.items != NULL) {
+        if (**s == ',') {
+          (*s)++;
+          skip_whitespace(s);
+          if (**s == '\0') {
+            return E_EXPECTED_OBJECT_ELEMENT;
+          }
+        } else {
+          return E_EXPECTED_OBJECT_ELEMENT;
+        }
+      }
+      if (**s != '"')
+        return E_EXPECTED_QUOTE;
+      json_value key;
+      if (!parse_string(s, &key))
+        return E_EXPECTED_STRING;
+      skip_whitespace(s);
+      if (**s != ':')
+        return E_EXPECTED_COLON;
+      (*s)++;
+      skip_whitespace(s);
+      if (**s == '\0') {
+        return E_EXPECTED_VALUE;
+      }
+      json_object_node *node = new_object_node();
+      if (!node)
+        return E_OBJECT_OVERFLOW;
+      node->item.key = key.u.string;
+      if (current->u.object.items == NULL) {
+        current->u.object.items = node;
+      } else {
+        current->u.object.last->next = node;
+      }
+      current->u.object.last = node;
+      current = &node->item.value;
+    } else if (current->type == J_ARRAY) {
+      if (**s == ']') {
+        top--;
+        (*s)++;
+        if (**s == '\0') {
+          break;
+        }
+        current = NULL;
+        continue;
+      }
+      if (current->u.array.items != NULL) {
+        if (**s == ',') {
+          (*s)++;
+          skip_whitespace(s);
+          if (**s == '\0') {
+            return E_EXPECTED_ARRAY_ELEMENT;
+          }
+        } else {
+          return E_EXPECTED_ARRAY_ELEMENT;
+        }
+      }
+      json_array_node *node = new_array_node();
+      if (!node)
+        return E_ARRAY_OVERFLOW;
+      if (current->u.array.items == NULL) {
+        current->u.array.items = node;
+      } else {
+        current->u.array.last->next = node;
+      }
+      current->u.array.last = node;
+      current = &node->item;
     }
   }
-  return true;
+  if (**s == '\0' && top == -1)
+    return E_NO_ERROR;
+  return E_INVALID_JSON_DATA;
 }
 
 bool json_parse_iterative(const char *s, json_value *root) {
@@ -974,8 +1125,8 @@ bool json_parse_iterative(const char *s, json_value *root) {
         if (*(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e') {
           current->type = J_BOOLEAN;
           current->u.boolean.ptr = s;
-          current->u.boolean.len = 5;
-          s += 5;
+          current->u.boolean.len = JSON_FALSE_LEN;
+          s += JSON_FALSE_LEN;
           current = NULL;
         } else {
           return false;
@@ -1065,26 +1216,14 @@ bool json_parse_iterative(const char *s, json_value *root) {
       current = &node->item;
     }
   }
-  skip_whitespace(&s);
   return *s == '\0' && top == -1;
 }
 
 bool json_parse(const char *s, json_value *root) {
-  skip_whitespace(&s);
   if (*s == '\0')
     return false;
   if (*s != '{' && *s != '[') {
     return false;
-  }
-  const char *end = s + strlen(s);
-  const char *start = s;
-  for (const char *c = start; c < end; c++) {
-    if (*c == '\n' || *c == '\r' || *c == '\t') {
-      continue;
-    }
-    if ((unsigned char)*c < 0x20 || (unsigned char)*c == 127) {
-      return false;
-    }
   }
   return parse_value_build(&s, root) && *s == '\0';
 }

@@ -124,5 +124,8 @@
   "disasexpl.associations": {
     "**/*.c": "${fileDirname}/${fileBasenameNoExtension}.s",
     "**/*.cpp": "${fileDirname}/${fileBasenameNoExtension}.s"
-  }
+  },
+  "clangd.arguments": [
+    "--clang-tidy-checks=-readability-magic-numbers"
+  ]
 }

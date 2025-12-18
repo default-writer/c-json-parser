@@ -3,7 +3,12 @@
 # Build the performance executable using ninja
 echo "building test-perf-c-json-parser..."
 
-./build-c-json-parser.sh
+target="$1"
+if [[ -z "$1" ]] then
+  target="perf-c-json-parser"
+fi
+
+./build-c-json-parser.sh ${target}
 
 echo "running performance tests 100 times..."
 
@@ -11,7 +16,7 @@ temp_file=$(mktemp)
 num_runs=100
 
 for i in $(seq 1 $num_runs); do
-    real_time=$( { time ./test-perf-c-json-parser > /dev/null; } 2>&1 | grep real | sed 's/m/:/g' | awk -F: '{printf "%.3f", ($1*60)+$2}' )
+    real_time=$( { time "./test-${target}" > /dev/null; } 2>&1 | grep real | sed 's/m/:/g' | awk -F: '{printf "%.3f", ($1*60)+$2}' )
     if [ -z "$real_time" ]; then
         continue
     fi

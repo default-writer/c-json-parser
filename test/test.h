@@ -110,7 +110,7 @@
     }                                                                            \
   } while (0)
 
-#define ASSERT_EQ(expected, actual)                                                                      \
+#define ASSERT_EQUAL(expected, actual)                                                                   \
   do {                                                                                                   \
     if ((expected) != (actual)) {                                                                        \
       printf("assertion failed at %s:%d: Expected %ld, got %ld\n", __FILE__, __LINE__, (long)(expected), \
@@ -119,7 +119,7 @@
     }                                                                                                    \
   } while (0)
 
-#define ASSERT_NOT_EQ(expected, actual)                                                                  \
+#define ASSERT_NOT_EQUAL(expected, actual)                                                               \
   do {                                                                                                   \
     if ((expected) == (actual)) {                                                                        \
       printf("assertion failed at %s:%d: Expected %ld, got %ld\n", __FILE__, __LINE__, (long)(expected), \
@@ -128,7 +128,7 @@
     }                                                                                                    \
   } while (0)
 
-#define ASSERT_PTR_EQ(expected, actual)                                                                     \
+#define ASSERT_PTR_EQUAL(expected, actual)                                                                  \
   do {                                                                                                      \
     if ((expected) != (actual)) {                                                                           \
       printf("assertion failed at %s:%d: Expected %p, got %p\n", __FILE__, __LINE__, (expected), (actual)); \
@@ -136,7 +136,7 @@
     }                                                                                                       \
   } while (0)
 
-#define ASSERT_PTR_NOT_EQ(expected, actual)                                                                 \
+#define ASSERT_PTR_NOT_EQUAL(expected, actual)                                                              \
   do {                                                                                                      \
     if ((expected) == (actual)) {                                                                           \
       printf("assertion failed at %s:%d: Expected %p, got %p\n", __FILE__, __LINE__, (expected), (actual)); \

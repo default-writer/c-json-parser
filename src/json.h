@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 18, 2025 at 1:30:09 AM GMT+3
+ *   December 18, 2025 at 10:43:04 AM GMT+3
  *
  */
 /*
@@ -75,6 +75,30 @@ static FILE *safe_fopen(const char *filename, const char *mode) {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/**
+ * @brief Enumeration of JSON error codes.
+ */
+typedef enum {
+  E_NO_ERROR = 0,
+  E_INVALID_JSON = 1,
+  E_INVALID_JSON_DATA = 2,
+  E_NULL = 10,
+  E_STACK_OVERFLOW = 11,
+  E_OBJECT_OVERFLOW = 12,
+  E_ARRAY_OVERFLOW = 13,
+  E_EXPECTED_VALUE = 100,
+  E_EXPECTED_STRING = 101,
+  E_EXPECTED_NUMBER = 102,
+  E_EXPECTED_TRUE = 103,
+  E_EXPECTED_FALSE = 104,
+  E_EXPECTED_NULL = 105,
+  E_EXPECTED_ARRAY_ELEMENT = 106,
+  E_EXPECTED_OBJECT_ELEMENT = 107,
+  E_EXPECTED_QUOTE = 1002,
+  E_EXPECTED_COLON = 1003,
+  E_INVALID_UNICODE_HEX = 10006,
+} json_error;
 
 /**
  * @brief Enumeration of JSON value types.
@@ -164,10 +188,9 @@ bool json_parse_iterative(const char *json, json_value *root);
 /**
  * @brief Validates a JSON string.
  * The caller is responsible for freeing the returned structure by calling json_free().
- * @param len Length of the JSON string to validate.
- * @return true if the JSON contains valid character set, false otherwize
+ * @return An error code of the last position of parsed character. Returns E_NO_ERROR if string is a valid JSON, non-zero error code otherwise
  */
-bool json_validate(const char *s, size_t len);
+json_error json_validate(const char **s);
 
 /**
  * @brief Compares two JSON strings for structural equality.

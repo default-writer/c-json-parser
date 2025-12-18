@@ -1,5 +1,5 @@
-#include "../test/test.h"
 #include "../src/json.h"
+#include "../test/test.h"
 
 TEST(test_c_json_parser) {
   char *json = utils_get_test_json_data("data/test.json");
@@ -19,7 +19,7 @@ TEST(test_c_json_parser) {
   }
   long long end_time = utils_get_time();
 
-  ASSERT_EQ(TEST_COUNT, i);
+  ASSERT_EQUAL(TEST_COUNT, i);
 
   utils_print_time_diff(start_time, end_time);
 
