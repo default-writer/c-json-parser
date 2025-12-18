@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 18, 2025 at 2:32:45 PM GMT+3
+ *   December 18, 2025 at 5:25:59 PM GMT+3
  *
  */
 /*
@@ -914,73 +914,78 @@ json_error json_validate(const char **s) {
     if (**s == '\0')
       break;
     if (current) {
-      switch (**s) {
-      case '{':
-        current->type = J_OBJECT;
-        current->u.object.items = NULL;
-        current->u.object.last = NULL;
-        if (++top >= JSON_STACK_SIZE)
-          return E_STACK_OVERFLOW_OBJECT;
-        (*s)++;
-        stack[top] = current;
-        current = NULL;
-        break;
-      case '[':
-        current->type = J_ARRAY;
-        current->u.array.items = NULL;
-        current->u.array.last = NULL;
-        (*s)++;
-        if (++top >= JSON_STACK_SIZE)
-          return E_STACK_OVERFLOW_ARRAY;
-        stack[top] = current;
-        current = NULL;
-        break;
-      case '"':
-        current->type = J_STRING;
-        if (!parse_string(s, current))
+      do {
+        if (**s == '{') {
+          current->type = J_OBJECT;
+          current->u.object.items = NULL;
+          current->u.object.last = NULL;
+          if (++top >= JSON_STACK_SIZE)
+            return E_STACK_OVERFLOW_OBJECT;
+          (*s)++;
+          stack[top] = current;
+          current = NULL;
+          break;
+        }
+        if (**s == '[') {
+          current->type = J_ARRAY;
+          current->u.array.items = NULL;
+          current->u.array.last = NULL;
+          (*s)++;
+          if (++top >= JSON_STACK_SIZE)
+            return E_STACK_OVERFLOW_ARRAY;
+          stack[top] = current;
+          current = NULL;
+          break;
+        }
+        if (**s == '"') {
+          current->type = J_STRING;
+          if (parse_string(s, current)) {
+            current = NULL;
+            break;
+          }
           return E_EXPECTED_STRING;
-        current = NULL;
-        break;
-      case 't':
-        if (*(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
-          current->type = J_BOOLEAN;
-          current->u.boolean.ptr = *s;
-          current->u.boolean.len = 4;
-          *s += 4;
-          current = NULL;
-        } else {
+        }
+        if (**s == 't') {
+          if (*(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
+            current->type = J_BOOLEAN;
+            current->u.boolean.ptr = *s;
+            current->u.boolean.len = 4;
+            *s += 4;
+            current = NULL;
+            break;
+          }
           return E_EXPECTED_BOOLEAN;
         }
-        break;
-      case 'f':
-        if (*(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
-          current->type = J_BOOLEAN;
-          current->u.boolean.ptr = *s;
-          current->u.boolean.len = JSON_FALSE_LEN;
-          *s += JSON_FALSE_LEN;
-          current = NULL;
-        } else {
+        if (**s == 'f') {
+          if (*(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
+            current->type = J_BOOLEAN;
+            current->u.boolean.ptr = *s;
+            current->u.boolean.len = JSON_FALSE_LEN;
+            *s += JSON_FALSE_LEN;
+            current = NULL;
+            break;
+          }
           return E_EXPECTED_BOOLEAN;
         }
-        break;
-      case 'n':
-        if (*(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
-          current->type = J_NULL;
-          *s += 4;
-          current = NULL;
-        } else {
+        if (**s == 'n') {
+          if (*(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
+            current->type = J_NULL;
+            *s += 4;
+            current = NULL;
+            break;
+          }
           return E_EXPECTED_NULL;
         }
-        break;
-      default:
-        if (parse_number(s, current)) {
-          current->type = J_NUMBER;
-          current = NULL;
-        } else {
-          return E_EXPECTED_NUMBER;
+        if (!parse_number(s, current)) {
+          return E_MAILFORMED_JSON;
         }
+        current->type = J_NUMBER;
+        current = NULL;
+        break;
+      } while (0);
+      if (!current) {
+        continue;
       }
-      continue;
     }
     if (top == -1) {
       break;
@@ -1000,7 +1005,7 @@ json_error json_validate(const char **s) {
         if (**s == ',') {
           (*s)++;
           skip_whitespace(s);
-          if (**s == '\0') {
+          if (**s == '\0' || **s == '}') {
             return E_EXPECTED_OBJECT_ELEMENT;
           }
         } else {
@@ -1033,7 +1038,9 @@ json_error json_validate(const char **s) {
       }
       current->u.object.last = node;
       current = &node->item.value;
-    } else if (current->type == J_ARRAY) {
+      continue;
+    }
+    if (current->type == J_ARRAY) {
       if (**s == ']') {
         top--;
         (*s)++;
@@ -1047,7 +1054,7 @@ json_error json_validate(const char **s) {
         if (**s == ',') {
           (*s)++;
           skip_whitespace(s);
-          if (**s == '\0') {
+          if (**s == '\0' || **s == ']') {
             return E_EXPECTED_ARRAY_ELEMENT;
           }
         } else {
@@ -1064,10 +1071,18 @@ json_error json_validate(const char **s) {
       }
       current->u.array.last = node;
       current = &node->item;
+      continue;
+    }
+    if (current) {
+      return E_UNKNOWN_ERROR;
     }
   }
-  if (**s == '\0' && top == -1)
-    return E_NO_ERROR;
+  if (top == -1) {
+    if (**s == '\0')
+      return E_NO_ERROR;
+    else
+      return E_INVALID_DATA;
+  }
   return E_INVALID_JSON_DATA;
 }
 
