@@ -1,11 +1,15 @@
 # [C JSON parser](https://github.com/default-writer/c-json-parser)
 
 - lightning-fast implementation of a JSON parser
-- c17 ready / c89 compatible
+- added JSON validation
 - easy to read, learn and implement
-- performance improvement rate of x8/x8 for speed/memory compared to [json-c](https://github.com/json-c/json-c)
-- same speed as [simdjson](https://github.com/simdjson/simdjson)
-- fully compatible with [RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259)
+- c17 ready / c89 compatible
+
+## performance
+
+- significantly faster compared to [json-c](https://github.com/json-c/json-c)
+- a little bit faster than [simdjson](https://github.com/simdjson/simdjson)
+- supports [RFC 8259](https://datatracker.ietf.org/doc/html/rfc8259)
 - supports SSE2
 
 ## badges
