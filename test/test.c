@@ -1,6 +1,17 @@
 #include "../test/test.h"
 #include "../src/json.h"
 
+#define LCPRN_RAND_MULTIPLIER 1664525
+#define LCPRN_RAND_INCREMENT 1013904223
+#define NUM_BUF_SIZE 0x10
+#define MAX_RANDOM_NUMBER 0x100
+#define MAX_GENERATION_ITERATIONS 0x1000
+#define MAX_CHILDREN 5
+#define MAX_DEPTH 5
+
+static void generate_random_json_value(json_value *v, int depth);
+static void json_free_generated(json_value *v);
+
 TEST(test_memory_leaks, char *json) {
   const char *source = "[{\"key\": \"value\"}]";
 
@@ -1548,7 +1559,7 @@ TEST(test_case_74) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_0) {
+TEST(test_case_invalid_char_0) {
   const char *original_source = "[]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1566,7 +1577,7 @@ TEST(test_invalid_char_case_0) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_1) {
+TEST(test_case_invalid_char_1) {
   const char *original_source = "[null]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1584,7 +1595,7 @@ TEST(test_invalid_char_case_1) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_2) {
+TEST(test_case_invalid_char_2) {
   const char *original_source = "[null, null]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1602,7 +1613,7 @@ TEST(test_invalid_char_case_2) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_3) {
+TEST(test_case_invalid_char_3) {
   const char *original_source = "[true]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1620,7 +1631,7 @@ TEST(test_invalid_char_case_3) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_4) {
+TEST(test_case_invalid_char_4) {
   const char *original_source = "[true, true]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1638,7 +1649,7 @@ TEST(test_invalid_char_case_4) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_5) {
+TEST(test_case_invalid_char_5) {
   const char *original_source = "[false]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1656,7 +1667,7 @@ TEST(test_invalid_char_case_5) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_6) {
+TEST(test_case_invalid_char_6) {
   const char *original_source = "[false, false]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1674,7 +1685,7 @@ TEST(test_invalid_char_case_6) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_7) {
+TEST(test_case_invalid_char_7) {
   const char *original_source = "[true, false]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1692,7 +1703,7 @@ TEST(test_invalid_char_case_7) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_8) {
+TEST(test_case_invalid_char_8) {
   const char *original_source = "[0]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1710,7 +1721,7 @@ TEST(test_invalid_char_case_8) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_9) {
+TEST(test_case_invalid_char_9) {
   const char *original_source = "[0, 0]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1728,7 +1739,7 @@ TEST(test_invalid_char_case_9) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_10) {
+TEST(test_case_invalid_char_10) {
   const char *original_source = "[1]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1746,7 +1757,7 @@ TEST(test_invalid_char_case_10) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_11) {
+TEST(test_case_invalid_char_11) {
   const char *original_source = "[1, 1]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1764,7 +1775,7 @@ TEST(test_invalid_char_case_11) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_12) {
+TEST(test_case_invalid_char_12) {
   const char *original_source = "[0, 1]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1782,7 +1793,7 @@ TEST(test_invalid_char_case_12) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_13) {
+TEST(test_case_invalid_char_13) {
   const char *original_source = "[0, 1, null]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1800,7 +1811,7 @@ TEST(test_invalid_char_case_13) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_14) {
+TEST(test_case_invalid_char_14) {
   const char *original_source = "[0.0, 0.1, 2.1, 1e12, 1234567890]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1820,7 +1831,7 @@ TEST(test_invalid_char_case_14) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_15) {
+TEST(test_case_invalid_char_15) {
   const char *original_source = "[{}]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1838,7 +1849,7 @@ TEST(test_invalid_char_case_15) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_16) {
+TEST(test_case_invalid_char_16) {
   const char *original_source = "{\"key\": null}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1858,7 +1869,7 @@ TEST(test_invalid_char_case_16) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_17) {
+TEST(test_case_invalid_char_17) {
   const char *original_source = "{\"key\": []}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1878,7 +1889,7 @@ TEST(test_invalid_char_case_17) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_18) {
+TEST(test_case_invalid_char_18) {
   const char *original_source = "{\"key\": [null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1898,7 +1909,7 @@ TEST(test_invalid_char_case_18) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_19) {
+TEST(test_case_invalid_char_19) {
   const char *original_source = "{\"key\": [null, null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1918,7 +1929,7 @@ TEST(test_invalid_char_case_19) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_20) {
+TEST(test_case_invalid_char_20) {
   const char *original_source = "{\"key1\": null, \"key2\":[]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1938,7 +1949,7 @@ TEST(test_invalid_char_case_20) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_21) {
+TEST(test_case_invalid_char_21) {
   const char *original_source = "{\"key1\": null, \"key2\":[null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1958,7 +1969,7 @@ TEST(test_invalid_char_case_21) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_22) {
+TEST(test_case_invalid_char_22) {
   const char *original_source = "{\"key1\": null, \"key2\":[null,null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1978,7 +1989,7 @@ TEST(test_invalid_char_case_22) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_23) {
+TEST(test_case_invalid_char_23) {
   const char *original_source = "{}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -1996,7 +2007,7 @@ TEST(test_invalid_char_case_23) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_24) {
+TEST(test_case_invalid_char_24) {
   const char *original_source = "{\"key\": null}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2016,7 +2027,7 @@ TEST(test_invalid_char_case_24) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_25) {
+TEST(test_case_invalid_char_25) {
   const char *original_source = "{\"key1\": null, \"key2\": null}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2036,7 +2047,7 @@ TEST(test_invalid_char_case_25) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_26) {
+TEST(test_case_invalid_char_26) {
   const char *original_source = "{\"key\": []}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2056,7 +2067,7 @@ TEST(test_invalid_char_case_26) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_27) {
+TEST(test_case_invalid_char_27) {
   const char *original_source = "{\"key\": [null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2076,7 +2087,7 @@ TEST(test_invalid_char_case_27) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_28) {
+TEST(test_case_invalid_char_28) {
   const char *original_source = "{\"key\": [null, null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2096,7 +2107,7 @@ TEST(test_invalid_char_case_28) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_29) {
+TEST(test_case_invalid_char_29) {
   const char *original_source = "{\"key\": true}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2116,7 +2127,7 @@ TEST(test_invalid_char_case_29) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_30) {
+TEST(test_case_invalid_char_30) {
   const char *original_source = "{\"key\": false}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2136,7 +2147,7 @@ TEST(test_invalid_char_case_30) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_31) {
+TEST(test_case_invalid_char_31) {
   const char *original_source = "{\"key\": 0}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2156,7 +2167,7 @@ TEST(test_invalid_char_case_31) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_32) {
+TEST(test_case_invalid_char_32) {
   const char *original_source = "{\"key\": 1}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2176,7 +2187,7 @@ TEST(test_invalid_char_case_32) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_33) {
+TEST(test_case_invalid_char_33) {
   const char *original_source = "{\"key\": 0.5}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2196,7 +2207,7 @@ TEST(test_invalid_char_case_33) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_34) {
+TEST(test_case_invalid_char_34) {
   const char *original_source = "{\"key\": \"value\"}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2216,7 +2227,7 @@ TEST(test_invalid_char_case_34) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_35) {
+TEST(test_case_invalid_char_35) {
   const char *original_source = "{\"key\": {}}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2236,7 +2247,7 @@ TEST(test_invalid_char_case_35) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_36) {
+TEST(test_case_invalid_char_36) {
   const char *original_source = "{\"key1\": {}, \"key2\": {}}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2256,7 +2267,7 @@ TEST(test_invalid_char_case_36) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_37) {
+TEST(test_case_invalid_char_37) {
   const char *original_source = "{\"key\": [{\"subkey\": []}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2276,7 +2287,7 @@ TEST(test_invalid_char_case_37) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_38) {
+TEST(test_case_invalid_char_38) {
   const char *original_source = "{\"key\": [{\"subkey\": [null]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2296,7 +2307,7 @@ TEST(test_invalid_char_case_38) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_39) {
+TEST(test_case_invalid_char_39) {
   const char *original_source = "{\"key\": [{\"subkey\": [null, null]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2316,7 +2327,7 @@ TEST(test_invalid_char_case_39) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_40) {
+TEST(test_case_invalid_char_40) {
   const char *original_source = "{\"key\": [{\"subkey\": [true]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2336,7 +2347,7 @@ TEST(test_invalid_char_case_40) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_41) {
+TEST(test_case_invalid_char_41) {
   const char *original_source = "{\"key\": [{\"subkey\": [true, false]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2356,7 +2367,7 @@ TEST(test_invalid_char_case_41) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_42) {
+TEST(test_case_invalid_char_42) {
   const char *original_source = "{\"key\": [{\"subkey\": [0]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2376,7 +2387,7 @@ TEST(test_invalid_char_case_42) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_43) {
+TEST(test_case_invalid_char_43) {
   const char *original_source = "{\"key\": [{\"subkey\": [0, 0]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2396,7 +2407,7 @@ TEST(test_invalid_char_case_43) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_44) {
+TEST(test_case_invalid_char_44) {
   const char *original_source = "{\"key\": [{\"subkey\": [1]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2416,7 +2427,7 @@ TEST(test_invalid_char_case_44) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_45) {
+TEST(test_case_invalid_char_45) {
   const char *original_source = "{\"key\": [{\"subkey\": [1, 1]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2436,7 +2447,7 @@ TEST(test_invalid_char_case_45) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_46) {
+TEST(test_case_invalid_char_46) {
   const char *original_source = "{\"key\": [{\"subkey\": [0, 1]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2456,7 +2467,7 @@ TEST(test_invalid_char_case_46) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_47) {
+TEST(test_case_invalid_char_47) {
   const char *original_source = "{\"key\": [{\"subkey\": [0, 1, null]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2476,7 +2487,7 @@ TEST(test_invalid_char_case_47) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_48) {
+TEST(test_case_invalid_char_48) {
   const char *original_source = "{\"key\": [{\"subkey\": [0.0, 0.1, 2.1, 1e12, 1234567890]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2496,7 +2507,7 @@ TEST(test_invalid_char_case_48) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_49) {
+TEST(test_case_invalid_char_49) {
   const char *original_source = "{\"key\": [{\"subkey\": [{}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2516,7 +2527,7 @@ TEST(test_invalid_char_case_49) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_50) {
+TEST(test_case_invalid_char_50) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key\": null}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2536,7 +2547,7 @@ TEST(test_invalid_char_case_50) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_51) {
+TEST(test_case_invalid_char_51) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key\": []}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2556,7 +2567,7 @@ TEST(test_invalid_char_case_51) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_52) {
+TEST(test_case_invalid_char_52) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key\": [null]}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2576,7 +2587,7 @@ TEST(test_invalid_char_case_52) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_53) {
+TEST(test_case_invalid_char_53) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key\": [null, null]}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2596,7 +2607,7 @@ TEST(test_invalid_char_case_53) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_54) {
+TEST(test_case_invalid_char_54) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[]}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2616,7 +2627,7 @@ TEST(test_invalid_char_case_54) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_55) {
+TEST(test_case_invalid_char_55) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null]}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2636,7 +2647,7 @@ TEST(test_invalid_char_case_55) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_56) {
+TEST(test_case_invalid_char_56) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null,null]}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2656,7 +2667,7 @@ TEST(test_invalid_char_case_56) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_57) {
+TEST(test_case_invalid_char_57) {
   const char *original_source = "{\"key\": [{\"subkey\": {}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2676,7 +2687,7 @@ TEST(test_invalid_char_case_57) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_58) {
+TEST(test_case_invalid_char_58) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": null}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2696,7 +2707,7 @@ TEST(test_invalid_char_case_58) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_59) {
+TEST(test_case_invalid_char_59) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key1\": null, \"key2\": null}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2716,7 +2727,7 @@ TEST(test_invalid_char_case_59) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_60) {
+TEST(test_case_invalid_char_60) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": []}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2736,7 +2747,7 @@ TEST(test_invalid_char_case_60) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_61) {
+TEST(test_case_invalid_char_61) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": [null]}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2756,7 +2767,7 @@ TEST(test_invalid_char_case_61) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_62) {
+TEST(test_case_invalid_char_62) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": [null, null]}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2776,7 +2787,7 @@ TEST(test_invalid_char_case_62) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_63) {
+TEST(test_case_invalid_char_63) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": true}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2796,7 +2807,7 @@ TEST(test_invalid_char_case_63) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_64) {
+TEST(test_case_invalid_char_64) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": false}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2816,7 +2827,7 @@ TEST(test_invalid_char_case_64) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_65) {
+TEST(test_case_invalid_char_65) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": 0}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2836,7 +2847,7 @@ TEST(test_invalid_char_case_65) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_66) {
+TEST(test_case_invalid_char_66) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": 1}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2856,7 +2867,7 @@ TEST(test_invalid_char_case_66) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_67) {
+TEST(test_case_invalid_char_67) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": 0.5}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2876,7 +2887,7 @@ TEST(test_invalid_char_case_67) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_68) {
+TEST(test_case_invalid_char_68) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": \"value\"}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2896,7 +2907,7 @@ TEST(test_invalid_char_case_68) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_69) {
+TEST(test_case_invalid_char_69) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": {}}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2916,7 +2927,7 @@ TEST(test_invalid_char_case_69) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_70) {
+TEST(test_case_invalid_char_70) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key1\": {}, \"key2\": {}}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -2936,7 +2947,7 @@ TEST(test_invalid_char_case_70) {
   END_TEST;
 }
 
-TEST(test_error_case_truncated_input) {
+TEST(test_case_truncated_input) {
   const char *test_cases[] = {
       "[]",
       "[null]",
@@ -3987,7 +3998,7 @@ TEST(test_case_iterative_74) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_0) {
+TEST(test_case_iterative_invalid_char_0) {
   const char *original_source = "[]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4005,7 +4016,7 @@ TEST(test_invalid_char_case_iterative_0) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_1) {
+TEST(test_case_iterative_invalid_char_1) {
   const char *original_source = "[null]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4023,7 +4034,7 @@ TEST(test_invalid_char_case_iterative_1) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_2) {
+TEST(test_case_iterative_invalid_char_2) {
   const char *original_source = "[null, null]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4041,7 +4052,7 @@ TEST(test_invalid_char_case_iterative_2) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_3) {
+TEST(test_case_iterative_invalid_char_3) {
   const char *original_source = "[true]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4059,7 +4070,7 @@ TEST(test_invalid_char_case_iterative_3) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_4) {
+TEST(test_case_iterative_invalid_char_4) {
   const char *original_source = "[true, true]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4077,7 +4088,7 @@ TEST(test_invalid_char_case_iterative_4) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_5) {
+TEST(test_case_iterative_invalid_char_5) {
   const char *original_source = "[false]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4095,7 +4106,7 @@ TEST(test_invalid_char_case_iterative_5) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_6) {
+TEST(test_case_iterative_invalid_char_6) {
   const char *original_source = "[false, false]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4113,7 +4124,7 @@ TEST(test_invalid_char_case_iterative_6) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_7) {
+TEST(test_case_iterative_invalid_char_7) {
   const char *original_source = "[true, false]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4131,7 +4142,7 @@ TEST(test_invalid_char_case_iterative_7) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_8) {
+TEST(test_case_iterative_invalid_char_8) {
   const char *original_source = "[0]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4149,7 +4160,7 @@ TEST(test_invalid_char_case_iterative_8) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_9) {
+TEST(test_case_iterative_invalid_char_9) {
   const char *original_source = "[0, 0]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4167,7 +4178,7 @@ TEST(test_invalid_char_case_iterative_9) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_10) {
+TEST(test_case_iterative_invalid_char_10) {
   const char *original_source = "[1]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4185,7 +4196,7 @@ TEST(test_invalid_char_case_iterative_10) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_11) {
+TEST(test_case_iterative_invalid_char_11) {
   const char *original_source = "[1, 1]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4203,7 +4214,7 @@ TEST(test_invalid_char_case_iterative_11) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_12) {
+TEST(test_case_iterative_invalid_char_12) {
   const char *original_source = "[0, 1]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4221,7 +4232,7 @@ TEST(test_invalid_char_case_iterative_12) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_13) {
+TEST(test_case_iterative_invalid_char_13) {
   const char *original_source = "[0, 1, null]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4239,7 +4250,7 @@ TEST(test_invalid_char_case_iterative_13) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_14) {
+TEST(test_case_iterative_invalid_char_14) {
   const char *original_source = "[0.0, 0.1, 2.1, 1e12, 1234567890]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4259,7 +4270,7 @@ TEST(test_invalid_char_case_iterative_14) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_15) {
+TEST(test_case_iterative_invalid_char_15) {
   const char *original_source = "[{}]";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4277,7 +4288,7 @@ TEST(test_invalid_char_case_iterative_15) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_16) {
+TEST(test_case_iterative_invalid_char_16) {
   const char *original_source = "{\"key\": null}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4297,7 +4308,7 @@ TEST(test_invalid_char_case_iterative_16) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_17) {
+TEST(test_case_iterative_invalid_char_17) {
   const char *original_source = "{\"key\": []}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4317,7 +4328,7 @@ TEST(test_invalid_char_case_iterative_17) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_18) {
+TEST(test_case_iterative_invalid_char_18) {
   const char *original_source = "{\"key\": [null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4337,7 +4348,7 @@ TEST(test_invalid_char_case_iterative_18) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_19) {
+TEST(test_case_iterative_invalid_char_19) {
   const char *original_source = "{\"key\": [null, null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4357,7 +4368,7 @@ TEST(test_invalid_char_case_iterative_19) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_20) {
+TEST(test_case_iterative_invalid_char_20) {
   const char *original_source = "{\"key1\": null, \"key2\":[]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4377,7 +4388,7 @@ TEST(test_invalid_char_case_iterative_20) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_21) {
+TEST(test_case_iterative_invalid_char_21) {
   const char *original_source = "{\"key1\": null, \"key2\":[null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4397,7 +4408,7 @@ TEST(test_invalid_char_case_iterative_21) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_22) {
+TEST(test_case_iterative_invalid_char_22) {
   const char *original_source = "{\"key1\": null, \"key2\":[null,null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4417,7 +4428,7 @@ TEST(test_invalid_char_case_iterative_22) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_23) {
+TEST(test_case_iterative_invalid_char_23) {
   const char *original_source = "{}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4435,7 +4446,7 @@ TEST(test_invalid_char_case_iterative_23) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_24) {
+TEST(test_case_iterative_invalid_char_24) {
   const char *original_source = "{\"key\": null}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4455,7 +4466,7 @@ TEST(test_invalid_char_case_iterative_24) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_25) {
+TEST(test_case_iterative_invalid_char_25) {
   const char *original_source = "{\"key1\": null, \"key2\": null}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4475,7 +4486,7 @@ TEST(test_invalid_char_case_iterative_25) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_26) {
+TEST(test_case_iterative_invalid_char_26) {
   const char *original_source = "{\"key\": []}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4495,7 +4506,7 @@ TEST(test_invalid_char_case_iterative_26) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_27) {
+TEST(test_case_iterative_invalid_char_27) {
   const char *original_source = "{\"key\": [null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4515,7 +4526,7 @@ TEST(test_invalid_char_case_iterative_27) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_28) {
+TEST(test_case_iterative_invalid_char_28) {
   const char *original_source = "{\"key\": [null, null]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4535,7 +4546,7 @@ TEST(test_invalid_char_case_iterative_28) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_29) {
+TEST(test_case_iterative_invalid_char_29) {
   const char *original_source = "{\"key\": true}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4555,7 +4566,7 @@ TEST(test_invalid_char_case_iterative_29) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_30) {
+TEST(test_case_iterative_invalid_char_30) {
   const char *original_source = "{\"key\": false}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4575,7 +4586,7 @@ TEST(test_invalid_char_case_iterative_30) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_31) {
+TEST(test_case_iterative_invalid_char_31) {
   const char *original_source = "{\"key\": 0}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4595,7 +4606,7 @@ TEST(test_invalid_char_case_iterative_31) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_32) {
+TEST(test_case_iterative_invalid_char_32) {
   const char *original_source = "{\"key\": 1}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4615,7 +4626,7 @@ TEST(test_invalid_char_case_iterative_32) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_33) {
+TEST(test_case_iterative_invalid_char_33) {
   const char *original_source = "{\"key\": 0.5}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4635,7 +4646,7 @@ TEST(test_invalid_char_case_iterative_33) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_34) {
+TEST(test_case_iterative_invalid_char_34) {
   const char *original_source = "{\"key\": \"value\"}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4655,7 +4666,7 @@ TEST(test_invalid_char_case_iterative_34) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_35) {
+TEST(test_case_iterative_invalid_char_35) {
   const char *original_source = "{\"key\": {}}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4675,7 +4686,7 @@ TEST(test_invalid_char_case_iterative_35) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_36) {
+TEST(test_case_iterative_invalid_char_36) {
   const char *original_source = "{\"key1\": {}, \"key2\": {}}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4695,7 +4706,7 @@ TEST(test_invalid_char_case_iterative_36) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_37) {
+TEST(test_case_iterative_invalid_char_37) {
   const char *original_source = "{\"key\": [{\"subkey\": []}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4715,7 +4726,7 @@ TEST(test_invalid_char_case_iterative_37) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_38) {
+TEST(test_case_iterative_invalid_char_38) {
   const char *original_source = "{\"key\": [{\"subkey\": [null]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4735,7 +4746,7 @@ TEST(test_invalid_char_case_iterative_38) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_39) {
+TEST(test_case_iterative_invalid_char_39) {
   const char *original_source = "{\"key\": [{\"subkey\": [null, null]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4755,7 +4766,7 @@ TEST(test_invalid_char_case_iterative_39) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_40) {
+TEST(test_case_iterative_invalid_char_40) {
   const char *original_source = "{\"key\": [{\"subkey\": [true]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4775,7 +4786,7 @@ TEST(test_invalid_char_case_iterative_40) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_41) {
+TEST(test_case_iterative_invalid_char_41) {
   const char *original_source = "{\"key\": [{\"subkey\": [true, false]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4795,7 +4806,7 @@ TEST(test_invalid_char_case_iterative_41) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_42) {
+TEST(test_case_iterative_invalid_char_42) {
   const char *original_source = "{\"key\": [{\"subkey\": [0]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4815,7 +4826,7 @@ TEST(test_invalid_char_case_iterative_42) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_43) {
+TEST(test_case_iterative_invalid_char_43) {
   const char *original_source = "{\"key\": [{\"subkey\": [0, 0]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4835,7 +4846,7 @@ TEST(test_invalid_char_case_iterative_43) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_44) {
+TEST(test_case_iterative_invalid_char_44) {
   const char *original_source = "{\"key\": [{\"subkey\": [1]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4855,7 +4866,7 @@ TEST(test_invalid_char_case_iterative_44) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_45) {
+TEST(test_case_iterative_invalid_char_45) {
   const char *original_source = "{\"key\": [{\"subkey\": [1, 1]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4875,7 +4886,7 @@ TEST(test_invalid_char_case_iterative_45) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_46) {
+TEST(test_case_iterative_invalid_char_46) {
   const char *original_source = "{\"key\": [{\"subkey\": [0, 1]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4895,7 +4906,7 @@ TEST(test_invalid_char_case_iterative_46) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_47) {
+TEST(test_case_iterative_invalid_char_47) {
   const char *original_source = "{\"key\": [{\"subkey\": [0, 1, null]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4915,7 +4926,7 @@ TEST(test_invalid_char_case_iterative_47) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_48) {
+TEST(test_case_iterative_invalid_char_48) {
   const char *original_source = "{\"key\": [{\"subkey\": [0.0, 0.1, 2.1, 1e12, 1234567890]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4935,7 +4946,7 @@ TEST(test_invalid_char_case_iterative_48) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_49) {
+TEST(test_case_iterative_invalid_char_49) {
   const char *original_source = "{\"key\": [{\"subkey\": [{}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4955,7 +4966,7 @@ TEST(test_invalid_char_case_iterative_49) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_50) {
+TEST(test_case_iterative_invalid_char_50) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key\": null}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4975,7 +4986,7 @@ TEST(test_invalid_char_case_iterative_50) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_51) {
+TEST(test_case_iterative_invalid_char_51) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key\": []}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -4995,7 +5006,7 @@ TEST(test_invalid_char_case_iterative_51) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_52) {
+TEST(test_case_iterative_invalid_char_52) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key\": [null]}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5015,7 +5026,7 @@ TEST(test_invalid_char_case_iterative_52) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_53) {
+TEST(test_case_iterative_invalid_char_53) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key\": [null, null]}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5035,7 +5046,7 @@ TEST(test_invalid_char_case_iterative_53) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_54) {
+TEST(test_case_iterative_invalid_char_54) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[]}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5055,7 +5066,7 @@ TEST(test_invalid_char_case_iterative_54) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_55) {
+TEST(test_case_iterative_invalid_char_55) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null]}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5075,7 +5086,7 @@ TEST(test_invalid_char_case_iterative_55) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_56) {
+TEST(test_case_iterative_invalid_char_56) {
   const char *original_source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null,null]}]}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5095,7 +5106,7 @@ TEST(test_invalid_char_case_iterative_56) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_57) {
+TEST(test_case_iterative_invalid_char_57) {
   const char *original_source = "{\"key\": [{\"subkey\": {}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5115,7 +5126,7 @@ TEST(test_invalid_char_case_iterative_57) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_58) {
+TEST(test_case_iterative_invalid_char_58) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": null}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5135,7 +5146,7 @@ TEST(test_invalid_char_case_iterative_58) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_59) {
+TEST(test_case_iterative_invalid_char_59) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key1\": null, \"key2\": null}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5155,7 +5166,7 @@ TEST(test_invalid_char_case_iterative_59) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_60) {
+TEST(test_case_iterative_invalid_char_60) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": []}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5175,7 +5186,7 @@ TEST(test_invalid_char_case_iterative_60) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_61) {
+TEST(test_case_iterative_invalid_char_61) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": [null]}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5195,7 +5206,7 @@ TEST(test_invalid_char_case_iterative_61) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_62) {
+TEST(test_case_iterative_invalid_char_62) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": [null, null]}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5215,7 +5226,7 @@ TEST(test_invalid_char_case_iterative_62) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_63) {
+TEST(test_case_iterative_invalid_char_63) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": true}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5235,7 +5246,7 @@ TEST(test_invalid_char_case_iterative_63) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_64) {
+TEST(test_case_iterative_invalid_char_64) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": false}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5255,7 +5266,7 @@ TEST(test_invalid_char_case_iterative_64) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_65) {
+TEST(test_case_iterative_invalid_char_65) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": 0}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5275,7 +5286,7 @@ TEST(test_invalid_char_case_iterative_65) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_66) {
+TEST(test_case_iterative_invalid_char_66) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": 1}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5295,7 +5306,7 @@ TEST(test_invalid_char_case_iterative_66) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_67) {
+TEST(test_case_iterative_invalid_char_67) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": 0.5}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5315,7 +5326,7 @@ TEST(test_invalid_char_case_iterative_67) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_68) {
+TEST(test_case_iterative_invalid_char_68) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": \"value\"}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5335,7 +5346,7 @@ TEST(test_invalid_char_case_iterative_68) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_69) {
+TEST(test_case_iterative_invalid_char_69) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key\": {}}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5355,7 +5366,7 @@ TEST(test_invalid_char_case_iterative_69) {
   END_TEST;
 }
 
-TEST(test_invalid_char_case_iterative_70) {
+TEST(test_case_iterative_invalid_char_70) {
   const char *original_source = "{\"key\": [{\"subkey\": {\"key1\": {}, \"key2\": {}}}]}";
   size_t len = strlen(original_source);
   char *source = (char *)calloc(1, len + 1);
@@ -5375,7 +5386,7 @@ TEST(test_invalid_char_case_iterative_70) {
   END_TEST;
 }
 
-TEST(test_error_case_iterative_truncated_input) {
+TEST(test_case_iterative_truncated_input) {
   const char *test_cases[] = {
       "[]",
       "[null]",
@@ -5483,10 +5494,131 @@ static void lcprng_srand(unsigned int seed) {
 }
 
 static unsigned int lcprng_rand() {
-  g_seed = 1664525 * g_seed + 1013904223;
+  g_seed = LCPRN_RAND_MULTIPLIER * g_seed + LCPRN_RAND_INCREMENT;
   return g_seed;
 }
 
+static void json_free_generated(json_value *v) {
+  if (!v)
+    return;
+
+  if (v->type == J_ARRAY) {
+    json_array_node *curr = v->u.array.items;
+    while (curr) {
+      json_array_node *next = curr->next;
+      json_free_generated(&curr->item);
+      free(curr);
+      curr = next;
+    }
+  } else if (v->type == J_OBJECT) {
+    json_object_node *curr = v->u.object.items;
+    while (curr) {
+      json_object_node *next = curr->next;
+      free((void *)curr->item.key.ptr);
+      json_free_generated(&curr->item.value);
+      free(curr);
+      curr = next;
+    }
+  } else if (v->type == J_STRING) {
+    free((void *)v->u.string.ptr);
+  } else if (v->type == J_NUMBER) {
+    free((void *)v->u.number.ptr);
+  }
+}
+
+static const char *greek_alphabet[] = {
+    "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa",
+    "lambda", "mu", "nu", "xi", "omicron", "pi", "rho", "sigma", "tau", "upsilon",
+    "phi", "chi", "psi", "omega"};
+static const int num_greek_letters = sizeof(greek_alphabet) / sizeof(char *);
+
+static void generate_random_json_value(json_value *v, int depth) {
+  int type = depth == -1 ? (lcprng_rand() % 2 ? J_ARRAY - 1 : J_OBJECT - 1) : ((lcprng_rand() % J_OBJECT));
+  depth = depth > 0 ? depth - 1 : MAX_DEPTH;
+  if (depth <= 0 && (type == J_ARRAY - 1 || type == J_OBJECT - 1)) {
+    type = lcprng_rand() % J_STRING;
+  }
+  switch (type) {
+  case J_NULL - 1:
+    v->type = J_NULL;
+    break;
+  case J_BOOLEAN - 1:
+    v->type = J_BOOLEAN;
+    v->u.boolean.ptr = (lcprng_rand() % 2) ? "true" : "false";
+    v->u.boolean.len = strlen(v->u.boolean.ptr);
+    break;
+  case J_NUMBER - 1: {
+    v->type = J_NUMBER;
+    char *num_str = (char *)calloc(1, NUM_BUF_SIZE);
+    if (!num_str) {
+      v->type = J_NULL;
+      break;
+    }
+    sprintf(num_str, "%d", lcprng_rand() % MAX_RANDOM_NUMBER);
+    v->u.number.ptr = num_str;
+    v->u.number.len = strlen(num_str);
+    break;
+  }
+  case J_STRING - 1: {
+    v->type = J_STRING;
+    const char *random_greek_letter = greek_alphabet[lcprng_rand() % num_greek_letters];
+    char *str = strdup(random_greek_letter);
+    if (!str) {
+      v->type = J_NULL;
+      break;
+    }
+    v->u.string.ptr = str;
+    v->u.string.len = strlen(str);
+    break;
+  }
+  case J_ARRAY - 1: {
+    v->type = J_ARRAY;
+    v->u.array.items = NULL;
+    v->u.array.last = NULL;
+    int num_children = lcprng_rand() % MAX_CHILDREN;
+    for (int i = 0; i < num_children; ++i) {
+      json_array_node *node = (json_array_node *)calloc(1, sizeof(json_array_node));
+      generate_random_json_value(&node->item, depth - 1);
+      node->next = NULL;
+      if (!v->u.array.items) {
+        v->u.array.items = node;
+        v->u.array.last = node;
+      } else {
+        v->u.array.last->next = node;
+        v->u.array.last = node;
+      }
+    }
+    break;
+  }
+  case J_OBJECT - 1: {
+    v->type = J_OBJECT;
+    v->u.object.items = NULL;
+    v->u.object.last = NULL;
+    int num_children = lcprng_rand() % MAX_CHILDREN;
+    for (int i = 0; i < num_children; ++i) {
+      json_object_node *node = (json_object_node *)calloc(1, sizeof(json_object_node));
+      const char *random_greek_letter = greek_alphabet[lcprng_rand() % num_greek_letters];
+      char *key = strdup(random_greek_letter);
+      if (!key) {
+        free(node);
+        continue;
+      }
+      node->item.key.ptr = key;
+      node->item.key.len = strlen(key);
+      generate_random_json_value(&node->item.value, depth - 1);
+      node->next = NULL;
+      if (!v->u.object.items) {
+        v->u.object.items = node;
+        v->u.object.last = node;
+      } else {
+        v->u.object.last->next = node;
+        v->u.object.last = node;
+      }
+    }
+    break;
+  }
+  }
+}
 TEST(test_randomization) {
   const char *test_cases[] = {
       "[]",
@@ -5710,167 +5842,28 @@ TEST(test_replacement) {
   END_TEST;
 }
 
-void generate_random_json_value(json_value *v, int depth);
-
-void json_free_generated(json_value *v) {
-  if (!v)
-    return;
-
-  if (v->type == J_ARRAY) {
-    json_array_node *curr = v->u.array.items;
-    while (curr) {
-      json_array_node *next = curr->next;
-      json_free_generated(&curr->item);
-      free(curr);
-      curr = next;
-    }
-  } else if (v->type == J_OBJECT) {
-    json_object_node *curr = v->u.object.items;
-    while (curr) {
-      json_object_node *next = curr->next;
-      free((void *)curr->item.key.ptr);
-      json_free_generated(&curr->item.value);
-      free(curr);
-      curr = next;
-    }
-  } else if (v->type == J_STRING) {
-    free((void *)v->u.string.ptr);
-  } else if (v->type == J_NUMBER) {
-    free((void *)v->u.number.ptr);
-  }
-}
-
-static const char *greek_alphabet[] = {
-    "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa",
-    "lambda", "mu", "nu", "xi", "omicron", "pi", "rho", "sigma", "tau", "upsilon",
-    "phi", "chi", "psi", "omega"};
-static const int num_greek_letters = sizeof(greek_alphabet) / sizeof(char *);
-
-void generate_random_json_value(json_value *v, int depth) {
-  int type = lcprng_rand() % 6;
-
-  if (depth <= 0 && (type == 4 || type == 5)) {
-    type = lcprng_rand() % 4;
-  }
-
-  switch (type) {
-  case 0: // J_NULL
-    v->type = J_NULL;
-    break;
-  case 1: // J_BOOLEAN
-    v->type = J_BOOLEAN;
-    v->u.boolean.ptr = (lcprng_rand() % 2) ? "true" : "false";
-    v->u.boolean.len = strlen(v->u.boolean.ptr);
-    break;
-  case 2: // J_NUMBER
-  {
-    v->type = J_NUMBER;
-    char *num_str = (char *)calloc(1, 16);
-    if (!num_str) {
-      v->type = J_NULL;
-      break;
-    }
-    sprintf(num_str, "%d", (lcprng_rand() % 1999) + 1);
-    v->u.number.ptr = num_str;
-    v->u.number.len = strlen(num_str);
-    break;
-  }
-  case 3: // J_STRING
-  {
-    v->type = J_STRING;
-    const char *random_greek_letter = greek_alphabet[lcprng_rand() % num_greek_letters];
-    char *str = strdup(random_greek_letter);
-    if (!str) {
-      v->type = J_NULL;
-      break;
-    }
-    v->u.string.ptr = str;
-    v->u.string.len = strlen(str);
-    break;
-  }
-  case 4: // J_ARRAY
-  {
-    v->type = J_ARRAY;
-    v->u.array.items = NULL;
-    v->u.array.last = NULL;
-    int num_children = lcprng_rand() % 5;
-    for (int i = 0; i < num_children; ++i) {
-      json_array_node *node = (json_array_node *)calloc(1, sizeof(json_array_node));
-      generate_random_json_value(&node->item, depth - 1);
-      node->next = NULL;
-      if (!v->u.array.items) {
-        v->u.array.items = node;
-        v->u.array.last = node;
-      } else {
-        v->u.array.last->next = node;
-        v->u.array.last = node;
-      }
-    }
-    break;
-  }
-  case 5: // J_OBJECT
-  {
-    v->type = J_OBJECT;
-    v->u.object.items = NULL;
-    v->u.object.last = NULL;
-    int num_children = lcprng_rand() % 5;
-    for (int i = 0; i < num_children; ++i) {
-      json_object_node *node = (json_object_node *)calloc(1, sizeof(json_object_node));
-
-      const char *random_greek_letter = greek_alphabet[lcprng_rand() % num_greek_letters];
-      char *key = strdup(random_greek_letter);
-      if (!key) {
-        free(node);
-        continue;
-      }
-
-      node->item.key.ptr = key;
-      node->item.key.len = strlen(key);
-
-      generate_random_json_value(&node->item.value, depth - 1);
-      node->next = NULL;
-      if (!v->u.object.items) {
-        v->u.object.items = node;
-        v->u.object.last = node;
-      } else {
-        v->u.object.last->next = node;
-        v->u.object.last = node;
-      }
-    }
-    break;
-  }
-  }
-}
-
 TEST(test_generation) {
-  lcprng_srand(0);
-  for (int i = 0; i < 100; i++) {
+  lcprng_srand((unsigned int)utils_get_time());
+  for (int i = 0; i < MAX_GENERATION_ITERATIONS; i++) {
     json_value v;
     memset(&v, 0, sizeof(json_value));
-    generate_random_json_value(&v, 5);
-
+    generate_random_json_value(&v, -1);
     char *json_str = json_stringify(&v);
     ASSERT_PTR_NOT_NULL(json_str);
-
-    // Wrap the generated string in an array to ensure it's a valid JSON document
     char *wrapped_str = (char *)calloc(1, strlen(json_str) + 3);
     sprintf(wrapped_str, "[%s]", json_str);
-
     json_value parsed_v;
     memset(&parsed_v, 0, sizeof(json_value));
     if (!json_parse(wrapped_str, &parsed_v)) {
       printf("failed to parse: %s\n", wrapped_str);
       ASSERT_TRUE(false);
     }
-    json_free(&parsed_v);
-
     memset(&parsed_v, 0, sizeof(json_value));
     if (!json_parse_iterative(wrapped_str, &parsed_v)) {
       printf("failed to parse iterative: %s\n", wrapped_str);
       ASSERT_TRUE(false);
     }
     json_free(&parsed_v);
-
     free(wrapped_str);
     free(json_str);
     json_free_generated(&v);
@@ -6166,78 +6159,78 @@ int main(void) {
   test_case_72();
   test_case_73();
   test_case_74();
-  test_invalid_char_case_0();
-  test_invalid_char_case_1();
-  test_invalid_char_case_2();
-  test_invalid_char_case_3();
-  test_invalid_char_case_4();
-  test_invalid_char_case_5();
-  test_invalid_char_case_6();
-  test_invalid_char_case_7();
-  test_invalid_char_case_8();
-  test_invalid_char_case_9();
-  test_invalid_char_case_10();
-  test_invalid_char_case_11();
-  test_invalid_char_case_12();
-  test_invalid_char_case_13();
-  test_invalid_char_case_14();
-  test_invalid_char_case_15();
-  test_invalid_char_case_16();
-  test_invalid_char_case_17();
-  test_invalid_char_case_18();
-  test_invalid_char_case_19();
-  test_invalid_char_case_20();
-  test_invalid_char_case_21();
-  test_invalid_char_case_22();
-  test_invalid_char_case_23();
-  test_invalid_char_case_24();
-  test_invalid_char_case_25();
-  test_invalid_char_case_26();
-  test_invalid_char_case_27();
-  test_invalid_char_case_28();
-  test_invalid_char_case_29();
-  test_invalid_char_case_30();
-  test_invalid_char_case_31();
-  test_invalid_char_case_32();
-  test_invalid_char_case_33();
-  test_invalid_char_case_34();
-  test_invalid_char_case_35();
-  test_invalid_char_case_36();
-  test_invalid_char_case_37();
-  test_invalid_char_case_38();
-  test_invalid_char_case_39();
-  test_invalid_char_case_40();
-  test_invalid_char_case_41();
-  test_invalid_char_case_42();
-  test_invalid_char_case_43();
-  test_invalid_char_case_44();
-  test_invalid_char_case_45();
-  test_invalid_char_case_46();
-  test_invalid_char_case_47();
-  test_invalid_char_case_48();
-  test_invalid_char_case_49();
-  test_invalid_char_case_50();
-  test_invalid_char_case_51();
-  test_invalid_char_case_52();
-  test_invalid_char_case_53();
-  test_invalid_char_case_54();
-  test_invalid_char_case_55();
-  test_invalid_char_case_56();
-  test_invalid_char_case_57();
-  test_invalid_char_case_58();
-  test_invalid_char_case_59();
-  test_invalid_char_case_60();
-  test_invalid_char_case_61();
-  test_invalid_char_case_62();
-  test_invalid_char_case_63();
-  test_invalid_char_case_64();
-  test_invalid_char_case_65();
-  test_invalid_char_case_66();
-  test_invalid_char_case_67();
-  test_invalid_char_case_68();
-  test_invalid_char_case_69();
-  test_invalid_char_case_70();
-  test_error_case_truncated_input();
+  test_case_invalid_char_0();
+  test_case_invalid_char_1();
+  test_case_invalid_char_2();
+  test_case_invalid_char_3();
+  test_case_invalid_char_4();
+  test_case_invalid_char_5();
+  test_case_invalid_char_6();
+  test_case_invalid_char_7();
+  test_case_invalid_char_8();
+  test_case_invalid_char_9();
+  test_case_invalid_char_10();
+  test_case_invalid_char_11();
+  test_case_invalid_char_12();
+  test_case_invalid_char_13();
+  test_case_invalid_char_14();
+  test_case_invalid_char_15();
+  test_case_invalid_char_16();
+  test_case_invalid_char_17();
+  test_case_invalid_char_18();
+  test_case_invalid_char_19();
+  test_case_invalid_char_20();
+  test_case_invalid_char_21();
+  test_case_invalid_char_22();
+  test_case_invalid_char_23();
+  test_case_invalid_char_24();
+  test_case_invalid_char_25();
+  test_case_invalid_char_26();
+  test_case_invalid_char_27();
+  test_case_invalid_char_28();
+  test_case_invalid_char_29();
+  test_case_invalid_char_30();
+  test_case_invalid_char_31();
+  test_case_invalid_char_32();
+  test_case_invalid_char_33();
+  test_case_invalid_char_34();
+  test_case_invalid_char_35();
+  test_case_invalid_char_36();
+  test_case_invalid_char_37();
+  test_case_invalid_char_38();
+  test_case_invalid_char_39();
+  test_case_invalid_char_40();
+  test_case_invalid_char_41();
+  test_case_invalid_char_42();
+  test_case_invalid_char_43();
+  test_case_invalid_char_44();
+  test_case_invalid_char_45();
+  test_case_invalid_char_46();
+  test_case_invalid_char_47();
+  test_case_invalid_char_48();
+  test_case_invalid_char_49();
+  test_case_invalid_char_50();
+  test_case_invalid_char_51();
+  test_case_invalid_char_52();
+  test_case_invalid_char_53();
+  test_case_invalid_char_54();
+  test_case_invalid_char_55();
+  test_case_invalid_char_56();
+  test_case_invalid_char_57();
+  test_case_invalid_char_58();
+  test_case_invalid_char_59();
+  test_case_invalid_char_60();
+  test_case_invalid_char_61();
+  test_case_invalid_char_62();
+  test_case_invalid_char_63();
+  test_case_invalid_char_64();
+  test_case_invalid_char_65();
+  test_case_invalid_char_66();
+  test_case_invalid_char_67();
+  test_case_invalid_char_68();
+  test_case_invalid_char_69();
+  test_case_invalid_char_70();
+  test_case_truncated_input();
   test_case_iterative_0();
   test_case_iterative_1();
   test_case_iterative_2();
@@ -6314,81 +6307,78 @@ int main(void) {
   test_case_iterative_72();
   test_case_iterative_73();
   test_case_iterative_74();
-  test_invalid_char_case_iterative_0();
-  test_invalid_char_case_iterative_1();
-  test_invalid_char_case_iterative_2();
-  test_invalid_char_case_iterative_3();
-  test_invalid_char_case_iterative_4();
-  test_invalid_char_case_iterative_5();
-  test_invalid_char_case_iterative_6();
-  test_invalid_char_case_iterative_7();
-  test_invalid_char_case_iterative_8();
-  test_invalid_char_case_iterative_9();
-  test_invalid_char_case_iterative_10();
-  test_invalid_char_case_iterative_11();
-  test_invalid_char_case_iterative_12();
-  test_invalid_char_case_iterative_13();
-  test_invalid_char_case_iterative_14();
-  test_invalid_char_case_iterative_15();
-  test_invalid_char_case_iterative_16();
-  test_invalid_char_case_iterative_17();
-  test_invalid_char_case_iterative_18();
-  test_invalid_char_case_iterative_19();
-  test_invalid_char_case_iterative_20();
-  test_invalid_char_case_iterative_21();
-  test_invalid_char_case_iterative_22();
-  test_invalid_char_case_iterative_23();
-  test_invalid_char_case_iterative_24();
-  test_invalid_char_case_iterative_25();
-  test_invalid_char_case_iterative_26();
-  test_invalid_char_case_iterative_27();
-  test_invalid_char_case_iterative_28();
-  test_invalid_char_case_iterative_29();
-  test_invalid_char_case_iterative_30();
-  test_invalid_char_case_iterative_31();
-  test_invalid_char_case_iterative_32();
-  test_invalid_char_case_iterative_33();
-  test_invalid_char_case_iterative_34();
-  test_invalid_char_case_iterative_35();
-  test_invalid_char_case_iterative_36();
-  test_invalid_char_case_iterative_37();
-  test_invalid_char_case_iterative_38();
-  test_invalid_char_case_iterative_39();
-  test_invalid_char_case_iterative_40();
-  test_invalid_char_case_iterative_41();
-  test_invalid_char_case_iterative_42();
-  test_invalid_char_case_iterative_43();
-  test_invalid_char_case_iterative_44();
-  test_invalid_char_case_iterative_45();
-  test_invalid_char_case_iterative_46();
-  test_invalid_char_case_iterative_47();
-  test_invalid_char_case_iterative_48();
-  test_invalid_char_case_iterative_49();
-  test_invalid_char_case_iterative_50();
-  test_invalid_char_case_iterative_51();
-  test_invalid_char_case_iterative_52();
-  test_invalid_char_case_iterative_53();
-  test_invalid_char_case_iterative_54();
-  test_invalid_char_case_iterative_55();
-  test_invalid_char_case_iterative_56();
-  test_invalid_char_case_iterative_57();
-  test_invalid_char_case_iterative_58();
-  test_invalid_char_case_iterative_59();
-  test_invalid_char_case_iterative_60();
-  test_invalid_char_case_iterative_61();
-  test_invalid_char_case_iterative_62();
-  test_invalid_char_case_iterative_63();
-  test_invalid_char_case_iterative_64();
-  test_invalid_char_case_iterative_65();
-  test_invalid_char_case_iterative_66();
-  test_invalid_char_case_iterative_67();
-  test_invalid_char_case_iterative_68();
-  test_invalid_char_case_iterative_69();
-  test_invalid_char_case_iterative_70();
-  test_error_case_iterative_truncated_input();
-  test_randomization();
-  test_replacement();
-  test_generation();
+  test_case_iterative_invalid_char_0();
+  test_case_iterative_invalid_char_1();
+  test_case_iterative_invalid_char_2();
+  test_case_iterative_invalid_char_3();
+  test_case_iterative_invalid_char_4();
+  test_case_iterative_invalid_char_5();
+  test_case_iterative_invalid_char_6();
+  test_case_iterative_invalid_char_7();
+  test_case_iterative_invalid_char_8();
+  test_case_iterative_invalid_char_9();
+  test_case_iterative_invalid_char_10();
+  test_case_iterative_invalid_char_11();
+  test_case_iterative_invalid_char_12();
+  test_case_iterative_invalid_char_13();
+  test_case_iterative_invalid_char_14();
+  test_case_iterative_invalid_char_15();
+  test_case_iterative_invalid_char_16();
+  test_case_iterative_invalid_char_17();
+  test_case_iterative_invalid_char_18();
+  test_case_iterative_invalid_char_19();
+  test_case_iterative_invalid_char_20();
+  test_case_iterative_invalid_char_21();
+  test_case_iterative_invalid_char_22();
+  test_case_iterative_invalid_char_23();
+  test_case_iterative_invalid_char_24();
+  test_case_iterative_invalid_char_25();
+  test_case_iterative_invalid_char_26();
+  test_case_iterative_invalid_char_27();
+  test_case_iterative_invalid_char_28();
+  test_case_iterative_invalid_char_29();
+  test_case_iterative_invalid_char_30();
+  test_case_iterative_invalid_char_31();
+  test_case_iterative_invalid_char_32();
+  test_case_iterative_invalid_char_33();
+  test_case_iterative_invalid_char_34();
+  test_case_iterative_invalid_char_35();
+  test_case_iterative_invalid_char_36();
+  test_case_iterative_invalid_char_37();
+  test_case_iterative_invalid_char_38();
+  test_case_iterative_invalid_char_39();
+  test_case_iterative_invalid_char_40();
+  test_case_iterative_invalid_char_41();
+  test_case_iterative_invalid_char_42();
+  test_case_iterative_invalid_char_43();
+  test_case_iterative_invalid_char_44();
+  test_case_iterative_invalid_char_45();
+  test_case_iterative_invalid_char_46();
+  test_case_iterative_invalid_char_47();
+  test_case_iterative_invalid_char_48();
+  test_case_iterative_invalid_char_49();
+  test_case_iterative_invalid_char_50();
+  test_case_iterative_invalid_char_51();
+  test_case_iterative_invalid_char_52();
+  test_case_iterative_invalid_char_53();
+  test_case_iterative_invalid_char_54();
+  test_case_iterative_invalid_char_55();
+  test_case_iterative_invalid_char_56();
+  test_case_iterative_invalid_char_57();
+  test_case_iterative_invalid_char_58();
+  test_case_iterative_invalid_char_59();
+  test_case_iterative_invalid_char_60();
+  test_case_iterative_invalid_char_61();
+  test_case_iterative_invalid_char_62();
+  test_case_iterative_invalid_char_63();
+  test_case_iterative_invalid_char_64();
+  test_case_iterative_invalid_char_65();
+  test_case_iterative_invalid_char_66();
+  test_case_iterative_invalid_char_67();
+  test_case_iterative_invalid_char_68();
+  test_case_iterative_invalid_char_69();
+  test_case_iterative_invalid_char_70();
+  test_case_iterative_truncated_input();
   test_validate_no_data();
   test_validate_invalid_json();
   test_validate_invalid_json_data();
@@ -6413,5 +6403,8 @@ int main(void) {
   test_validate_expected_array_element_null();
   test_validate_expected_object_element();
   test_validate_expected_object_element_null();
+  test_randomization();
+  test_replacement();
+  test_generation();
   TEST_FINALIZE;
 }
