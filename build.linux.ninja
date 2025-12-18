@@ -38,9 +38,13 @@ build perf-c-json-parser: phony perf.stamp
 
 # --- test-perf-c-json-parser-no-string-validation target ---
 cflags_perf_no_string_validation = -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections
+build main.o.perf_no_string_validation: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_no_string_validation
 build json.o.perf_no_string_validation: cc src/json.c
   cflags = $cflags_perf_no_string_validation
-build perf_no_string_validation.stamp: link main.o.perf json.o.perf_no_string_validation utils.o.perf
+build utils.o.perf_no_string_validation: cc utils/utils.c
+  cflags = $cflags_perf_no_string_validation  
+build perf_no_string_validation.stamp: link main.o.perf_no_string_validation json.o.perf_no_string_validation utils.o.perf_no_string_validation
   name = test-perf-c-json-parser-no-string-validation
   cflags = $cflags_perf_no_string_validation
   ldflags = $ldflags_perf
@@ -51,7 +55,11 @@ cflags_perf_long = $cflags_perf -DLONG_TEST
 ldflags_perf_long = $ldflags_perf
 build main.o.perf_long: cc perf/test_c_json_parser.c
   cflags = $cflags_perf_long
-build perf_long.stamp: link main.o.perf_long json.o.perf utils.o.perf
+build json.o.perf_long: cc src/json.c
+  cflags = $cflags_perf_long
+build utils.o.perf_long: cc utils/utils.c
+  cflags = $cflags_perf_long   
+build perf_long.stamp: link main.o.perf_long json.o.perf_long utils.o.perf_long
   name = test-perf-c-json-parser-long
   cflags = $cflags_perf_long
   ldflags = $ldflags_perf_long
@@ -59,10 +67,12 @@ build perf-c-json-parser-long: phony perf_long.stamp
 
 # --- test-perf-c-json-parser-no-string-validation-long target ---
 cflags_perf_no_string_validation_long = -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DLONG_TEST
+build main.o.perf_no_string_validation_long: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_no_string_validation_long
 build json.o.perf_no_string_validation_long: cc src/json.c
   cflags = $cflags_perf_no_string_validation_long
-build perf_no_string_validation_long.stamp: link main.o.perf json.o.perf_no_string_validation_long utils.o.perf
-  name = test-perf-c-json-parser-no-string-validation
+build perf_no_string_validation_long.stamp: link main.o.perf_no_string_validation_long json.o.perf_no_string_validation_long utils.o.perf
+  name = test-perf-c-json-parser-no-string-validation-long
   cflags = $cflags_perf_no_string_validation_long
   ldflags = $ldflags_perf
 build perf-c-json-parser-no-string-validation-long: phony perf_no_string_validation_long.stamp
@@ -72,7 +82,11 @@ cflags_perf_json_c = -Wall -Wextra -std=c17 -Ilibs/json-c/include -O3 -march=nat
 ldflags_perf_json_c = $ldflags -flto -flto=thin -fvectorize -funroll-loops -Llibs/json-c/lib -ljson-c
 build main.o.perf_json_c: cc perf/test_json_c.c
   cflags = $cflags_perf_json_c
-build perf_json_c.stamp: link main.o.perf_json_c json.o.perf utils.o.perf
+build json.o.perf_json_c: cc src/json.c
+  cflags = $cflags_perf_json_c
+build utils.o.perf_json_c: cc utils/utils.c
+  cflags = $cflags_perf_json_c    
+build perf_json_c.stamp: link main.o.perf_json_c json.o.perf_json_c utils.o.perf_json_c
   name = test-perf-json-c
   cflags = $cflags_perf_json_c
   ldflags = $ldflags_perf_json_c
@@ -83,7 +97,11 @@ cflags_perf_json_c_long = $cflags_perf_json_c -DLONG_TEST
 ldflags_perf_json_c_long = $ldflags_perf_json_c
 build main.o.perf_json_c_long: cc perf/test_json_c.c
   cflags = $cflags_perf_json_c_long
-build perf_json_c_long.stamp: link main.o.perf_json_c_long json.o.perf utils.o.perf
+build json.o.perf_json_c_long: cc src/json.c
+  cflags = $cflags_perf_json_c_long
+build utils.o.perf_json_c_long: cc utils/utils.c
+  cflags = $cflags_perf_json_c_long    
+build perf_json_c_long.stamp: link main.o.perf_json_c_long json.o.perf_json_c_long utils.o.perf_json_c_long
   name = test-perf-json-c-long
   cflags = $cflags_perf_json_c_long
   ldflags = $ldflags_perf_json_c_long
@@ -133,10 +151,10 @@ build .s: phony test/test.s src/json.s utils/utils.s
 # --- gprof target (gcc) ---
 cflags_gprof = -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
 ldflags_gprof = -pg
-build json.o.gprof: cc src/json.c
+build test.o.gprof: cc test/test_gprof.c
   cc = gcc
   cflags = $cflags_gprof
-build test.o.gprof: cc test/test_gprof.c
+build json.o.gprof: cc src/json.c
   cc = gcc
   cflags = $cflags_gprof
 build utils.o.gprof: cc utils/utils.c
