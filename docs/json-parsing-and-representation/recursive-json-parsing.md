@@ -2,6 +2,7 @@
 
 - The library uses a recursive descent parser to process JSON documents.
 - This approach naturally handles the nested structure of JSON.
+- For an alternative, non-recursive approach, see [Iterative JSON Parsing](iterative-json-parsing.md).
 
 ## Core Functions
 

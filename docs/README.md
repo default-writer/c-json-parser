@@ -11,7 +11,9 @@
 
 ## API
 
-- `json_parse()`: Parses a JSON string into a `json_value` tree.
+- `json_parse()`: Parses a JSON string using a recursive descent strategy.
+- `json_parse_iterative()`: Parses a JSON string using an iterative (non-recursive) strategy to avoid stack depth issues.
+- `json_validate()`: Validates a JSON string using a fast iterative parser, returning an error code on failure.
 - `json_equal()`: Compares two JSON values for equality.
 - `json_stringify()`: Converts a `json_value` to a JSON string.
 - `json_free()`: Frees the memory of a `json_value` tree.
@@ -19,6 +21,7 @@
 ## Data Structures
 
 - `json_token`: Enum for JSON value types (`J_NULL`, `J_BOOLEAN`, `J_NUMBER`, `J_STRING`, `J_ARRAY`, `J_OBJECT`).
+- `json_error`: Enum for JSON parsing and validation error codes.
 - `reference`: A struct that points to a part of the original JSON string, containing a `ptr` and `len`.
 - `json_value`: A struct representing a JSON value, with a `type` and a `union` of value types.
 - `json_object`: A struct representing a key-value pair in a JSON object.

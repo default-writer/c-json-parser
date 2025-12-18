@@ -4,6 +4,7 @@
 - [JSON Parsing and Representation](json-parsing-and-representation/README.md)
   - [In-Memory JSON Structure](json-parsing-and-representation/in-memory-json-structure.md)
   - [Recursive JSON Parsing](json-parsing-and-representation/recursive-json-parsing.md)
+  - [Iterative JSON Parsing](json-parsing-and-representation/iterative-json-parsing.md)
 - [JSON Manipulation and Comparison](json-manipulation-and-comparison/README.md)
   - [Deep Equality Checks](json-manipulation-and-comparison/deep-equality-checks.md)
   - [JSON Data Modification](json-manipulation-and-comparison/json-data-modification.md)

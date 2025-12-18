@@ -7,6 +7,7 @@
 ## Core Definitions
 
 - `json_token`: Enum for JSON value types (`J_NULL`, `J_BOOLEAN`, `J_NUMBER`, `J_STRING`, `J_ARRAY`, `J_OBJECT`).
+- `json_error`: Enum for detailed JSON parsing and validation error codes.
 - `reference`: A pointer to a slice of the original JSON string (`ptr`, `len`). Avoids allocations for primitive types.
 - `json_value`: Represents any JSON value. Contains a `type` field and a `union` for the specific value.
 - `json_object`: Represents a key-value pair, where the key is a `reference` and the value is a `json_value`.
