@@ -143,8 +143,8 @@ build test.stamp: link test.o json.o utils.o
 build main: phony test.stamp
 
 # --- .s target ---
-build test/test.s: asm test/test.c
 build src/json.s: asm src/json.c
+build test/test.s: asm test/test.c
 build utils/utils.s: asm utils/utils.c
 build .s: phony test/test.s src/json.s utils/utils.s
 
