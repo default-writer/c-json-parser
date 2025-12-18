@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 18, 2025 at 12:36:43 PM GMT+3
+ *   December 18, 2025 at 2:32:45 PM GMT+3
  *
  */
 /*
@@ -898,7 +898,7 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
 
 json_error json_validate(const char **s) {
   if (**s == '\0')
-    return E_INVALID_JSON;
+    return E_NO_DATA;
   if (**s != '{' && **s != '[') {
     return E_INVALID_JSON;
   }
@@ -920,7 +920,7 @@ json_error json_validate(const char **s) {
         current->u.object.items = NULL;
         current->u.object.last = NULL;
         if (++top >= JSON_STACK_SIZE)
-          return E_STACK_OVERFLOW;
+          return E_STACK_OVERFLOW_OBJECT;
         (*s)++;
         stack[top] = current;
         current = NULL;
@@ -931,7 +931,7 @@ json_error json_validate(const char **s) {
         current->u.array.last = NULL;
         (*s)++;
         if (++top >= JSON_STACK_SIZE)
-          return E_STACK_OVERFLOW;
+          return E_STACK_OVERFLOW_ARRAY;
         stack[top] = current;
         current = NULL;
         break;
@@ -949,7 +949,7 @@ json_error json_validate(const char **s) {
           *s += 4;
           current = NULL;
         } else {
-          return E_EXPECTED_TRUE;
+          return E_EXPECTED_BOOLEAN;
         }
         break;
       case 'f':
@@ -960,7 +960,7 @@ json_error json_validate(const char **s) {
           *s += JSON_FALSE_LEN;
           current = NULL;
         } else {
-          return E_EXPECTED_FALSE;
+          return E_EXPECTED_BOOLEAN;
         }
         break;
       case 'n':
@@ -1004,25 +1004,27 @@ json_error json_validate(const char **s) {
             return E_EXPECTED_OBJECT_ELEMENT;
           }
         } else {
-          return E_EXPECTED_OBJECT_ELEMENT;
+          return E_EXPECTED_OBJECT;
         }
       }
-      if (**s != '"')
-        return E_EXPECTED_QUOTE;
+      if (**s != '"') {
+        return E_OBJECT_KEY;
+      }
       json_value key;
       if (!parse_string(s, &key))
-        return E_EXPECTED_STRING;
+        return E_EXPECTED_OBJECT_KEY;
       skip_whitespace(s);
-      if (**s != ':')
-        return E_EXPECTED_COLON;
+      if (**s != ':') {
+        return E_OBJECT_VALUE;
+      }
       (*s)++;
       skip_whitespace(s);
       if (**s == '\0') {
-        return E_EXPECTED_VALUE;
+        return E_EXPECTED_OBJECT_VALUE;
       }
       json_object_node *node = new_object_node();
       if (!node)
-        return E_OBJECT_OVERFLOW;
+        return E_STACK_OVERFLOW_OBJECT;
       node->item.key = key.u.string;
       if (current->u.object.items == NULL) {
         current->u.object.items = node;
@@ -1049,12 +1051,12 @@ json_error json_validate(const char **s) {
             return E_EXPECTED_ARRAY_ELEMENT;
           }
         } else {
-          return E_EXPECTED_ARRAY_ELEMENT;
+          return E_EXPECTED_ARRAY;
         }
       }
       json_array_node *node = new_array_node();
       if (!node)
-        return E_ARRAY_OVERFLOW;
+        return E_STACK_OVERFLOW_ARRAY;
       if (current->u.array.items == NULL) {
         current->u.array.items = node;
       } else {
