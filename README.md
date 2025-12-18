@@ -1,4 +1,4 @@
-# C JSON parser
+# [C JSON parser](https://github.com/default-writer/c-json-parser)
 
 - lightning-fast implementation of a JSON parser
 - c17 ready / c89 compatible
