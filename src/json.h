@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 25, 2025 at 7:50:30 AM GMT+3
+ *   December 25, 2025 at 9:35:35 PM GMT+3
  *
  */
 /*
@@ -117,10 +117,10 @@ typedef enum {
 } json_token;
 
 /**
- * @brief Represents a reference to a part of the original JSON string.
+ * @brief Represents a reference to a part of the original JSON string (start and length).
  * This is used to avoid allocating new memory for strings, numbers, and booleans.
  */
-typedef struct {
+typedef struct reference {
   const char *ptr;
   size_t len;
 } reference;
@@ -132,7 +132,7 @@ typedef struct json_array_node json_array_node_type;
 typedef struct json_object_node json_object_node_type;
 
 /**
- * @brief Represents a JSON value.
+ * @brief Represents a generic JSON value.
  * The type of the value is determined by the `type` field.
  */
 typedef struct json_value {
@@ -153,7 +153,7 @@ typedef struct json_value {
 } json_value;
 
 /**
- * @brief Represents a key-value pair in a JSON object.
+ * @brief Represents a key-value pair representing an item in a JSON object.
  */
 typedef struct json_object {
   reference key;
@@ -161,7 +161,7 @@ typedef struct json_object {
 } json_object;
 
 /**
- * @brief Represents a node in a linked list of JSON values.
+ * @brief Represents a node in a linked list of JSON object key-value pairs.
  */
 typedef struct json_object_node {
   json_object_type item;
@@ -174,16 +174,14 @@ typedef struct json_array_node {
 } json_array_node;
 
 /**
- * @brief Parses a JSON string and returns a tree of json_value objects.
- * The caller is responsible for freeing the returned structure by calling json_free().
+ * @brief Parses a JSON string and creates a tree of `json_value` objects.
  * @param json The JSON string to parse.
- * @return A pointer to the root json_value, or NULL on error.
+ * @param root A pointer to the root `json_value` where the parsed JSON will be stored.
+ * @return `true` if the JSON was successfully parsed, `false` otherwise.
  */
 bool json_parse(const char *json, json_value *root);
 
 /**
- * @brief Parses a JSON string and returns a tree of json_value objects.
- * The caller is responsible for freeing the returned structure by calling json_free().
  * @param json The JSON string to parse.
  * @return A pointer to the root json_value, or NULL on error.
  */
@@ -191,7 +189,7 @@ bool json_parse_iterative(const char *json, json_value *root);
 
 /**
  * @brief Validates a JSON string.
- * The caller is responsible for freeing the returned structure by calling json_free().
+ * @param s A pointer to a const char* that represents the JSON string to validate.
  * @return An error code of the last position of parsed character. Returns E_NO_ERROR if string is a valid JSON, non-zero error code otherwise
  */
 json_error json_validate(const char **s);
@@ -205,7 +203,7 @@ json_error json_validate(const char **s);
 bool json_equal(const json_value *a, const json_value *b);
 
 /**
- * @brief Converts a json_value tree to a pretty-printed JSON string.
+ * @brief Converts a `json_value` tree to a pretty-printed JSON string.
  * The caller is responsible for freeing the returned string.
  * @param v The json_value to stringify.
  * @return A newly allocated string containing the JSON, or NULL on error.
@@ -213,23 +211,23 @@ bool json_equal(const json_value *a, const json_value *b);
 char *json_stringify(const json_value *v);
 
 /**
- * @brief Resets a json_value pools indexes.
+ * @brief Resets the internal memory pool indexes for `json_value` allocation.
  */
 void json_reset(void);
 
 /**
- * @brief Fill with zeroes all of the json_value pools.
+ * @brief Fills the internal memory pools for `json_value` allocation with zeroes, effectively clearing them.
  */
 void json_cleanup(void);
 
 /**
- * @brief Frees a json_value and all its children.(left for COMPATIBITLITY)
+ * @brief Frees a `json_value` and all its children. (Left for COMPATIBILITY)
  * @param v The json_value to free.
  */
 void json_free(json_value *v);
 
 /**
- * @brief Prints a json_value tree to a standard output.
+ * @brief Prints a `json_value` tree to a standard output.
  * @param v The json_value to print.
  * @param out The standard output FILE handle.
  */
