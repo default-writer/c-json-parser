@@ -345,6 +345,33 @@ TEST(test_valid_number_zero_point_zero_iterative) {
   END_TEST;
 }
 
+TEST(test_invalid_iterative_truncated_exponent) {
+  const char *source = "[1e]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_truncated_exponent_sign) {
+  const char *source = "[1e+]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_invalid_iterative_exponent_missing_digits) {
+  const char *source = "[1e+ ]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse_iterative(source, &v));
+  json_free(&v);
+  END_TEST;
+}
+
 // Additional valid tests for json_parse_iterative
 TEST(test_valid_number_iterative_positive_integer) {
   const char *source = "[123]";
@@ -361,6 +388,31 @@ TEST(test_valid_number_iterative_positive_integer) {
 
 TEST(test_valid_number_iterative_negative_integer) {
   const char *source = "[-123]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+
+TEST(test_valid_number_iterative_exponent_positive) {
+  const char *source = "[1e+2]";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source, &v));
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+  json_free(&v);
+  free(json);
+  END_TEST;
+}
+TEST(test_valid_number_iterative_exponent_negative) {
+  const char *source = "[1e-2]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
   ASSERT_TRUE(json_parse_iterative(source, &v));
@@ -6067,6 +6119,9 @@ int main(void) {
   test_invalid_iterative_array_of_unclosed_objects();
   test_valid_number_zero_point_zero();
   test_valid_number_zero_point_zero_iterative();
+  test_invalid_iterative_truncated_exponent();
+  test_invalid_iterative_truncated_exponent_sign();
+  test_invalid_iterative_exponent_missing_digits();
   test_valid_number_iterative_positive_integer();
   test_valid_number_iterative_negative_integer();
   test_valid_number_iterative_positive_float();
