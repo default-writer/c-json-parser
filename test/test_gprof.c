@@ -13,8 +13,10 @@ TEST(test_json_parse) {
     if (!json_parse_iterative(source, &v)) {
       break;
     }
-    json_free(&v);
+    json_reset();
   }
+
+  json_cleanup();
 
   /* parse into internal json_value* */
   json_parse(source, &v);
@@ -30,6 +32,7 @@ TEST(test_json_parse) {
   utils_output(json);
 
   /* cleanup */
+  json_free(&v);
   free(json);
   free(source);
 

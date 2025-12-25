@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 25, 2025 at 6:02:15 AM GMT+3
+ *   December 25, 2025 at 7:53:29 AM GMT+3
  *
  */
 /*
@@ -1274,6 +1274,16 @@ bool json_equal(const json_value *a, const json_value *b) {
   default:
     return false;
   }
+}
+
+void json_reset(void) {
+  json_object_node_free_count = JSON_VALUE_POOL_SIZE;
+  json_array_node_free_count = JSON_VALUE_POOL_SIZE;
+}
+
+void json_cleanup(void) {
+  memset(json_array_node_pool, 0, JSON_VALUE_POOL_SIZE * sizeof(json_array_node));
+  memset(json_object_node_pool, 0, JSON_VALUE_POOL_SIZE * sizeof(json_object_node));
 }
 
 void json_free(json_value *v) {

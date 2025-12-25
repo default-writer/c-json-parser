@@ -1,5 +1,6 @@
 #include "../src/json.h"
 #include "../test/test.h"
+#include <sys/types.h>
 
 TEST(test_c_json_parser) {
   char *json = utils_get_test_json_data("data/test.json");
@@ -15,11 +16,13 @@ TEST(test_c_json_parser) {
     if (!json_parse_iterative(json, &v)) {
       break;
     }
-    json_free(&v);
+    json_reset();
   }
+
+  json_cleanup();
   long long end_time = utils_get_time();
 
-  ASSERT_EQUAL(TEST_COUNT, i);
+  ASSERT_EQUAL(TEST_COUNT, i, u_int32_t);
 
   utils_print_time_diff(start_time, end_time);
 

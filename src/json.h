@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 25, 2025 at 6:02:08 AM GMT+3
+ *   December 25, 2025 at 7:50:30 AM GMT+3
  *
  */
 /*
@@ -213,7 +213,17 @@ bool json_equal(const json_value *a, const json_value *b);
 char *json_stringify(const json_value *v);
 
 /**
- * @brief Frees a json_value and all its children.
+ * @brief Resets a json_value pools indexes.
+ */
+void json_reset(void);
+
+/**
+ * @brief Fill with zeroes all of the json_value pools.
+ */
+void json_cleanup(void);
+
+/**
+ * @brief Frees a json_value and all its children.(left for COMPATIBITLITY)
  * @param v The json_value to free.
  */
 void json_free(json_value *v);

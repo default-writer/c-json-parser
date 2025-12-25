@@ -21,7 +21,7 @@ rule asm
   description = Assembling $in
 
 cflags_perf = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION
-ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops
+ldflags_perf = $ldflags -O3 -march=native -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -flto -fvectorize -funroll-loops
 
 # --- test-perf-c-json-parser target ---
 build main.o.perf: cc perf/test_c_json_parser.c
@@ -143,13 +143,14 @@ build test.stamp: link test.o json.o utils.o
 build main: phony test.stamp
 
 # --- .s target ---
-build src/json.s: asm src/json.c
-build test/test.s: asm test/test.c
-build utils/utils.s: asm utils/utils.c
-build .s: phony test/test.s src/json.s utils/utils.s
+build src.json.s: asm src/json.c
+build test.test.s: asm test/test.c
+build utils.utils.s: asm utils/utils.c
+build .s: phony test.test.s src.json.s utils.utils.s
 
 # --- gprof target (gcc) ---
 cflags_gprof = -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
+#cflags_gprof = -Wall -Wextra -std=c17 -g
 ldflags_gprof = -pg
 build test.o.gprof: cc test/test_gprof.c
   cc = gcc
@@ -165,6 +166,12 @@ build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof
   name = test-gprof
   ldflags = $ldflags_gprof
 build gprof: phony gprof.stamp
+
+# --- gprof.s target ---
+build gprof.src.json.s: asm src/json.c
+build gprof.test.test.s: asm test/test_gprof.c
+build gprof.utils.utils.s: asm utils/utils.c
+build gprof.s: phony gprof.test.test.s gprof.src.json.s gprof.utils.utils.s
 
 # default target
 default main
