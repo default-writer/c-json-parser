@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 18, 2025 at 5:29:17 PM GMT+3
+ *   December 25, 2025 at 6:02:08 AM GMT+3
  *
  */
 /*
@@ -39,6 +39,7 @@
 #ifndef JSON_H
 #define JSON_H
 
+#include <sys/types.h>
 #define DICTIONARY_SIZE 16
 #define MAX_BUFFER_SIZE 0x100
 #define JSON_VALUE_POOL_SIZE 0xFFFF
@@ -79,7 +80,7 @@ extern "C" {
 /**
  * @brief Enumeration of JSON error codes.
  */
-typedef enum {
+typedef enum : u_int8_t {
   E_NO_ERROR = 0,
   E_NO_DATA = 1,
   E_INVALID_JSON = 2,

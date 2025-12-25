@@ -5623,7 +5623,7 @@ static void generate_random_json_value(json_value *v, int depth) {
 TEST(test_validate_no_error) {
   const char *source = "{\"\u123a\": 1}";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_NO_ERROR);
+  ASSERT_EQUAL(json_validate(&position), E_NO_ERROR, json_error);
   END_TEST;
 }
 
@@ -5724,7 +5724,7 @@ TEST(test_randomization) {
 
       memset(&v, 0, sizeof(json_value));
       const char *position = source;
-      ASSERT_NOT_EQUAL(json_validate(&position), E_NO_ERROR);
+      ASSERT_NOT_EQUAL(json_validate(&position), E_NO_ERROR, json_error);
       json_free(&v);
     }
     free(source);
@@ -5882,161 +5882,161 @@ TEST(test_generation) {
 TEST(test_validate_no_data) {
   const char *source = "";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_NO_DATA);
+  ASSERT_EQUAL(json_validate(&position), E_NO_DATA, json_error);
   END_TEST;
 }
 
 TEST(test_validate_invalid_json_string) {
   const char *source = "abc";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_INVALID_JSON);
+  ASSERT_EQUAL(json_validate(&position), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
 TEST(test_validate_invalid_json_number) {
   const char *source = "0";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_INVALID_JSON);
+  ASSERT_EQUAL(json_validate(&position), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
 TEST(test_validate_invalid_json_boolean) {
   const char *source = "true";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_INVALID_JSON);
+  ASSERT_EQUAL(json_validate(&position), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
 TEST(test_validate_invalid_json_value) {
   const char *source = "0";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_INVALID_JSON);
+  ASSERT_EQUAL(json_validate(&position), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
 TEST(test_validate_invalid_data) {
   const char *source = "{}==";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_INVALID_DATA);
+  ASSERT_EQUAL(json_validate(&position), E_INVALID_DATA, json_error);
   END_TEST;
 }
 
 TEST(test_validate_invalid_json_data_error) {
   const char *source = "[";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_INVALID_JSON_DATA);
+  ASSERT_EQUAL(json_validate(&position), E_INVALID_JSON_DATA, json_error);
   END_TEST;
 }
 
 TEST(test_validate_object_key) {
   const char *source = "{a:1}";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_OBJECT_KEY);
+  ASSERT_EQUAL(json_validate(&position), E_OBJECT_KEY, json_error);
   END_TEST;
 }
 
 TEST(test_validate_mailformed_object) {
   const char *source = "{\"a\"::1}";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON);
+  ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_object_key) {
   const char *source = "{\"a\":1,,}";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_OBJECT_KEY);
+  ASSERT_EQUAL(json_validate(&position), E_OBJECT_KEY, json_error);
   END_TEST;
 }
 
 TEST(test_validate_array_mailformed_json) {
   const char *source = "[1,,2]";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON);
+  ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_string) {
   const char *source = "[\"\\u123\"]";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_STRING);
+  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_STRING, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_array_value) {
   const char *source = "[1a]";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_ARRAY);
+  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_ARRAY, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_boolean) {
   const char *source = "[tru]";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_BOOLEAN);
+  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_BOOLEAN, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_null) {
   const char *source = "[nul]";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_NULL);
+  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_NULL, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_object_key_null) {
   const char *source = "{\"";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_OBJECT_KEY);
+  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_OBJECT_KEY, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_object_value) {
   const char *source = "{\"a\":}";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON);
+  ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_json) {
   const char *source = "{\"a\": \u2333}";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON);
+  ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_object_value_null) {
   const char *source = "{\"a\":";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_OBJECT_VALUE);
+  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_OBJECT_VALUE, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_array_element) {
   const char *source = "[1,]";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_ARRAY_ELEMENT);
+  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_ARRAY_ELEMENT, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_array_element_null) {
   const char *source = "[1,";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_ARRAY_ELEMENT);
+  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_ARRAY_ELEMENT, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_object_element) {
   const char *source = "{\"a\":1,}";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_OBJECT_ELEMENT);
+  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_OBJECT_ELEMENT, json_error);
   END_TEST;
 }
 
 TEST(test_validate_expected_object_element_null) {
   const char *source = "{\"a\":1,";
   const char *position = source;
-  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_OBJECT_ELEMENT);
+  ASSERT_EQUAL(json_validate(&position), E_EXPECTED_OBJECT_ELEMENT, json_error);
   END_TEST;
 }
 

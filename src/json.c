@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 18, 2025 at 7:18:17 PM GMT+3
+ *   December 25, 2025 at 6:02:15 AM GMT+3
  *
  */
 /*
@@ -177,7 +177,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
   }
   if (*p == '0') {
     p++;
-    if (*p >= '0' && *p <= '9') {
+    if (*p >= '1' && *p <= '9') {
       return false;
     }
   } else if (*p >= '1' && *p <= '9') {
@@ -203,6 +203,9 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
     p++;
     if (*p == '+' || *p == '-') {
       p++;
+    }
+    if (!(*p >= '0' && *p <= '9')) {
+      return false;
     }
     if (*p >= '0' && *p <= '9') {
       p++;
