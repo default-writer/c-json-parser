@@ -1,72 +1,115 @@
-# Ninja build file generated from Makefile.windows
+# Ninja build file for Linux
 
 # Variables
 cc = clang-cl
-cflags = /W4 /Zi
-ldflags = /DEBUG
+cflags = -Wall -Wextra -std=c11 -g
+ldflags = -fuse-ld=lld
 
-# Rule for compiling .c files to .obj
+# Rule for compiling .c files to .o
 rule cc
-  command = $cc $cflags /c /Fo$out $in
+  command = $cc $cflags -c -o $out $in
   description = Compiling $in
 
-# Rule for linking .obj files to .exe
+# Rule for linking .o files with a specific name
 rule link
-  command = lld-link $ldflags /OUT:$out $in
-  description = Linking $out
-
-# Rule for linking .obj files with a specific name
-rule link_named
-  command = lld-link $ldflags /OUT:$name $in && cmd /c "type NUL > $out"
+  command = $cc $ldflags -o $name $in
   description = Linking $name
 
 # Build statements for object files
-build main.obj: cc test/main.c
-build json.obj: cc src/json.c
-build test.obj: cc test/test.c
+build main.o: cc test/main.c
+build json.o: cc src/json.c
+build test.o: cc test/test.c
+build utils.o: cc test/utils.c
 
 # Build statement for the executable
-build main.stamp: link_named main.obj json.obj test.obj
-  name = test-main.exe
+build main.stamp: link main.o json.o test.o utils.o
+  name = test-main
 build main: phony main.stamp
 
-# --- O2 Target ---
-cflags_o2 = $cflags /O2
-build main.obj.o2: cc test/main.c
-  cflags = $cflags_o2
-build json.obj.o2: cc src/json.c
-  cflags = $cflags_o2
-build test.obj.o2: cc test/test.c
-  cflags = $cflags_o2
-build o2.stamp: link_named main.obj.o2 json.obj.o2 test.obj.o2
-  name = test-o2.exe
-build o2: phony o2.stamp
+# default target
+default main
 
-# --- O3 Target ---
-cflags_o3 = $cflags /O2
-build main.obj.o3: cc test/main.c
-  cflags = $cflags_o3
-build json.obj.o3: cc src/json.c
-  cflags = $cflags_o3
-build test.obj.o3: cc test/test.c
-  cflags = $cflags_o3
-build o3.stamp: link_named main.obj.o3 json.obj.o3 test.obj.o3
-  name = test-o3.exe
-build o3: phony o3.stamp
+# --- memory target ---
+test_memory_cflags_perf = -Wall -Wextra -std=c11 -g
+test_memory_ldflags_perf = $ldflags
+build test_memory_test_memory.o.perf: cc test/test_memory.c
+  cflags = $test_memory_cflags_perf
+build test_memory_json.o.perf: cc src/json.c
+  cflags = $test_memory_cflags_perf
+build test_memory_test.o.perf: cc test/test.c
+  cflags = $test_memory_cflags_perf
+build test_memory_utils.o.perf: cc test/utils.c
+  cflags = $test_memory_cflags_perf
+build test_memory.stamp: link test_memory_test_memory.o.perf test_memory_json.o.perf test_memory_test.o.perf test_memory_utils.o.perf
+  name = test-memory
+  cflags = $test_memory_cflags_perf
+  ldflags = $test_memory_ldflags_perf
+build memory: phony test_memory.stamp
 
-# --- Perf Target ---
-cflags_perf = $cflags /O2 /GL
-ldflags_perf = $ldflags /LTCG
-build main.obj.perf: cc test/main.c
+# --- perf target ---
+cflags_perf = -Wall -Wextra -std=c11 -O3 -march=native -flto -flto=thin 
+ldflags_perf = $ldflags -flto -flto=thin -fvectorize -funroll-loops
+build main.o.perf: cc test/test_performance.c
   cflags = $cflags_perf
-build json.obj.perf: cc src/json.c
+build json.o.perf: cc src/json.c
   cflags = $cflags_perf
-build test.obj.perf: cc test/test.c
+build utils.o.perf: cc test/utils.c
   cflags = $cflags_perf
-build perf.stamp: link_named main.obj.perf json.obj.perf test.obj.perf
-  name = test-perf.exe
+build perf.stamp: link main.o.perf json.o.perf utils.o.perf
+  name = test-perf
+  cflags = $cflags_perf
   ldflags = $ldflags_perf
 build perf: phony perf.stamp
 
-# Default target
-default main
+# --- perf-long target ---
+cflags_perf_long = $cflags_perf -DLONG_TEST
+ldflags_perf_long = $ldflags_perf
+build main.o.perf_long: cc test/test_performance.c
+  cflags = $cflags_perf_long
+build perf_long.stamp: link main.o.perf_long json.o.perf utils.o.perf
+  name = test-perf-long
+  cflags = $cflags_perf_long
+  ldflags = $ldflags_perf_long
+build perf-long: phony perf_long.stamp
+
+# --- perf-alloc target ---
+cflags_perf_alloc = $cflags_perf -DUSE_ALLOC
+build json.o.perf_alloc: cc src/json.c
+  cflags = $cflags_perf_alloc
+build perf_alloc.stamp: link main.o.perf json.o.perf_alloc utils.o.perf
+  name = test-perf-alloc
+  cflags = $cflags_perf_alloc
+  ldflags = $ldflags_perf_long
+build perf-alloc: phony perf_alloc.stamp
+
+# --- perf-alloc-long target ---
+cflags_perf_long_alloc = $cflags_perf_long -DUSE_ALLOC
+build json.o.perf_long_alloc: cc src/json.c
+  cflags = $cflags_perf_long_alloc
+build perf_long_alloc.stamp: link main.o.perf_long json.o.perf_long_alloc utils.o.perf
+  name = test-perf-alloc-long
+  cflags = $cflags_perf_long_alloc
+  ldflags = $ldflags_perf_long
+build perf-alloc-long: phony perf_long_alloc.stamp
+
+# --- perf-json-c target ---
+cflags_perf_json_c = -Wall -Wextra -std=c11 -Ilibs/include -O3 -march=native -flto
+ldflags_perf_json_c = $ldflags -flto -flto=thin -fvectorize -funroll-loops -Llibs/lib -ljson-c
+build test_json_c_perf_json_c.o.perf: cc test/test_json_c.c
+  cflags = $cflags_perf_json_c
+build perf_json_c.stamp: link test_json_c_perf_json_c.o.perf  json.o.perf utils.o.perf
+  name = test-perf-json-c
+  cflags = $cflags_perf_json_c
+  ldflags = $ldflags_perf_json_c
+build perf-json-c: phony perf_json_c.stamp
+
+# --- perf-json-c-long target ---
+cflags_perf_json_c_long = $cflags_perf_json_c -DLONG_TEST
+ldflags_perf_json_c_long = $ldflags_perf_json_c
+build test_json_c_perf_json_c.o.perf_long: cc test/test_json_c.c
+  cflags = $cflags_perf_json_c_long
+build perf_json_c_long.stamp: link test_json_c_perf_json_c.o.perf_long json.o.perf utils.o.perf
+  name = test-perf-json-c-long
+  cflags = $cflags_perf_json_c_long
+  ldflags = $ldflags_perf_json_c_long
+build perf-json-c-long: phony perf_json_c_long.stamp

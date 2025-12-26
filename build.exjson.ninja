@@ -1,0 +1,27 @@
+# Ninja build file for exJSON microLISP
+
+# Variables
+cc = clang-cl
+cflags = /W4 /Zi /I"src"
+ldflags = /DEBUG
+
+# Rule for compiling .c files to .obj
+rule cc
+  command = $cc $cflags /c /Fo$out $in
+  description = Compiling $in
+
+# Rule for linking .obj files to .exe
+rule link
+  command = lld-link $ldflags /OUT:$out $in
+  description = Linking $out
+
+# Build statements for object files
+build exjson_json.obj: cc src/json.c
+build exjson_exjson.obj: cc src/exjson.c
+build exjson_test.obj: cc src/test_exjson.c
+
+# Build statement for the executable
+build test-exjson.exe: link exjson_test.obj exjson_exjson.obj exjson_json.obj
+
+# Default target
+default test-exjson.exe
