@@ -57,13 +57,13 @@
     }                                                                                            \
   } while (0)
 
-#define TEST(name, ...)              \
-  void name() {                      \
-    __VA_ARGS__;                     \
-    do {                             \
-      tests_run++;                   \
-      int passed = 1;                \
-      const char *test_name = #name; \
+#define TEST(name)         \
+  void name() {            \
+    int passed = 1;        \
+    const char *test_name; \
+    do {                   \
+      tests_run++;         \
+      test_name = #name;   \
       do
 
 #define END_TEST                                            \
@@ -71,7 +71,7 @@
   while (0)                                                 \
     ;                                                       \
   do {                                                      \
-    int padding = 72 - strlen(test_name);                   \
+    int padding = (int)(72 - strlen(test_name));            \
     if (padding < 0) {                                      \
       padding = 0;                                          \
     }                                                       \

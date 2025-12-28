@@ -18,7 +18,7 @@ TEST(test_simdjson_parser) {
 
   long long end_time = utils_get_time();
 
-  ASSERT_EQUAL(TEST_COUNT, i);
+  ASSERT_EQUAL(TEST_COUNT, i, unsigned long);
 
   utils_print_time_diff(start_time, end_time);
 

@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 25, 2025 at 9:35:38 PM GMT+3
+ *   December 28, 2025 at 4:49:56 PM GMT+3
  *
  */
 /*
@@ -249,7 +249,8 @@ static INLINE bool validate_string_chunk(const char *s, size_t len) {
 
 static bool parse_hex4(const char **s, uint16_t *result) {
   *result = 0;
-  for (int i = 0; i < 4; ++i) {
+  int i;
+  for (i = 0; i < 4; ++i) {
     char c = (*s)[i];
     if (c == '\0')
       return false;
@@ -309,9 +310,9 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
         if (!parse_hex4(&end, &codepoint)) {
           return false;
         }
-        if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) { // High surrogate
+        if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) {
           if (end[0] != '\\' || end[1] != 'u') {
-            return false; // Expected low surrogate
+            return false;
           }
           end += 2;
           uint16_t low_surrogate;
@@ -319,10 +320,10 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
             return false;
           }
           if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END) {
-            return false; // Invalid low surrogate
+            return false;
           }
         } else if (codepoint >= LOW_SURROGATE_START && codepoint <= LOW_SURROGATE_END) {
-          return false; // Low surrogate without high surrogate
+          return false;
         }
         break;
       default:
@@ -845,16 +846,18 @@ char *json_stringify(const json_value *v) {
 }
 
 static bool json_array_equal(const json_value *a, const json_value *b) {
+  json_array_node *a_node;
+  json_array_node *b_node;
   if (!a || !b)
     return a == b;
   if (a->type != J_ARRAY || b->type != J_ARRAY)
     return false;
   size_t a_len = 0;
-  for (json_array_node *a_node = a->u.array.items; a_node; a_node = a_node->next) {
+  for (a_node = a->u.array.items; a_node; a_node = a_node->next) {
     a_len++;
   }
   size_t b_len = 0;
-  for (json_array_node *b_node = b->u.array.items; b_node; b_node = b_node->next) {
+  for (b_node = b->u.array.items; b_node; b_node = b_node->next) {
     b_len++;
   }
   if (a_len != b_len) {
@@ -872,24 +875,28 @@ static bool json_array_equal(const json_value *a, const json_value *b) {
 }
 
 static bool json_object_equal(const json_value *a, const json_value *b) {
+  json_object_node *a_node;
+  json_object_node *b_node;
+  json_object *e;
+  json_value *b_val;
   if (!a || !b)
     return a == b;
   if (a->type != J_OBJECT || b->type != J_OBJECT)
     return false;
   size_t a_len = 0;
-  for (json_object_node *a_node = a->u.object.items; a_node; a_node = a_node->next) {
+  for (a_node = a->u.object.items; a_node; a_node = a_node->next) {
     a_len++;
   }
   size_t b_len = 0;
-  for (json_object_node *b_node = b->u.object.items; b_node; b_node = b_node->next) {
+  for (b_node = b->u.object.items; b_node; b_node = b_node->next) {
     b_len++;
   }
   if (a_len != b_len) {
     return false;
   }
-  for (json_object_node *a_node = a->u.object.items; a_node; a_node = a_node->next) {
-    json_object *e = &a_node->item;
-    json_value *b_val = json_object_get(b, e->key.ptr, e->key.len);
+  for (a_node = a->u.object.items; a_node; a_node = a_node->next) {
+    e = &a_node->item;
+    b_val = json_object_get(b, e->key.ptr, e->key.len);
     if (!b_val || !json_equal(&e->value, b_val)) {
       return false;
     }
