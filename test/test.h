@@ -88,7 +88,7 @@
 
 #define ASSERT_TRUE(condition)                                                           \
   do {                                                                                   \
-    if (!((condition) == true)) {                                                        \
+    if ((condition) != true) {                                                           \
       printf("assertion failed at %s:%d: %s != true\n", __FILE__, __LINE__, #condition); \
       passed = 0;                                                                        \
     }                                                                                    \
@@ -96,7 +96,7 @@
 
 #define ASSERT_FALSE(condition)                                                           \
   do {                                                                                    \
-    if (!((condition) == false)) {                                                        \
+    if ((condition) != false) {                                                           \
       printf("assertion failed at %s:%d: %s != false\n", __FILE__, __LINE__, #condition); \
       passed = 0;                                                                         \
     }                                                                                     \

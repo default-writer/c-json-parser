@@ -5837,7 +5837,7 @@ static void generate_random_json_value(json_value *v, int depth) {
   case J_STRING - 1: {
     v->type = J_STRING;
     const char *random_greek_letter = greek_alphabet[lcprng_rand() % num_greek_letters];
-    char *str = strdup(random_greek_letter);
+    char *str = json_strdup(random_greek_letter);
     if (!str) {
       v->type = J_NULL;
       break;
@@ -5873,7 +5873,7 @@ static void generate_random_json_value(json_value *v, int depth) {
     for (i = 0; i < num_children; ++i) {
       json_object_node *node = (json_object_node *)calloc(1, sizeof(json_object_node));
       const char *random_greek_letter = greek_alphabet[lcprng_rand() % num_greek_letters];
-      char *key = strdup(random_greek_letter);
+      char *key = json_strdup(random_greek_letter);
       if (!key) {
         free(node);
         continue;
@@ -5981,25 +5981,26 @@ TEST(test_randomization) {
   const char non_visible_chars[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
   size_t i;
   int j;
+  char *source;
+  json_value v;
+  const char *position;
+  const char *original_source;
+  size_t len;
+  char new_char;
   lcprng_srand(0);
-
   for (j = 0; j < num_tests; j++) {
-    const char *original_source = test_cases[j];
-    size_t len = strlen(original_source);
-    char *source = (char *)calloc(1, len + 1);
-
+    original_source = test_cases[j];
+    len = strlen(original_source);
+    source = (char *)calloc(1, len + 1);
     for (i = 0; i < len; i++) {
       memcpy(source, original_source, len + 1);
-      char new_char = non_visible_chars[lcprng_rand() % sizeof(non_visible_chars)];
+      new_char = non_visible_chars[lcprng_rand() % sizeof(non_visible_chars)];
       source[i] = new_char;
-
-      json_value v;
       memset(&v, 0, sizeof(json_value));
       ASSERT_FALSE(json_parse(source, &v));
       json_free(&v);
-
       memset(&v, 0, sizeof(json_value));
-      const char *position = source;
+      position = source;
       ASSERT_NOT_EQUAL(json_validate(&position), E_NO_ERROR, json_error);
       json_free(&v);
     }
@@ -6086,37 +6087,33 @@ TEST(test_replacement) {
   const char replacements[] = {' ', ',', '}', '{', '[', ']'};
   size_t i;
   int j = 0;
-
+  char original_char;
+  const char *original_source;
+  size_t len;
+  char *source;
+  json_value original_v;
+  json_value v;
+  char new_char;
   lcprng_srand(0);
-
   for (j = 0; j < num_tests; j++) {
-    char original_char;
-    const char *original_source = test_cases[j];
-    size_t len = strlen(original_source);
-    char *source = (char *)calloc(1, len + 1);
-
-    json_value original_v;
+    original_source = test_cases[j];
+    len = strlen(original_source);
+    source = (char *)calloc(1, len + 1);
     memset(&original_v, 0, sizeof(json_value));
     ASSERT_TRUE(json_parse(original_source, &original_v));
-
     for (i = 0; i < len; i++) {
       original_char = original_source[i];
       if (strchr("{}[], ", original_char) != NULL) {
         memcpy(source, original_source, len + 1);
-
-        char new_char;
         do {
           new_char = replacements[lcprng_rand() % (sizeof(replacements))];
         } while (new_char == original_char);
         source[i] = new_char;
-
-        json_value v;
         memset(&v, 0, sizeof(json_value));
         if (json_parse(source, &v)) {
           ASSERT_FALSE(json_equal(&original_v, &v));
           json_free(&v);
         }
-
         memset(&v, 0, sizeof(json_value));
         if (json_parse_iterative(source, &v)) {
           ASSERT_FALSE(json_equal(&original_v, &v));
@@ -6132,16 +6129,18 @@ TEST(test_replacement) {
 
 TEST(test_generation) {
   int i;
+  char *json_str;
+  char *wrapped_str;
+  json_value v;
+  json_value parsed_v;
   lcprng_srand((unsigned int)utils_get_time());
   for (i = 0; i < MAX_GENERATION_ITERATIONS; i++) {
-    json_value v;
     memset(&v, 0, sizeof(json_value));
     generate_random_json_value(&v, -1);
-    char *json_str = json_stringify(&v);
+    json_str = json_stringify(&v);
     ASSERT_PTR_NOT_NULL(json_str);
-    char *wrapped_str = (char *)calloc(1, strlen(json_str) + 3);
+    wrapped_str = (char *)calloc(1, strlen(json_str) + 3);
     sprintf(wrapped_str, "[%s]", json_str);
-    json_value parsed_v;
     memset(&parsed_v, 0, sizeof(json_value));
     if (!json_parse(wrapped_str, &parsed_v)) {
       printf("failed to parse: %s\n", wrapped_str);

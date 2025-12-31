@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 28, 2025 at 4:49:56 PM GMT+3
+ *   December 28, 2025 at 10:48:17 PM GMT+3
  *
  */
 /*
@@ -42,12 +42,14 @@
 #define JSON_TRUE_LEN 4
 #define JSON_FALSE_LEN 5
 #define HEX_OFFSET 10
+#ifndef _WIN32
 #define HIGH_SURROGATE_START 0xD800
 #define HIGH_SURROGATE_END 0xDBFF
 #define LOW_SURROGATE_START 0xDC00
 #define LOW_SURROGATE_END 0xDFFF
 #define SPACE_CHAR 0x20
 #define MASK_CHAR 0x80
+#endif
 
 typedef struct {
   char *buf;
@@ -1328,3 +1330,25 @@ void json_free(json_value *v) {
 void json_print(const json_value *v, FILE *out) {
   print_value(v, 0, out);
 }
+
+#ifdef _WIN32
+
+char *json_strdup(const char *s) {
+  char *new_s;
+  new_s = (char *)calloc(1, strlen(s) + 1);
+  if (new_s == NULL)
+    return NULL;
+  strcpy_s(new_s, strlen(s) + 1, s);
+  return new_s;
+}
+
+FILE *json_fopen(const char *filename, const char *mode) {
+  FILE *fp = NULL;
+  errno_t err = fopen_s(&fp, filename, mode);
+  if (err != 0) {
+    return NULL;
+  }
+  return fp;
+}
+
+#endif

@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 25, 2025 at 6:02:01 AM GMT+3
+ *   December 28, 2025 at 10:48:03 PM GMT+3
  *
  */
 /*
@@ -38,6 +38,21 @@
 
 #ifndef HEADERS_H
 #define HEADERS_H
+
+#define INLINE __inline__
+#define INLINE_ATTRIBUTE __attribute__((always_inline))
+
+#ifdef _WIN32
+#include <stdio.h>
+#include <windows.h>
+
+char *json_strdup(const char *s);
+FILE *json_fopen(const char *filename, const char *mode);
+#define fprintf(stream, format, ...)            \
+  do {                                          \
+    fprintf_s((stream), (format), __VA_ARGS__); \
+  } while (0)
+#endif
 
 #include <ctype.h>
 #include <math.h>

@@ -69,9 +69,8 @@ void utils_print_time_diff(long long start_ns, long long end_ns) {
 }
 
 char *utils_get_test_json_data(const char *filename) {
-  FILE *fp = fopen(filename, "r");
-
-  if (fp == NULL) {
+  FILE *fp;
+  if (fopen_s(&fp, filename, "r") != 0) {
     return NULL;
   }
 

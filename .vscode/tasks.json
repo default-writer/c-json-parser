@@ -34,9 +34,6 @@
         "kind": "build",
         "isDefault": true
       },
-      "dependsOn": [
-        "build .s"
-      ],
       "windows": {
         "command": "ninja",
         "args": [
@@ -49,6 +46,9 @@
         "args": [
           "-f",
           "build.linux.ninja"
+        ],
+        "dependsOn": [
+          "build .s"
         ]
       }
     },

@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 25, 2025 at 9:35:35 PM GMT+3
+ *   December 28, 2025 at 10:48:10 PM GMT+3
  *
  */
 /*
@@ -54,25 +54,6 @@
 
 #include "headers.h"
 
-#ifdef _WIN32
-#include <windows.h>
-static FILE *safe_fopen(const char *filename, const char *mode) {
-  FILE *fp = NULL;
-  errno_t err = fopen_s(&fp, filename, mode);
-  if (err != 0) {
-    return NULL;
-  }
-  return fp;
-}
-#define fopen(filename, mode) safe_fopen(filename, mode)
-#define fprintf(stream, format, ...)            \
-  do {                                          \
-    fprintf_s((stream), (format), __VA_ARGS__); \
-  } while (0)
-#endif
-#define INLINE __inline__
-#define INLINE_ATTRIBUTE __attribute__((always_inline))
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -80,7 +61,7 @@ extern "C" {
 /**
  * @brief Enumeration of JSON error codes.
  */
-typedef enum : u_int8_t {
+typedef enum {
   E_NO_ERROR = 0,
   E_NO_DATA = 1,
   E_INVALID_JSON = 2,
