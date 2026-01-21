@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 28, 2025 at 4:49:56 PM GMT+3
+ *   January 21, 2026 at 3:21:19 PM GMT+3
  *
  */
 /*
@@ -306,24 +306,24 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
         end++;
         if (*end == '\0')
           return false;
-        uint16_t codepoint;
-        if (!parse_hex4(&end, &codepoint)) {
-          return false;
-        }
-        if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) {
-          if (end[0] != '\\' || end[1] != 'u') {
+          uint16_t codepoint;
+          if (!parse_hex4(&end, &codepoint)) {
             return false;
           }
-          end += 2;
-          uint16_t low_surrogate;
-          if (!parse_hex4(&end, &low_surrogate)) {
+          if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) {
+            if (end[0] != '\\' || end[1] != 'u') {
+              return false;
+            }
+            end += 2;
+            uint16_t low_surrogate;
+            if (!parse_hex4(&end, &low_surrogate)) {
+              return false;
+            }
+            if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END) {
+              return false;
+            }
+          } else if (codepoint >= LOW_SURROGATE_START && codepoint <= LOW_SURROGATE_END) {
             return false;
-          }
-          if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END) {
-            return false;
-          }
-        } else if (codepoint >= LOW_SURROGATE_START && codepoint <= LOW_SURROGATE_END) {
-          return false;
         }
         break;
       default:
@@ -791,20 +791,20 @@ static int buffer_write_value(buffer *b, const json_value *v) {
 static int buffer_write(buffer *b, const char *data, int len) {
   if (len <= 0)
     return 0;
-  if (b->pos + 1 >= b->cap) {
-    int new_cap = b->cap * 2;
+  /* Ensure there is enough capacity for len bytes plus null terminator. */
+  if (b->pos + len + 1 >= b->cap) {
+    int new_cap = b->cap ? b->cap : 1;
+    while (b->pos + len + 1 >= new_cap) {
+      new_cap = new_cap * 2;
+    }
     char *new_buf = (char *)realloc(b->buf, new_cap);
     if (!new_buf)
       return -1;
     b->buf = new_buf;
     b->cap = new_cap;
   }
-  char *buf = &b->buf[b->pos];
-  int i;
-  for (i = 0; i < len; i++) {
-    *buf++ = *data++;
-    b->pos++;
-  }
+  memcpy(b->buf + b->pos, data, (size_t)len);
+  b->pos += len;
   return 0;
 }
 
