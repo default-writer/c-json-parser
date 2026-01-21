@@ -13,6 +13,9 @@
       },
       "linux": {
         "program": "${workspaceFolder}/test-main"
+      },
+      "osx": {
+        "program": "${workspaceFolder}/test-main"
       }
     }
   ]

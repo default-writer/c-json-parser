@@ -25,6 +25,14 @@
           "build.linux.ninja",
           "main"
         ]
+      },
+      "osx": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.osx.ninja",
+          "main"
+        ]
       }
     },
     {
@@ -49,6 +57,13 @@
         "args": [
           "-f",
           "build.linux.ninja"
+        ]
+      },
+      "osx": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.osx.ninja"
         ]
       }
     },
@@ -77,12 +92,25 @@
           "build.linux.ninja",
           ".s"
         ]
+      },
+      "osx": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.osx.ninja",
+          ".s"
+        ]
       }
     },
     {
       "label": "clean",
       "type": "shell",
       "group": "build",
+      "command": "ninja",
+      "args": [
+        "-t",
+        "clean"
+      ],
       "windows": {
         "command": "ninja",
         "args": [
@@ -98,7 +126,16 @@
           "-f",
           "build.linux.ninja",
           "-t",
-          "clean",
+          "clean"
+        ]
+      },
+      "osx": {
+        "command": "ninja",
+        "args": [
+          "-f",
+          "build.osx.ninja",
+          "-t",
+          "clean"
         ]
       }
     }

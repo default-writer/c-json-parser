@@ -1,0 +1,122 @@
+# Ninja build file for macOS (Tahoe)
+
+# Variables
+cc = clang
+cflags = -Wall -Wextra -std=c89 -g -DSTRING_VALIDATION
+# REMOVED: -fuse-ld=lld (not supported) and -lrt (not needed)
+ldflags = 
+
+# Rule for compiling .c files to .o
+rule cc
+  command = $cc $cflags -c -o $out $in
+  description = Compiling $in
+
+# Rule for linking .o files
+rule link
+  command = $cc $ldflags -o $name $in
+  description = Linking $name
+
+# Rule for compiling .c to .s
+rule asm
+  command = $cc $cflags -S -o $out $in
+  description = Assembling $in
+
+# Performance flags: Removed section-specific flags in favor of macOS dead_strip
+cflags_perf = -Wall -Wextra -std=c17 -O3 -march=native -flto -fomit-frame-pointer -DSTRING_VALIDATION
+ldflags_perf = $ldflags -O3 -march=native -flto -Wl,-dead_strip
+
+# --- test-perf-c-json-parser target ---
+build main.o.perf: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf
+build json.o.perf: cc src/json.c
+  cflags = $cflags_perf
+build utils.o.perf: cc utils/utils.c
+  cflags = $cflags_perf
+build perf.stamp: link main.o.perf json.o.perf utils.o.perf
+  name = test-perf-c-json-parser
+  ldflags = $ldflags_perf
+build perf-c-json-parser: phony perf.stamp
+
+# --- test-perf-c-json-parser-no-string-validation target ---
+cflags_perf_no_string_validation = -Wall -Wextra -std=c17 -O3 -march=native -flto -fomit-frame-pointer
+build main.o.perf_no_string_validation: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_no_string_validation
+build json.o.perf_no_string_validation: cc src/json.c
+  cflags = $cflags_perf_no_string_validation
+build utils.o.perf_no_string_validation: cc utils/utils.c
+  cflags = $cflags_perf_no_string_validation  
+build perf_no_string_validation.stamp: link main.o.perf_no_string_validation json.o.perf_no_string_validation utils.o.perf_no_string_validation
+  name = test-perf-c-json-parser-no-string-validation
+  ldflags = $ldflags_perf
+build perf-c-json-parser-no-string-validation: phony perf_no_string_validation.stamp
+
+# --- test-perf-c-json-parser-long target ---
+cflags_perf_long = $cflags_perf -DLONG_TEST
+ldflags_perf_long = $ldflags_perf
+build main.o.perf_long: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_long
+build json.o.perf_long: cc src/json.c
+  cflags = $cflags_perf_long
+build utils.o.perf_long: cc utils/utils.c
+  cflags = $cflags_perf_long   
+build perf_long.stamp: link main.o.perf_long json.o.perf_long utils.o.perf_long
+  name = test-perf-c-json-parser-long
+  ldflags = $ldflags_perf_long
+build perf-c-json-parser-long: phony perf_long.stamp
+
+# --- test-perf-json-c target ---
+cflags_perf_json_c = -Wall -Wextra -std=c17 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer
+ldflags_perf_json_c = $ldflags -flto -Llibs/json-c/lib -ljson-c -Wl,-dead_strip
+build main.o.perf_json_c: cc perf/test_json_c.c
+  cflags = $cflags_perf_json_c
+build json.o.perf_json_c: cc src/json.c
+  cflags = $cflags_perf_json_c
+build utils.o.perf_json_c: cc utils/utils.c
+  cflags = $cflags_perf_json_c    
+build perf_json_c.stamp: link main.o.perf_json_c json.o.perf_json_c utils.o.perf_json_c
+  name = test-perf-json-c
+  ldflags = $ldflags_perf_json_c
+build perf-json-c: phony perf_json_c.stamp
+
+# --- test-perf-simdjson target ---
+cflags_perf_simdjson = -Wall -Wextra -std=c++17 -O3 -march=native -flto -fomit-frame-pointer
+ldflags_perf_simdjson = $ldflags -flto -lc++ -Wl,-dead_strip
+build simdjson.o.perf: cc libs/simdjson/simdjson.cpp
+  cflags = $cflags_perf_simdjson
+build main.o.perf_perf_simdjson: cc perf/test_simdjson.cpp
+  cflags = $cflags_perf_simdjson
+build perf_perf_simdjson.stamp: link main.o.perf_perf_simdjson json.o.perf utils.o.perf simdjson.o.perf
+  name = test-perf-simdjson
+  ldflags = $ldflags_perf_simdjson
+build perf-simdjson: phony perf_perf_simdjson.stamp
+
+# --- test-main target ---
+build json.o: cc src/json.c
+build test.o: cc test/test.c
+build utils.o: cc utils/utils.c
+build test.stamp: link test.o json.o utils.o
+  name = test-main
+build main: phony test.stamp
+
+# --- .s target ---
+build src.json.s: asm src/json.c
+build test.test.s: asm test/test.c
+build utils.utils.s: asm utils/utils.c
+build .s: phony test.test.s src.json.s utils.utils.s
+
+# --- gprof target (Note: gprof is deprecated on macOS) ---
+# We use 'clang' as 'gcc' on Mac is just an alias for clang
+cflags_gprof = -Wall -Wextra -std=c17 -g -O3 -march=native -flto
+ldflags_gprof = 
+build test.o.gprof: cc test/test_gprof.c
+  cflags = $cflags_gprof
+build json.o.gprof: cc src/json.c
+  cflags = $cflags_gprof
+build utils.o.gprof: cc utils/utils.c
+  cflags = $cflags_gprof
+build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof
+  name = test-gprof
+  ldflags = $ldflags_gprof
+build gprof: phony gprof.stamp
+
+default main
