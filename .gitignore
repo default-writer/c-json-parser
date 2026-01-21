@@ -12,3 +12,4 @@ main-*
 **/*.s
 /.ninja_log
 gmon.out
+.DS_Store
