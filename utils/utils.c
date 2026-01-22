@@ -69,12 +69,18 @@ void utils_print_time_diff(long long start_ns, long long end_ns) {
 }
 
 char *utils_get_test_json_data(const char *filename) {
+#ifdef _WIN32
+  FILE *fp = NULL;
+  errno_t err = fopen_s(&fp, filename,"r");
+  if (err != 0) {
+    return NULL;
+  }
+#else
   FILE *fp = fopen(filename, "r");
-
   if (fp == NULL) {
     return NULL;
   }
-
+#endif
   fseek(fp, 0, SEEK_END);
   long size = ftell(fp);
   fseek(fp, 0, SEEK_SET);

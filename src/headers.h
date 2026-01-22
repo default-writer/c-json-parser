@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   December 25, 2025 at 6:02:01 AM GMT+3
+ *   January 21, 2026 at 5:12:49 PM GMT+3
  *
  */
 /*
@@ -52,6 +52,12 @@
 
 #if defined(__SSE2__)
 #include <emmintrin.h>
+#endif
+
+#ifdef _WIN32
+#include <windows.h>
+#define strdup _strdup
+#define fprintf fprintf_s
 #endif
 
 #endif /* HEADERS_H */

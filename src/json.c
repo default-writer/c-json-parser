@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 21, 2026 at 3:21:19 PM GMT+3
+ *   January 22, 2026 at 6:18:08 AM GMT+3
  *
  */
 /*
@@ -42,10 +42,12 @@
 #define JSON_TRUE_LEN 4
 #define JSON_FALSE_LEN 5
 #define HEX_OFFSET 10
+#ifndef _WIN32
 #define HIGH_SURROGATE_START 0xD800
 #define HIGH_SURROGATE_END 0xDBFF
 #define LOW_SURROGATE_START 0xDC00
 #define LOW_SURROGATE_END 0xDFFF
+#endif
 #define SPACE_CHAR 0x20
 #define MASK_CHAR 0x80
 
@@ -290,7 +292,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
       if (*end == '\0')
         return false;
       switch (*end) {
-      case '"':
+      case '\"':
       case '\\':
       case '/':
       case 'b':
@@ -306,24 +308,24 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
         end++;
         if (*end == '\0')
           return false;
-          uint16_t codepoint;
-          if (!parse_hex4(&end, &codepoint)) {
+        uint16_t codepoint;
+        if (!parse_hex4(&end, &codepoint)) {
+          return false;
+        }
+        if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) {
+          if (end[0] != '\\' || end[1] != 'u') {
             return false;
           }
-          if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) {
-            if (end[0] != '\\' || end[1] != 'u') {
-              return false;
-            }
-            end += 2;
-            uint16_t low_surrogate;
-            if (!parse_hex4(&end, &low_surrogate)) {
-              return false;
-            }
-            if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END) {
-              return false;
-            }
-          } else if (codepoint >= LOW_SURROGATE_START && codepoint <= LOW_SURROGATE_END) {
+          end += 2;
+          uint16_t low_surrogate;
+          if (!parse_hex4(&end, &low_surrogate)) {
             return false;
+          }
+          if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END) {
+            return false;
+          }
+        } else if (codepoint >= LOW_SURROGATE_START && codepoint <= LOW_SURROGATE_END) {
+          return false;
         }
         break;
       default:
@@ -1131,7 +1133,7 @@ bool json_parse_iterative(const char *s, json_value *root) {
         stack[top] = current;
         current = NULL;
         break;
-      case '"':
+      case '\"':
         current->type = J_STRING;
         if (!parse_string(&s, current))
           return false;
@@ -1197,7 +1199,7 @@ bool json_parse_iterative(const char *s, json_value *root) {
           return false;
         }
       }
-      if (*s != '"')
+      if (*s != '\"')
         return false;
       json_value key;
       if (!parse_string(&s, &key))
@@ -1247,12 +1249,20 @@ bool json_parse_iterative(const char *s, json_value *root) {
 }
 
 bool json_parse(const char *s, json_value *root) {
+  while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r') {
+    s++;
+  }
   if (*s == '\0')
     return false;
-  if (*s != '{' && *s != '[') {
+  if (*s != '{' && *s != '[')
     return false;
+  const char *ptr = s;
+  if (!parse_value_build(&ptr, root))
+    return false;
+  while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '\r') {
+    ptr++;
   }
-  return parse_value_build(&s, root) && *s == '\0';
+  return *ptr == '\0';
 }
 
 bool json_equal(const json_value *a, const json_value *b) {

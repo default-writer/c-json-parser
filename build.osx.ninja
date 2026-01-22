@@ -3,7 +3,6 @@
 # Variables
 cc = clang
 cflags = -Wall -Wextra -std=c89 -g -DSTRING_VALIDATION
-# REMOVED: -fuse-ld=lld (not supported) and -lrt (not needed)
 ldflags = 
 
 # Rule for compiling .c files to .o
