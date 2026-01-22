@@ -21,7 +21,7 @@ rule asm
   description = Assembling $in
 
 # Performance flags: Removed section-specific flags in favor of macOS dead_strip
-cflags_perf = -Wall -Wextra -std=c23 -O3 -march=native -flto -fomit-frame-pointer -DSTRING_VALIDATION -DNDEBUG -msse2 -mpopcnt -funroll-loops
+cflags_perf = -Wall -Wextra -std=c17 -O3 -march=native -flto -fomit-frame-pointer -DSTRING_VALIDATION -DNDEBUG -msse2 -mpopcnt -funroll-loops
 ldflags_perf = $ldflags -O3 -march=native -flto -Wl
 
 # --- test-perf-c-json-parser target ---
@@ -37,7 +37,7 @@ build perf.stamp: link main.o.perf json.o.perf utils.o.perf
 build perf-c-json-parser: phony perf.stamp
 
 # --- test-perf-c-json-parser-no-string-validation target ---
-cflags_perf_no_string_validation = -Wall -Wextra -std=c23 -O3 -march=native -flto -fomit-frame-pointer
+cflags_perf_no_string_validation = -Wall -Wextra -std=c17 -O3 -march=native -flto -fomit-frame-pointer
 build main.o.perf_no_string_validation: cc perf/test_c_json_parser.c
   cflags = $cflags_perf_no_string_validation
 build json.o.perf_no_string_validation: cc src/json.c
@@ -64,7 +64,7 @@ build perf_long.stamp: link main.o.perf_long json.o.perf_long utils.o.perf_long
 build perf-c-json-parser-long: phony perf_long.stamp
 
 # --- test-perf-json-c target ---
-cflags_perf_json_c = -Wall -Wextra -std=c23 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer
+cflags_perf_json_c = -Wall -Wextra -std=c17 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer
 ldflags_perf_json_c = $ldflags -flto -Llibs/json-c/lib -ljson-c -Wl
 build main.o.perf_json_c: cc perf/test_json_c.c
   cflags = $cflags_perf_json_c
@@ -105,7 +105,7 @@ build .s: phony test.test.s src.json.s utils.utils.s
 
 # --- gprof target (Note: gprof is deprecated on macOS) ---
 # We use 'clang' as 'gcc' on Mac is just an alias for clang
-cflags_gprof = -Wall -Wextra -std=c23 -g -O3 -march=native -flto
+cflags_gprof = -Wall -Wextra -std=c17 -g -O3 -march=native -flto
 ldflags_gprof = 
 build test.o.gprof: cc test/test_gprof.c
   cflags = $cflags_gprof

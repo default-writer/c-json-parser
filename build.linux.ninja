@@ -20,7 +20,7 @@ rule asm
   command = $cc $cflags -S -o $out $in
   description = Assembling $in
 
-cflags_perf = -msse2 -Wall -Wextra -std=c23 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION
+cflags_perf = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION
 ldflags_perf = $ldflags -O3 -march=native -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -flto -fvectorize -funroll-loops
 
 # --- test-perf-c-json-parser target ---
@@ -37,7 +37,7 @@ build perf.stamp: link main.o.perf json.o.perf utils.o.perf
 build perf-c-json-parser: phony perf.stamp
 
 # --- test-perf-c-json-parser-no-string-validation target ---
-cflags_perf_no_string_validation = -Wall -Wextra -std=c23 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections
+cflags_perf_no_string_validation = -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections
 build main.o.perf_no_string_validation: cc perf/test_c_json_parser.c
   cflags = $cflags_perf_no_string_validation
 build json.o.perf_no_string_validation: cc src/json.c
@@ -66,7 +66,7 @@ build perf_long.stamp: link main.o.perf_long json.o.perf_long utils.o.perf_long
 build perf-c-json-parser-long: phony perf_long.stamp
 
 # --- test-perf-c-json-parser-no-string-validation-long target ---
-cflags_perf_no_string_validation_long = -Wall -Wextra -std=c23 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DLONG_TEST
+cflags_perf_no_string_validation_long = -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DLONG_TEST
 build main.o.perf_no_string_validation_long: cc perf/test_c_json_parser.c
   cflags = $cflags_perf_no_string_validation_long
 build json.o.perf_no_string_validation_long: cc src/json.c
@@ -78,7 +78,7 @@ build perf_no_string_validation_long.stamp: link main.o.perf_no_string_validatio
 build perf-c-json-parser-no-string-validation-long: phony perf_no_string_validation_long.stamp
 
 # --- test-perf-json-c target ---
-cflags_perf_json_c = -Wall -Wextra -std=c23 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer
+cflags_perf_json_c = -Wall -Wextra -std=c17 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer
 ldflags_perf_json_c = $ldflags -flto -flto=thin -fvectorize -funroll-loops -Llibs/json-c/lib -ljson-c
 build main.o.perf_json_c: cc perf/test_json_c.c
   cflags = $cflags_perf_json_c
@@ -149,8 +149,8 @@ build utils.utils.s: asm utils/utils.c
 build .s: phony test.test.s src.json.s utils.utils.s
 
 # --- gprof target (gcc) ---
-cflags_gprof = -Wall -Wextra -std=c23 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
-#cflags_gprof = -Wall -Wextra -std=c23 -g
+cflags_gprof = -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections
+#cflags_gprof = -Wall -Wextra -std=c17 -g
 ldflags_gprof = -pg
 build test.o.gprof: cc test/test_gprof.c
   cc = gcc
