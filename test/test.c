@@ -5896,7 +5896,11 @@ static void generate_random_json_value(json_value *v, int depth) {
 }
 
 TEST(test_validate_no_error) {
+#if defined(__STDC_VERSION__)
   const char *source = "{\"\u123a\": 1}";
+#else
+  const char *source = "{\"\xe1\x88\xba\": 1}";
+#endif
   const char *position = source;
   ASSERT_EQUAL(json_validate(&position), E_NO_ERROR, json_error);
   END_TEST;
@@ -6279,7 +6283,11 @@ TEST(test_validate_expected_object_value) {
 }
 
 TEST(test_validate_expected_json) {
-  const char *source = "{\"a\": \u2333}";
+#if defined(__STDC_VERSION__)
+  const char *source = "{\"a\": \u123a}";
+#else
+  const char *source = "{\"a\": \xe1\x88\xba}";
+#endif  
   const char *position = source;
   ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON, json_error);
   END_TEST;
