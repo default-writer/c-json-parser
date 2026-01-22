@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 21, 2026 at 5:06:46 PM GMT+3
+ *   January 22, 2026 at 10:09:49 AM GMT+3
  *
  */
 /*
@@ -159,17 +159,17 @@ typedef struct json_array_node {
 
 /**
  * @brief Parses a JSON string and creates a tree of `json_value` objects.
- * @param json The JSON string to parse.
+ * @param s The JSON string to parse.
  * @param root A pointer to the root `json_value` where the parsed JSON will be stored.
  * @return `true` if the JSON was successfully parsed, `false` otherwise.
  */
-bool json_parse(const char *json, json_value *root);
+bool json_parse(const char *s, json_value *root);
 
 /**
- * @param json The JSON string to parse.
+ * @param s The JSON string to parse.
  * @return A pointer to the root json_value, or NULL on error.
  */
-bool json_parse_iterative(const char *json, json_value *root);
+bool json_parse_iterative(const char *s, json_value *root);
 
 /**
  * @brief Validates a JSON string.

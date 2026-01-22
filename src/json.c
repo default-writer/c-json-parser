@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 22, 2026 at 6:18:08 AM GMT+3
+ *   January 22, 2026 at 10:08:19 AM GMT+3
  *
  */
 /*
@@ -1249,9 +1249,7 @@ bool json_parse_iterative(const char *s, json_value *root) {
 }
 
 bool json_parse(const char *s, json_value *root) {
-  while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r') {
-    s++;
-  }
+  skip_whitespace(&s);
   if (*s == '\0')
     return false;
   if (*s != '{' && *s != '[')
@@ -1259,9 +1257,7 @@ bool json_parse(const char *s, json_value *root) {
   const char *ptr = s;
   if (!parse_value_build(&ptr, root))
     return false;
-  while (*ptr == ' ' || *ptr == '\t' || *ptr == '\n' || *ptr == '\r') {
-    ptr++;
-  }
+  skip_whitespace(&ptr);
   return *ptr == '\0';
 }
 
