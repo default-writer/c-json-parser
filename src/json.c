@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 22, 2026 at 11:02:06 PM GMT+3
+ *   January 22, 2026 at 11:15:15 PM GMT+3
  *
  */
 /*
@@ -42,10 +42,12 @@
 #define JSON_TRUE_LEN 4
 #define JSON_FALSE_LEN 5
 #define HEX_OFFSET 10
+#ifndef _WIN32
 #define HIGH_SURROGATE_START 0xD800
 #define HIGH_SURROGATE_END 0xDBFF
 #define LOW_SURROGATE_START 0xDC00
 #define LOW_SURROGATE_END 0xDFFF
+#endif
 #define SPACE_CHAR 0x20
 #define MASK_CHAR 0x80
 
