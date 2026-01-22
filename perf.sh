@@ -4,7 +4,7 @@
 echo "building test-perf-c-json-parser..."
 
 target="$1"
-if [[ -z "$1" ]] then
+if [[ -z "$1" ]]; then
   target="perf-c-json-parser"
 fi
 

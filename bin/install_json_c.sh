@@ -1,4 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/env bash
+
+case "$(uname)" in
+    "Darwin")
+        echo "Unsupported Operating System: $(uname)"
+        exit 1
+        ;;
+esac
 
 set -e
 if [[ "${BASHOPTS}" != *extdebug* ]]; then
@@ -16,6 +23,7 @@ if [[ "${BASHOPTS}" != *extdebug* ]]; then
 fi
 
 cwd=$(cd "$(dirname $(dirname "${BASH_SOURCE[0]}"))" &> /dev/null && pwd)
+
 BUILD_DIR="${cwd}/build"
 
 rm -rf "$BUILD_DIR"

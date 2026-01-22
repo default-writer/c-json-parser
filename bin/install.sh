@@ -1,4 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/env bash
+
+case "$(uname)" in
+    "Darwin")
+        echo "Unsupported Operating System: $(uname)"
+        exit 1
+        ;;
+esac
 
 set -e
 if [[ "${BASHOPTS}" != *extdebug* ]]; then
