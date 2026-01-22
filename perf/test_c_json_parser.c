@@ -22,7 +22,7 @@ TEST(test_c_json_parser) {
   json_cleanup();
   long long end_time = utils_get_time();
 
-  ASSERT_EQUAL(TEST_COUNT, i, u_int32_t);
+  ASSERT_EQUAL(TEST_COUNT, i, uint32_t);
 
   utils_print_time_diff(start_time, end_time);
 

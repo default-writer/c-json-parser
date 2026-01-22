@@ -22,7 +22,7 @@ rule asm
 
 # Performance flags: Removed section-specific flags in favor of macOS dead_strip
 cflags_perf = -Wall -Wextra -std=c23 -O3 -march=native -flto -fomit-frame-pointer -DSTRING_VALIDATION
-ldflags_perf = $ldflags -O3 -march=native -flto -Wl,-dead_strip
+ldflags_perf = $ldflags -O3 -march=native -flto -Wl
 
 # --- test-perf-c-json-parser target ---
 build main.o.perf: cc perf/test_c_json_parser.c
@@ -65,7 +65,7 @@ build perf-c-json-parser-long: phony perf_long.stamp
 
 # --- test-perf-json-c target ---
 cflags_perf_json_c = -Wall -Wextra -std=c23 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer
-ldflags_perf_json_c = $ldflags -flto -Llibs/json-c/lib -ljson-c -Wl,-dead_strip
+ldflags_perf_json_c = $ldflags -flto -Llibs/json-c/lib -ljson-c -Wl
 build main.o.perf_json_c: cc perf/test_json_c.c
   cflags = $cflags_perf_json_c
 build json.o.perf_json_c: cc src/json.c
@@ -79,7 +79,7 @@ build perf-json-c: phony perf_json_c.stamp
 
 # --- test-perf-simdjson target ---
 cflags_perf_simdjson = -Wall -Wextra -std=c++17 -O3 -march=native -flto -fomit-frame-pointer
-ldflags_perf_simdjson = $ldflags -flto -lc++ -Wl,-dead_strip
+ldflags_perf_simdjson = $ldflags -flto -lc++ -Wl
 build simdjson.o.perf: cc libs/simdjson/simdjson.cpp
   cflags = $cflags_perf_simdjson
 build main.o.perf_perf_simdjson: cc perf/test_simdjson.cpp

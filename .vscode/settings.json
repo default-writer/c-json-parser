@@ -127,5 +127,15 @@
   },
   "clangd.arguments": [
     "--clang-tidy-checks=-readability-magic-numbers"
-  ]
+  ],
+  "terminal.integrated.profiles.windows": {
+    "pwsh": {
+      "path": "C:\\tools\\pwsh\\7\\pwsh.exe",
+      "icon": "terminal-powershell"
+    }
+  },
+  "powershell.powerShellDefaultVersion": "Power Shell Core",
+  "powershell.powerShellAdditionalExePaths": {
+    "Power Shell Core": "c:\\tools\\pwsh\\7\\pwsh.exe"
+  }
 }
