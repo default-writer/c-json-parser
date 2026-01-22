@@ -21,7 +21,7 @@ rule asm
   description = Assembling $in
 
 # Performance flags: Removed section-specific flags in favor of macOS dead_strip
-cflags_perf = -Wall -Wextra -std=c23 -O3 -march=native -flto -fomit-frame-pointer -DSTRING_VALIDATION
+cflags_perf = -Wall -Wextra -std=c23 -O3 -march=native -flto -fomit-frame-pointer -DSTRING_VALIDATION -DNDEBUG -msse2 -mpopcnt -funroll-loops
 ldflags_perf = $ldflags -O3 -march=native -flto -Wl
 
 # --- test-perf-c-json-parser target ---

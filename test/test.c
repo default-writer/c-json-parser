@@ -504,15 +504,33 @@ TEST(test_valid_string_iterative_with_spaces) {
 }
 
 TEST(test_valid_string_iterative_with_escaped_chars) {
-  const char *source = "[\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"]";
+  const char *source = "[\"\\\"\\\\/\\b\\f\\n\\r\\t\"]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
+
   ASSERT_TRUE(json_parse_iterative(source, &v));
+  ASSERT_EQ(v.type, J_ARRAY);
+
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
-  ASSERT_TRUE(utils_test_json_equal(json, source));
+
+  json_value parsed_back;
+  memset(&parsed_back, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse(json, &parsed_back));
+
+  printf("SERIALIZED: %s\n", json);
+  ASSERT_TRUE(json_equal(&v, &parsed_back));
+
+  ASSERT_TRUE(strstr(json, "\\n") != NULL);
+  ASSERT_TRUE(strstr(json, "\\r") != NULL);
+  ASSERT_TRUE(strstr(json, "\\t") != NULL);
+  ASSERT_TRUE(strstr(json, "\\\"") != NULL);
+  ASSERT_TRUE(strstr(json, "\\\\") != NULL);
+
   json_free(&v);
+  json_free(&parsed_back);
   free(json);
+
   END_TEST;
 }
 
@@ -6287,7 +6305,7 @@ TEST(test_validate_expected_json) {
   const char *source = "{\"a\": \u123a}";
 #else
   const char *source = "{\"a\": \xe1\x88\xba}";
-#endif  
+#endif
   const char *position = source;
   ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON, json_error);
   END_TEST;

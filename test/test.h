@@ -110,6 +110,26 @@
     }                                                                            \
   } while (0)
 
+#define ASSERT_EQ(actual, expected)                                                            \
+  do {                                                                                         \
+    uint64_t _expected = (expected);                                                           \
+    uint64_t _actual = (actual);                                                               \
+    if (_expected != _actual) {                                                                \
+      printf("assertion failed at %s:%d: %s != %s\n", __FILE__, __LINE__, #expected, #actual); \
+      passed = 0;                                                                              \
+    }                                                                                          \
+  } while (0)
+
+#define ASSERT_NOT_EQ(actual, expected)                                                        \
+  do {                                                                                         \
+    uint64_t _expected = (expected);                                                           \
+    uint64_t _actual = (actual);                                                               \
+    if (_expected == _actual) {                                                                \
+      printf("assertion failed at %s:%d: %s == %s\n", __FILE__, __LINE__, #expected, #actual); \
+      passed = 0;                                                                              \
+    }                                                                                          \
+  } while (0)
+
 #define ASSERT_EQUAL(actual, expected, type)                                                   \
   do {                                                                                         \
     type _expected = (expected);                                                               \

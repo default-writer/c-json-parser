@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 22, 2026 at 10:09:49 AM GMT+3
+ *   January 22, 2026 at 10:47:26 PM GMT+3
  *
  */
 /*
@@ -44,13 +44,6 @@
 #define MAX_BUFFER_SIZE 0x100
 #define JSON_VALUE_POOL_SIZE 0xFFFF
 #define JSON_STACK_SIZE 0xFFFF
-
-#define STATE_INITIAL 1
-#define STATE_ESCAPE_START 2
-#define STATE_ESCAPE_UNICODE_BYTE1 3
-#define STATE_ESCAPE_UNICODE_BYTE2 4
-#define STATE_ESCAPE_UNICODE_BYTE3 5
-#define STATE_ESCAPE_UNICODE_BYTE4 6
 
 #include "headers.h"
 
