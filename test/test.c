@@ -5894,14 +5894,13 @@ static void generate_random_json_value(json_value *v, int depth) {
   }
   }
 }
-/*
+
 TEST(test_validate_no_error) {
   const char *source = "{\"\u123a\": 1}";
   const char *position = source;
   ASSERT_EQUAL(json_validate(&position), E_NO_ERROR, json_error);
   END_TEST;
 }
-*/
 
 TEST(test_randomization) {
   const char *test_cases[] = {
@@ -6279,14 +6278,12 @@ TEST(test_validate_expected_object_value) {
   END_TEST;
 }
 
-/*
 TEST(test_validate_expected_json) {
   const char *source = "{\"a\": \u2333}";
   const char *position = source;
   ASSERT_EQUAL(json_validate(&position), E_MAILFORMED_JSON, json_error);
   END_TEST;
 }
-*/
 
 TEST(test_validate_expected_object_value_null) {
   const char *source = "{\"a\":";
@@ -6681,7 +6678,7 @@ int main(void) {
   test_validate_expected_array_value();
   test_validate_expected_boolean();
   test_validate_expected_null();
-  /* test_validate_expected_json(); */
+  test_validate_expected_json();
   test_validate_expected_object_key();
   test_validate_expected_object_key_null();
   test_validate_expected_object_value();
@@ -6690,7 +6687,7 @@ int main(void) {
   test_validate_expected_array_element_null();
   test_validate_expected_object_element();
   test_validate_expected_object_element_null();
-  /* test_validate_no_error(); */
+  test_validate_no_error();
   test_randomization();
   test_replacement();
   test_generation();
