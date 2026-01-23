@@ -1,4 +1,5 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
+set -e
 
 NINJA_FILE="build.linux.ninja"
 case "$(uname)" in

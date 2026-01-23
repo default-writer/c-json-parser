@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
 
 # Build the performance executable using ninja
 echo "building test-perf-c-json-parser..."

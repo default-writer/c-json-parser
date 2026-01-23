@@ -1,4 +1,5 @@
-#!/bin/env bash
+#!/usr/bin/env bash
+set -e
 
 case "$(uname)" in
     "Darwin")
@@ -22,9 +23,9 @@ if [[ "${BASHOPTS}" != *extdebug* ]]; then
     trap 'err_report $LINENO' ERR
 fi
 
-sudo apt-get update -y
-sudo apt-get upgrade -y
-sudo apt-get install -y lsb-release wget gpg gcc make cmake unzip
+sudo apt update -y
+sudo apt upgrade -y
+sudo apt install -y lsb-release wget gpg gcc make cmake unzip
 
 cwd=$(cd "$(dirname $(dirname "${BASH_SOURCE[0]}"))" &> /dev/null && pwd)
 TOOLS_DIR="${cwd}/.tools"
