@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 23, 2026 at 6:14:41 AM GMT+3
+ *   January 23, 2026 at 6:23:20 AM GMT+3
  *
  */
 /*
@@ -520,8 +520,9 @@ static bool parse_value_build(const char **s, json_value *v) {
 /* --- pretty-print helpers --- */
 
 static void print_string_escaped(FILE *out, const char *s, size_t len) {
+  size_t i;
   fputc('"', out);
-  for (size_t i = 0; i < len; i++) {
+  for (i = 0; i < len; i++) {
     char c = s[i];
     switch (c) {
     case '"':
