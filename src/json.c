@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 23, 2026 at 6:23:20 AM GMT+3
+ *   January 23, 2026 at 8:32:52 AM GMT+3
  *
  */
 /*
@@ -292,7 +292,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
       if (*end == '\0')
         return false;
       switch (*end) {
-      case '"':
+      case '\"':
       case '\\':
       case '/':
       case 'b':
@@ -525,7 +525,7 @@ static void print_string_escaped(FILE *out, const char *s, size_t len) {
   for (i = 0; i < len; i++) {
     char c = s[i];
     switch (c) {
-    case '"':
+    case '\"':
       fputs("\\\"", out);
       break;
     case '\\':
@@ -1154,7 +1154,7 @@ bool json_parse_iterative(const char *s, json_value *root) {
         stack[top] = current;
         current = NULL;
         break;
-      case '"':
+      case '\"':
         current->type = J_STRING;
         if (!parse_string(&s, current))
           return false;
