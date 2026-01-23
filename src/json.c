@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 22, 2026 at 11:15:15 PM GMT+3
+ *   January 23, 2026 at 6:14:41 AM GMT+3
  *
  */
 /*
@@ -42,14 +42,14 @@
 #define JSON_TRUE_LEN 4
 #define JSON_FALSE_LEN 5
 #define HEX_OFFSET 10
+#define MIN_PRINTABLE_ASCII 0x20
+#define MAX_PRINTABLE_ASCII 0x7E
 #ifndef _WIN32
 #define HIGH_SURROGATE_START 0xD800
 #define HIGH_SURROGATE_END 0xDBFF
 #define LOW_SURROGATE_START 0xDC00
 #define LOW_SURROGATE_END 0xDFFF
 #endif
-#define SPACE_CHAR 0x20
-#define MASK_CHAR 0x80
 
 typedef struct {
   char *buf;
@@ -521,11 +521,37 @@ static bool parse_value_build(const char **s, json_value *v) {
 
 static void print_string_escaped(FILE *out, const char *s, size_t len) {
   fputc('"', out);
-  size_t i = 0;
-  const unsigned char *p;
-  for (p = (const unsigned char *)s; *p && i < len; ++i, ++p) {
-    unsigned char c = *p;
-    fputc(c, out);
+  for (size_t i = 0; i < len; i++) {
+    char c = s[i];
+    switch (c) {
+    case '"':
+      fputs("\\\"", out);
+      break;
+    case '\\':
+      fputs("\\\\", out);
+      break;
+    case '\b':
+      fputs("\\b", out);
+      break;
+    case '\f':
+      fputs("\\f", out);
+      break;
+    case '\n':
+      fputs("\\n", out);
+      break;
+    case '\r':
+      fputs("\\r", out);
+      break;
+    case '\t':
+      fputs("\\t", out);
+      break;
+    default:
+      if (c >= MIN_PRINTABLE_ASCII && c <= MAX_PRINTABLE_ASCII)
+        fputc(c, out);
+      else
+        fprintf(out, "\\u%04x", (unsigned char)c);
+      break;
+    }
   }
   fputc('"', out);
 }
@@ -652,13 +678,8 @@ static int buffer_write_indent(buffer *b, int indent) {
 static int buffer_write_string(buffer *b, const char *s, size_t len) {
   if (buffer_putc(b, '"') < 0)
     return -1;
-  size_t i = 0;
-  const unsigned char *p;
-  for (p = (const unsigned char *)s; *p && i < len; ++i, ++p) {
-    unsigned char c = *p;
-    if (buffer_putc(b, c) < 0)
-      return -1;
-  }
+  if (buffer_write(b, s, len) < 0)
+    return -1;
   if (buffer_putc(b, '"') < 0)
     return -1;
   return 0;
@@ -793,20 +814,19 @@ static int buffer_write_value(buffer *b, const json_value *v) {
 static int buffer_write(buffer *b, const char *data, int len) {
   if (len <= 0)
     return 0;
-  if (b->pos + 1 >= b->cap) {
-    int new_cap = b->cap * 2;
+  if (b->pos + len + 1 >= b->cap) {
+    int new_cap = b->cap ? b->cap : 1;
+    while (b->pos + len + 1 >= new_cap) {
+      new_cap = new_cap * 2;
+    }
     char *new_buf = (char *)realloc(b->buf, new_cap);
     if (!new_buf)
       return -1;
     b->buf = new_buf;
     b->cap = new_cap;
   }
-  char *buf = &b->buf[b->pos];
-  int i;
-  for (i = 0; i < len; i++) {
-    *buf++ = *data++;
-    b->pos++;
-  }
+  memcpy(b->buf + b->pos, data, len);
+  b->pos += len;
   return 0;
 }
 

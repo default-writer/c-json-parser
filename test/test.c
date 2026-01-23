@@ -517,8 +517,6 @@ TEST(test_valid_string_iterative_with_escaped_chars) {
   json_value parsed_back;
   memset(&parsed_back, 0, sizeof(json_value));
   ASSERT_TRUE(json_parse(json, &parsed_back));
-
-  printf("SERIALIZED: %s\n", json);
   ASSERT_TRUE(json_equal(&v, &parsed_back));
 
   ASSERT_TRUE(strstr(json, "\\n") != NULL);
