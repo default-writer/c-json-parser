@@ -1,0 +1,27 @@
+{
+  "servers": {
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y", 
+        "@modelcontextprotocol/server-filesystem", 
+        "/Users/user/src/c-json-parser"
+      ]
+    },
+    "ragv1": {
+      "command": "npx",
+      "args": ["-y", "rag-memory-mcp"],
+      "env": {
+        "MEMORY_DB_PATH": "./data/rag_storage.db"
+      }
+    }
+  }
+}
