@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 23, 2026 at 6:14:51 AM GMT+3
+ *   January 24, 2026 at 10:02:48 AM GMT+3
  *
  */
 /*
@@ -46,6 +46,19 @@
 #define JSON_STACK_SIZE 0xFFFF
 
 #include "headers.h"
+
+#if defined(__has_attribute)
+#if __has_attribute(always_inline)
+#define INLINE __inline__
+#define INLINE_ATTRIBUTE __attribute__((always_inline))
+#else
+#define INLINE __inline__
+#define INLINE_ATTRIBUTE
+#endif
+#else
+#define INLINE inline
+#define INLINE_ATTRIBUTE
+#endif
 
 #define INLINE __inline__
 #define INLINE_ATTRIBUTE __attribute__((always_inline))

@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 23, 2026 at 8:32:52 AM GMT+3
+ *   January 24, 2026 at 10:02:43 AM GMT+3
  *
  */
 /*
@@ -166,7 +166,7 @@ static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_no
 }
 
 static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
-  while (**s && isspace((unsigned char)**s)) {
+  while (**s == ' ' || **s == '\t' || **s == '\n' || **s == '\r') {
     (*s)++;
   }
 }
