@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 24, 2026 at 10:02:43 AM GMT+3
+ *   January 24, 2026 at 2:31:49 PM GMT+3
  *
  */
 /*
@@ -225,7 +225,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
 }
 
 #ifdef STRING_VALIDATION
-static INLINE bool validate_string_chunk(const char *s, size_t len) {
+static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t len) {
   size_t i = 0;
 #if defined(__SSE2__)
   const __m128i limit = _mm_set1_epi8(0x20);

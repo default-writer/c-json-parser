@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 24, 2026 at 10:02:48 AM GMT+3
+ *   January 24, 2026 at 2:30:01 PM GMT+3
  *
  */
 /*
@@ -59,9 +59,6 @@
 #define INLINE inline
 #define INLINE_ATTRIBUTE
 #endif
-
-#define INLINE __inline__
-#define INLINE_ATTRIBUTE __attribute__((always_inline))
 
 #ifdef __cplusplus
 extern "C" {
