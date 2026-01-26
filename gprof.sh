@@ -19,11 +19,11 @@ esac
 ninja -f $NINJA_FILE -t clean > /dev/null 2>&1 
 
 # gprof target
-ninja -f $NINJA_FILE gprof
+ninja -f $NINJA_FILE perf-gprof
 ninja -f $NINJA_FILE -t clean > /dev/null 2>&1
 
-./test-gprof
+./test-perf-gprof
 
-gprof ./test-gprof gmon.out > test-gprof.txt
+gprof ./test-perf-gprof gmon.out > test-perf-gprof.txt
 
 [[ -f gmon.out ]] && rm gmon.out

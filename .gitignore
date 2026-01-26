@@ -13,3 +13,7 @@ main-*
 /.ninja_log
 gmon.out
 .DS_Store
+*.info
+*.html
+*.gcov
+coverage_report/
