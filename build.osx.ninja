@@ -117,4 +117,18 @@ build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof
   ldflags = $ldflags_gprof
 build gprof: phony gprof.stamp
 
+# --- coverage target (clang) ---
+cflags_coverage = -fprofile-instr-generate -fcoverage-mapping -g
+ldflags_coverage = -fprofile-instr-generate
+build test.o.cov: cc test/test_gprof.c
+  cflags = $cflags_coverage
+build json.o.cov: cc src/json.c
+  cflags = $cflags_coverage
+build utils.o.cov: cc utils/utils.c
+  cflags = $cflags_coverage
+build coverage.stamp: link test.o.cov json.o.cov utils.o.cov
+  name = test-coverage
+  ldflags = $ldflags_coverage
+build coverage: phony coverage.stamp
+
 default main

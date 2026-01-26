@@ -1,5 +1,5 @@
-#!/usr/bin/env bash
-
+#!/bin/bash
+set -e
 
 NINJA_FILE="build.linux.ninja"
 case "$(uname)" in
@@ -18,4 +18,4 @@ esac
 # cleanup
 ninja -f $NINJA_FILE -t clean > /dev/null 2>&1 
 rm ./test-* > /dev/null 2>&1
-rm -f *.gcda *.gcno *.ultra *.o gmon.out perf.data test-gprof.txt perf-gprof.txt > /dev/null 2>&1 || true
+rm -f *.gcda *.gcno *.gout *.info *.o gmon.out perf.data test-gprof.txt perf-gprof.txt > /dev/null 2>&1 || true

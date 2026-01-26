@@ -1,19 +1,34 @@
+# Build tools and downloaded libraries
 .tools/
+libs/
+
+# IDE and history files
 .history/
+.vscode/
+.devcontainer/
+
+# Build artifacts
 **/*.o
 **/*.obj
 **/*.pdb
-**/*.o.*
 **/*.stamp
+**/*.s
 build/
-libs/
 test-*
 main-*
-**/*.s
 /.ninja_log
+
+# Profiling and Coverage Data
+perf.data
 gmon.out
-.DS_Store
 *.info
-*.html
+*.gcno
+*.gcda
 *.gcov
+*.gprof
+
+# Coverage report output
 coverage_report/
+
+# OS-specific
+.DS_Store

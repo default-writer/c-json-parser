@@ -61,8 +61,10 @@ build main.o.perf_long: cc perf/test_c_json_parser.c
 build json.o.perf_long: cc src/json.c
   cflags = $cflags_perf_long
 build utils.o.perf_long: cc utils/utils.c
-  cflags = $cflags_perf_long   
-build perf_long.stamp: link main.o.perf_long json.o.perf_long utils.o.perf_long
+  cflags = $cflags_perf_long
+build whitespace_lookup.o.perf_long: asm_obj src/whitespace_lookup.asm
+  cflags = $cflags_perf_long
+build perf_long.stamp: link main.o.perf_long json.o.perf_long utils.o.perf_long whitespace_lookup.o.perf_long
   name = test-perf-c-json-parser-long
   cflags = $cflags_perf_long
   ldflags = $ldflags_perf_long
