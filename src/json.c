@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 24, 2026 at 2:31:49 PM GMT+3
+ *   January 26, 2026 at 7:52:34 AM UTC
  *
  */
 /*
@@ -38,6 +38,8 @@
 
 #include "json.h"
 
+extern bool whitespace_lookup[256];
+
 #define JSON_NULL_LEN 4
 #define JSON_TRUE_LEN 4
 #define JSON_FALSE_LEN 5
@@ -60,9 +62,11 @@ typedef struct {
 #ifndef USE_ALLOC
 static json_array_node json_array_node_pool[JSON_VALUE_POOL_SIZE];
 static size_t json_array_node_free_count = JSON_VALUE_POOL_SIZE;
+static size_t next_array_index = 0;
 
 static json_object_node json_object_node_pool[JSON_VALUE_POOL_SIZE];
 static size_t json_object_node_free_count = JSON_VALUE_POOL_SIZE;
+static size_t next_object_index = 0;
 #endif
 
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
@@ -117,11 +121,11 @@ static INLINE json_array_node *INLINE_ATTRIBUTE new_array_node() {
 #ifdef USE_ALLOC
   return (json_array_node *)calloc(1, sizeof(json_array_node));
 #else
-  if (json_array_node_free_count == 0)
-    return NULL;
-  json_array_node *node = &json_array_node_pool[JSON_VALUE_POOL_SIZE - json_array_node_free_count];
-  json_array_node_free_count--;
-  return node;
+  if (next_array_index < JSON_VALUE_POOL_SIZE) {
+    json_array_node *node = &json_array_node_pool[next_array_index++];
+    return node;
+  }
+  return NULL;
 #endif
 }
 
@@ -143,11 +147,11 @@ static INLINE json_object_node *INLINE_ATTRIBUTE new_object_node() {
 #ifdef USE_ALLOC
   return (json_object_node *)calloc(1, sizeof(json_object_node));
 #else
-  if (json_object_node_free_count == 0)
-    return NULL;
-  json_object_node *node = &json_object_node_pool[JSON_VALUE_POOL_SIZE - json_object_node_free_count];
-  json_object_node_free_count--;
-  return node;
+  if (next_object_index < JSON_VALUE_POOL_SIZE) {
+    json_object_node *node = &json_object_node_pool[next_object_index++];
+    return node;
+  }
+  return NULL;
 #endif
 }
 
@@ -166,7 +170,7 @@ static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_no
 }
 
 static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
-  while (**s == ' ' || **s == '\t' || **s == '\n' || **s == '\r') {
+  while (whitespace_lookup[(unsigned char)**s]) {
     (*s)++;
   }
 }
@@ -1307,6 +1311,8 @@ bool json_equal(const json_value *a, const json_value *b) {
 }
 
 void json_reset(void) {
+  next_array_index = 0;
+  next_object_index = 0;
   json_object_node_free_count = JSON_VALUE_POOL_SIZE;
   json_array_node_free_count = JSON_VALUE_POOL_SIZE;
 }

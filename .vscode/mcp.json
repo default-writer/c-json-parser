@@ -13,7 +13,7 @@
       "args": [
         "-y", 
         "@modelcontextprotocol/server-filesystem", 
-        "/Users/user/src/c-json-parser"
+        "${workspaceFolder}"
       ]
     },
     "ragv1": {

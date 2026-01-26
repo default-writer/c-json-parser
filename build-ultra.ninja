@@ -1,0 +1,56 @@
+# Ninja build file for Linux - Ultra Performance Optimized
+
+# Variables
+cc = clang
+cflags = -msse2 -Wall -Wextra -std=c89 -g -DSTRING_VALIDATION
+ldflags = -fuse-ld=lld -lrt
+
+# Rule for compiling .c files to .o
+rule cc
+  command = $cc $cflags -c -o $out $in
+  description = Compiling $in
+
+# Rule for linking .o files with a specific name
+rule link
+  command = $cc $ldflags -o $name $in
+  description = Linking $name
+
+# Rule for compiling .c to .s
+rule asm
+  command = $cc $cflags -S -o $out $in
+  description = Assembling $in
+
+# Ultra performance build flags
+cflags_ultra = -msse4.2 -Wall -Wextra -std=c17 -O3 -march=native -mtune=native -flto -ffast-math -fomit-frame-pointer -ffunction-sections -fdata-sections -funroll-loops -fvectorize -fslp-vectorize -ftree-vectorize -DNDEBUG -DSTRING_VALIDATION -Wno-initializer-overrides -fno-stack-protector -minline-all-stringops
+
+ldflags_ultra = $ldflags -O3 -march=native -mtune=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -fvectorize -funroll-loops -Wl,--gc-sections -Wl,--strip-all -Wl,--sort-common -Wl,--as-needed
+
+# --- test-ultra-perf-c-json-parser target ---
+build main.o.ultra: cc perf/test_c_json_parser.c
+  cflags = $cflags_ultra
+build json.o.ultra: cc src/json.c
+  cflags = $cflags_ultra
+build utils.o.ultra: cc utils/utils.c
+  cflags = $cflags_ultra
+build ultra.stamp: link main.o.ultra json.o.ultra utils.o.ultra
+  name = test-ultra-perf-c-json-parser
+  cflags = $cflags_ultra
+  ldflags = $ldflags_ultra
+build ultra-perf-c-json-parser: phony ultra.stamp
+
+# --- test-ultra-perf-c-json-parser-no-string-validation target ---
+cflags_ultra_no_validation = $cflags_ultra -DNDEBUG -USTRING_VALIDATION
+build main.o.ultra_no_validation: cc perf/test_c_json_parser.c
+  cflags = $cflags_ultra_no_validation
+build json.o.ultra_no_validation: cc src/json.c
+  cflags = $cflags_ultra_no_validation
+build utils.o.ultra_no_validation: cc utils/utils.c
+  cflags = $cflags_ultra_no_validation
+build ultra_no_validation.stamp: link main.o.ultra_no_validation json.o.ultra_no_validation utils.o.ultra_no_validation
+  name = test-ultra-perf-c-json-parser-no-validation
+  cflags = $cflags_ultra_no_validation
+  ldflags = $ldflags_ultra
+build ultra-perf-c-json-parser-no-validation: phony ultra_no_validation.stamp
+
+# default target
+default ultra-perf-c-json-parser

@@ -10,6 +10,11 @@ rule cc
   command = $cc $cflags -c -o $out $in
   description = Compiling $in
 
+# Rule for assembling .S files to .o
+rule asm_obj
+  command = $cc -c -o $out $in
+  description = Assembling $in
+
 # Rule for linking .o files with a specific name
 rule link
   command = $cc $ldflags -o $name $in
@@ -20,7 +25,7 @@ rule asm
   command = $cc $cflags -S -o $out $in
   description = Assembling $in
 
-cflags_perf = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION -DNDEBUG
+cflags_perf = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION -DNDEBUG -Wno-initializer-overrides
 ldflags_perf = $ldflags -O3 -march=native -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -flto -fvectorize -funroll-loops
 
 # --- test-perf-c-json-parser target ---
@@ -30,7 +35,8 @@ build json.o.perf: cc src/json.c
   cflags = $cflags_perf
 build utils.o.perf: cc utils/utils.c
   cflags = $cflags_perf
-build perf.stamp: link main.o.perf json.o.perf utils.o.perf
+build whitespace_lookup.o.perf: asm_obj src/whitespace_lookup.S
+build perf.stamp: link main.o.perf json.o.perf utils.o.perf whitespace_lookup.o.perf
   name = test-perf-c-json-parser
   cflags = $cflags_perf
   ldflags = $ldflags_perf
@@ -138,7 +144,8 @@ build perf-simdjson-long: phony perf_perf_simdjson_long.stamp
 build json.o: cc src/json.c
 build test.o: cc test/test.c
 build utils.o: cc utils/utils.c
-build test.stamp: link test.o json.o utils.o
+build whitespace_lookup.o: asm_obj src/whitespace_lookup.S
+build test.stamp: link test.o json.o utils.o whitespace_lookup.o
   name = test-main
 build main: phony test.stamp
 
@@ -149,8 +156,8 @@ build utils.utils.s: asm utils/utils.c
 build .s: phony test.test.s src.json.s utils.utils.s
 
 # --- gprof target (gcc) ---
-cflags_gprof = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections -DNDEBUG
-ldflags_gprof = -pg
+cflags_gprof = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections -DNDEBUG -fprofile-arcs -ftest-coverage
+ldflags_gprof = -pg --coverage
 build test.o.gprof: cc test/test_gprof.c
   cc = gcc
   cflags = $cflags_gprof
@@ -174,3 +181,21 @@ build gprof.s: phony gprof.test.test.s gprof.src.json.s gprof.utils.utils.s
 
 # default target
 default main
+
+# --- perf-gprof target (gcc) ---
+cflags_perf_gprof = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections -DNDEBUG -fprofile-arcs -ftest-coverage
+ldflags_perf_gprof = -pg --coverage
+build perf.o.gprof: cc perf/test_c_json_parser.c
+  cc = gcc
+  cflags = $cflags_perf_gprof
+build json.o.perf_gprof: cc src/json.c
+  cc = gcc
+  cflags = $cflags_perf_gprof
+build utils.o.perf_gprof: cc utils/utils.c
+  cc = gcc
+  cflags = $cflags_perf_gprof
+build perf_gprof.stamp: link perf.o.gprof json.o.perf_gprof utils.o.perf_gprof
+  cc = gcc
+  name = test-perf-gprof
+  ldflags = $ldflags_perf_gprof
+build perf-gprof: phony perf_gprof.stamp
