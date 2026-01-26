@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 case "$(uname)" in
     "Darwin")
@@ -8,7 +7,6 @@ case "$(uname)" in
         ;;
 esac
 
-set -e
 if [[ "${BASHOPTS}" != *extdebug* ]]; then
     set -e
 fi

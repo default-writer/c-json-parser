@@ -4,6 +4,7 @@
     {
       "name": "debug",
       "type": "lldb-dap",
+      "disableASLR": false,
       "program": "",
       "request": "launch",
       "preLaunchTask": "build",

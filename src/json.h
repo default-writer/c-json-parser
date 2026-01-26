@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 24, 2026 at 2:30:01 PM GMT+3
+ *   January 26, 2026 at 5:09:29 PM UTC
  *
  */
 /*
@@ -44,6 +44,7 @@
 #define MAX_BUFFER_SIZE 0x100
 #define JSON_VALUE_POOL_SIZE 0xFFFF
 #define JSON_STACK_SIZE 0xFFFF
+#define LOOKUP_TABLE_SIZE 256
 
 #include "headers.h"
 

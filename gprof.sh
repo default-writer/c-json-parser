@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 NINJA_FILE="build.linux.ninja"
 case "$(uname)" in
@@ -14,6 +13,23 @@ case "$(uname)" in
         exit 1
         ;;
 esac
+
+if [[ "${BASHOPTS}" != *extdebug* ]]; then
+    set -e
+fi
+
+err_report() {
+    cd ${source}
+    echo "ERROR: $0:$*"
+    exit 8
+}
+
+if [[ "${BASHOPTS}" != *extdebug* ]]; then
+    trap 'err_report $LINENO' ERR
+fi
+
+cwd=$(cd "$(dirname $(dirname "${BASH_SOURCE[0]}"))" &> /dev/null && pwd)
+cd ${cwd}
 
 # cleanup
 ninja -f $NINJA_FILE -t clean > /dev/null 2>&1 

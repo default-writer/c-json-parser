@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 26, 2026 at 7:52:34 AM UTC
+ *   January 26, 2026 at 5:09:21 PM UTC
  *
  */
 /*
@@ -38,7 +38,7 @@
 
 #include "json.h"
 
-extern bool whitespace_lookup[256];
+extern bool whitespace_lookup[LOOKUP_TABLE_SIZE];
 
 #define JSON_NULL_LEN 4
 #define JSON_TRUE_LEN 4

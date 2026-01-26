@@ -147,12 +147,35 @@ build whitespace_lookup.o: asm_obj src/whitespace_lookup.asm
 build test.stamp: link test.o json.o utils.o whitespace_lookup.o
   name = test-main
 build main: phony test.stamp
+# default target
+default main
 
 # --- .s target ---
 build src.json.s: asm src/json.c
 build test.test.s: asm test/test.c
 build utils.utils.s: asm utils/utils.c
 build .s: phony test.test.s src.json.s utils.utils.s
+
+# --- test-gprof-coverage target (gcc) ---
+cflags_gprof_coverage = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections -DNDEBUG -fprofile-arcs -ftest-coverage
+ldflags_gprof_coverage = -pg --coverage
+build coverage_test.o.gprof: cc test/test_gprof.c
+  cc = gcc
+  cflags = $cflags_gprof_coverage
+build coverage_json.o.gprof: cc src/json.c
+  cc = gcc
+  cflags = $cflags_gprof_coverage
+build coverage_utils.o.gprof: cc utils/utils.c
+  cc = gcc
+  cflags = $cflags_gprof_coverage
+build coverage_whitespace_lookup.o.gprof: asm_obj src/whitespace_lookup.asm
+  cc = gcc
+  cflags = $cflags_gprof_coverage
+build gprof_coverage.stamp: link coverage_test.o.gprof coverage_json.o.gprof coverage_utils.o.gprof coverage_whitespace_lookup.o.gprof
+  cc = gcc
+  name = test-gprof-coverage
+  ldflags = $ldflags_gprof_coverage
+build gprof-coverage: phony gprof_coverage.stamp
 
 # --- gprof target (gcc) ---
 cflags_gprof = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections -DNDEBUG -fprofile-arcs -ftest-coverage
@@ -180,9 +203,6 @@ build gprof.src.json.s: asm src/json.c
 build gprof.test.test.s: asm test/test_gprof.c
 build gprof.utils.utils.s: asm utils/utils.c
 build gprof.s: phony gprof.test.test.s gprof.src.json.s gprof.utils.utils.s
-
-# default target
-default main
 
 # --- perf-gprof target (gcc) ---
 cflags_perf_gprof = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections -DNDEBUG -fprofile-arcs -ftest-coverage
