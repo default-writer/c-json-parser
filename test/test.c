@@ -6914,12 +6914,12 @@ TEST(test_whitespace_lookup) {
 
   /* Valid JSON tests: arrays/objects with leading whitespace (should parse) */
   const char *valid_whitespace_tests[] = {
-      "[1,2,3]",                 /* space before array */
-      "{\t\"a\":1}",             /* tab before object */
+      "[1,2,3]",                         /* space before array */
+      "{\t\"a\":1}",                     /* tab before object */
       "[\r{\n\"key\"\t:\r\"value\"}\t]", /* newline before array containing object */
-      "{\r\"nested\":\n[1,2]\t}",  /* carriage return before nested structure */
-      "{\r\"x\"\t:5\n}",           /* mixed whitespace before object */
-      "[   \t\r  null\n ]"       /* lots of whitespace before null */
+      "{\r\"nested\":\n[1,2]\t}",        /* carriage return before nested structure */
+      "{\r\"x\"\t:5\n}",                 /* mixed whitespace before object */
+      "[   \t\r  null\n ]"               /* lots of whitespace before null */
   };
 
   /* Test numbers with whitespace to hit lines 182-211 in parse_number */

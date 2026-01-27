@@ -46,8 +46,9 @@ build main.o.perf_no_string_validation: cc perf/test_c_json_parser.c
 build json.o.perf_no_string_validation: cc src/json.c
   cflags = $cflags_perf_no_string_validation
 build utils.o.perf_no_string_validation: cc utils/utils.c
-  cflags = $cflags_perf_no_string_validation  
-build perf_no_string_validation.stamp: link main.o.perf_no_string_validation json.o.perf_no_string_validation utils.o.perf_no_string_validation
+  cflags = $cflags_perf_no_string_validation
+build whitespace_lookup.o.perf_no_string_validation: asm_obj src/whitespace_lookup.asm  
+build perf_no_string_validation.stamp: link main.o.perf_no_string_validation json.o.perf_no_string_validation utils.o.perf_no_string_validation whitespace_lookup.o.perf_no_string_validation
   name = test-perf-c-json-parser-no-string-validation
   cflags = $cflags_perf_no_string_validation
   ldflags = $ldflags_perf
