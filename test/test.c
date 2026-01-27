@@ -7,7 +7,7 @@
 #define MAX_RANDOM_NUMBER 0x100
 #define MAX_GENERATION_ITERATIONS 0x1000
 #define MAX_CHILDREN 5
-#define MAX_DEPTH 5
+#define MAX_DEPTH 25
 #define MAX_STDIO_BUFFER_SIZE 0x1000
 
 static void generate_random_json_value(json_value *v, int depth);
@@ -431,6 +431,7 @@ TEST(test_valid_number_iterative_exponent_positive) {
   free(json);
   END_TEST;
 }
+
 TEST(test_valid_number_iterative_exponent_negative) {
   const char *source = "[1e-2]";
   json_value v;
@@ -5786,7 +5787,7 @@ static void lcprng_srand(unsigned int seed) {
   g_seed = seed;
 }
 
-static unsigned int lcprng_rand() {
+static INLINE unsigned int INLINE_ATTRIBUTE lcprng_rand() {
   g_seed = LCPRN_RAND_MULTIPLIER * g_seed + LCPRN_RAND_INCREMENT;
   return g_seed;
 }
@@ -5828,10 +5829,6 @@ static const int num_greek_letters = sizeof(greek_alphabet) / sizeof(char *);
 static void generate_random_json_value(json_value *v, int depth) {
   int i;
   int type = depth == -1 ? (lcprng_rand() % 2 ? J_ARRAY - 1 : J_OBJECT - 1) : ((lcprng_rand() % J_OBJECT));
-  depth = depth > 0 ? depth - 1 : MAX_DEPTH;
-  if (depth <= 0 && (type == J_ARRAY - 1 || type == J_OBJECT - 1)) {
-    type = lcprng_rand() % J_STRING;
-  }
   switch (type) {
   case J_NULL - 1:
     v->type = J_NULL;
@@ -5844,10 +5841,6 @@ static void generate_random_json_value(json_value *v, int depth) {
   case J_NUMBER - 1: {
     v->type = J_NUMBER;
     char *num_str = (char *)calloc(1, NUM_BUF_SIZE);
-    if (!num_str) {
-      v->type = J_NULL;
-      break;
-    }
     sprintf(num_str, "%d", lcprng_rand() % MAX_RANDOM_NUMBER);
     v->u.number.ptr = num_str;
     v->u.number.len = strlen(num_str);
@@ -5857,10 +5850,6 @@ static void generate_random_json_value(json_value *v, int depth) {
     v->type = J_STRING;
     const char *random_greek_letter = greek_alphabet[lcprng_rand() % num_greek_letters];
     char *str = strdup(random_greek_letter);
-    if (!str) {
-      v->type = J_NULL;
-      break;
-    }
     v->u.string.ptr = str;
     v->u.string.len = strlen(str);
     break;
@@ -5893,10 +5882,6 @@ static void generate_random_json_value(json_value *v, int depth) {
       json_object_node *node = (json_object_node *)calloc(1, sizeof(json_object_node));
       const char *random_greek_letter = greek_alphabet[lcprng_rand() % num_greek_letters];
       char *key = strdup(random_greek_letter);
-      if (!key) {
-        free(node);
-        continue;
-      }
       node->item.key.ptr = key;
       node->item.key.len = strlen(key);
       generate_random_json_value(&node->item.value, depth - 1);
@@ -6134,16 +6119,10 @@ TEST(test_replacement) {
 
         json_value v;
         memset(&v, 0, sizeof(json_value));
-        if (json_parse(source, &v)) {
-          ASSERT_FALSE(json_equal(&original_v, &v));
-          json_free(&v);
-        }
+        ASSERT_FALSE(json_parse(source, &v));
 
         memset(&v, 0, sizeof(json_value));
-        if (json_parse_iterative(source, &v)) {
-          ASSERT_FALSE(json_equal(&original_v, &v));
-          json_free(&v);
-        }
+        ASSERT_FALSE(json_parse_iterative(source, &v));
       }
     }
     json_free(&original_v);
@@ -6165,15 +6144,9 @@ TEST(test_generation) {
     sprintf(wrapped_str, "[%s]", json_str);
     json_value parsed_v;
     memset(&parsed_v, 0, sizeof(json_value));
-    if (!json_parse(wrapped_str, &parsed_v)) {
-      printf("failed to parse: %s\n", wrapped_str);
-      ASSERT_TRUE(false);
-    }
+    ASSERT_TRUE(json_parse(wrapped_str, &parsed_v));
     memset(&parsed_v, 0, sizeof(json_value));
-    if (!json_parse_iterative(wrapped_str, &parsed_v)) {
-      printf("failed to parse iterative: %s\n", wrapped_str);
-      ASSERT_TRUE(false);
-    }
+    ASSERT_TRUE(json_parse_iterative(wrapped_str, &parsed_v));
     json_free(&parsed_v);
     free(wrapped_str);
     free(json_str);
@@ -7220,6 +7193,8 @@ int main(void) {
   test_invalid_iterative_exponent_missing_digits();
   test_valid_number_iterative_positive_integer();
   test_valid_number_iterative_negative_integer();
+  test_valid_number_iterative_exponent_positive();
+  test_valid_number_iterative_exponent_negative();
   test_valid_number_iterative_positive_float();
   test_valid_number_iterative_negative_float();
   test_valid_number_iterative_scientific_notation();
