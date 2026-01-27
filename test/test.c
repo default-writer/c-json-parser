@@ -10,6 +10,7 @@
 #define MAX_DEPTH 25
 #define MAX_STDIO_BUFFER_SIZE 0x1000
 #define MAX_TICK_COUNTER 1000000000
+#define INVALID_TYPE 99
 
 static void generate_random_json_value(json_value *v, int depth);
 static void json_free_generated(json_value *v);
@@ -6730,6 +6731,50 @@ TEST(test_json_object_equal_function) {
   END_TEST;
 }
 
+TEST(test_json_object_equal_function_null_a) {
+  /* Test case from object equal function coverage */
+  json_value a, b;
+  memset(&a, 0, sizeof(json_value));
+  memset(&b, 0, sizeof(json_value));
+
+  a.type = J_OBJECT;
+  a.u.object.items = NULL;
+  a.u.object.last = NULL;
+
+  b.type = J_OBJECT;
+  b.u.object.items = NULL;
+  b.u.object.last = NULL;
+
+  /* This will test json_object_equal indirectly through json_equal */
+  ASSERT_FALSE(json_equal(NULL, &b));
+
+  json_free(&a);
+  json_free(&b);
+  END_TEST;
+}
+
+TEST(test_json_object_equal_function_null_b) {
+  /* Test case from object equal function coverage */
+  json_value a, b;
+  memset(&a, 0, sizeof(json_value));
+  memset(&b, 0, sizeof(json_value));
+
+  a.type = J_OBJECT;
+  a.u.object.items = NULL;
+  a.u.object.last = NULL;
+
+  b.type = J_OBJECT;
+  b.u.object.items = NULL;
+  b.u.object.last = NULL;
+
+  /* This will test json_object_equal indirectly through json_equal */
+  ASSERT_FALSE(json_equal(&a, NULL));
+
+  json_free(&a);
+  json_free(&b);
+  END_TEST;
+}
+
 TEST(test_json_parse_function) {
   json_value v;
   memset(&v, 0, sizeof(json_value));
@@ -6755,6 +6800,50 @@ TEST(test_json_parse_function) {
   /* Test empty string */
   memset(&v, 0, sizeof(json_value));
   ASSERT_FALSE(json_parse("", &v));
+
+  END_TEST;
+}
+
+TEST(test_json_parse_function_json_object_equals) {
+  json_value v1, v2;
+  memset(&v1, 0, sizeof(json_value));
+  memset(&v2, 0, sizeof(json_value));
+
+  const char *object_json1 = "{\"key\": 1}";
+  const char *object_json2 = "{\"key\": 2}";
+
+  ASSERT_TRUE(json_parse(object_json1, &v1));
+  ASSERT_TRUE(json_parse(object_json2, &v2));
+
+  ASSERT_EQ(v1.type, J_OBJECT);
+  ASSERT_EQ(v2.type, J_OBJECT);
+
+  ASSERT_FALSE(json_equal(&v1, &v2));
+
+  json_free(&v1);
+  json_free(&v2);
+
+  END_TEST;
+}
+
+TEST(test_json_parse_function_json_object_equals_null) {
+  json_value v1, v2;
+  memset(&v1, 0, sizeof(json_value));
+  memset(&v2, 0, sizeof(json_value));
+
+  const char *object_json1 = "{\"key\": 1}";
+  const char *object_json2 = "{\"key\": 2}";
+
+  ASSERT_TRUE(json_parse(object_json1, &v1));
+  ASSERT_TRUE(json_parse(object_json2, &v2));
+
+  ASSERT_EQ(v1.type, J_OBJECT);
+  ASSERT_EQ(v2.type, J_OBJECT);
+
+  ASSERT_FALSE(json_equal(&v1, &v2));
+
+  json_free(&v1);
+  json_free(&v2);
 
   END_TEST;
 }
@@ -7567,6 +7656,41 @@ TEST(test_utils_functions) {
   END_TEST;
 }
 
+TEST(test_new_coverage_and_whitespace) {
+  ASSERT_PTR_NULL(json_stringify(NULL));
+
+  json_value v_invalid;
+  memset(&v_invalid, 0, sizeof(json_value));
+  v_invalid.type = (json_token)INVALID_TYPE;
+  char *result = json_stringify(&v_invalid);
+  ASSERT_PTR_NULL(result);
+
+  const char *leading_ws = " [1, 2, 3]";
+  const char *trailing_ws = "[1, 2, 3] ";
+  const char *leading_ws_obj = " {\"a\":1}";
+  const char *trailing_ws_obj = "{\"a\":1} ";
+
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+
+  ASSERT_FALSE(json_parse(leading_ws, &v));
+  json_free(&v);
+
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse(trailing_ws, &v));
+  json_free(&v);
+
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse(leading_ws_obj, &v));
+  json_free(&v);
+
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_FALSE(json_parse(trailing_ws_obj, &v));
+  json_free(&v);
+
+  END_TEST;
+}
+
 int main(void) {
   TEST_INITIALIZE;
   TEST_SUITE("unit tests");
@@ -7951,7 +8075,11 @@ int main(void) {
   test_json_equal_function();
   test_json_array_equal_function();
   test_json_object_equal_function();
+  test_json_object_equal_function_null_a();
+  test_json_object_equal_function_null_b();
   test_json_parse_function();
+  test_json_parse_function_json_object_equals();
+  test_json_parse_function_json_object_equals_null();
   test_json_validate_function();
   test_comprehensive_coverage_buffer_functions();
   test_comprehensive_coverage_print_functions();
@@ -7965,6 +8093,7 @@ int main(void) {
   test_all_json_types_comprehensive();
   test_equality_functions_full();
   test_utils_functions();
+  test_new_coverage_and_whitespace();
 
   TEST_FINALIZE;
 }

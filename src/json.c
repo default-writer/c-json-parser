@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 27, 2026 at 1:26:17 PM UTC
+ *   January 27, 2026 at 2:40:11 PM UTC
  *
  */
 /*
@@ -568,10 +568,6 @@ static void print_indent(FILE *out, int indent) {
 }
 
 static void print_array_compact(const json_value *v, FILE *out) {
-  if (!v || v->type != J_ARRAY) {
-    fputs("[]", out);
-    return;
-  }
   fputc('[', out);
   json_array_node *array_items = v->u.array.items;
   while (array_items) {
@@ -585,10 +581,6 @@ static void print_array_compact(const json_value *v, FILE *out) {
 }
 
 static void print_object_compact(const json_value *v, FILE *out) {
-  if (!v || v->type != J_OBJECT) {
-    fputs("{}", out);
-    return;
-  }
   fputc('{', out);
   json_object_node *object_items = v->u.object.items;
   while (object_items) {
@@ -604,10 +596,6 @@ static void print_object_compact(const json_value *v, FILE *out) {
 }
 
 static void print_value_compact(const json_value *v, FILE *out) {
-  if (!v) {
-    fputs("null", out);
-    return;
-  }
   switch (v->type) {
   case J_NULL:
     fputs("null", out);
@@ -631,10 +619,6 @@ static void print_value_compact(const json_value *v, FILE *out) {
 }
 
 static void print_value(const json_value *v, int indent, FILE *out) {
-  if (!v) {
-    fputs("null", out);
-    return;
-  }
   switch (v->type) {
   case J_NULL:
     fputs("null", out);
@@ -775,8 +759,6 @@ static int buffer_write_object(buffer *b, const json_value *v) {
 }
 
 static int buffer_write_value_indent(buffer *b, const json_value *v, int indent) {
-  if (!v)
-    return buffer_write(b, "null", 4);
   switch (v->type) {
   case J_NULL:
     return buffer_write(b, "null", 4);
@@ -795,8 +777,6 @@ static int buffer_write_value_indent(buffer *b, const json_value *v, int indent)
 }
 
 static int buffer_write_value(buffer *b, const json_value *v) {
-  if (!v)
-    return buffer_write(b, "null", 4);
   switch (v->type) {
   case J_NULL:
     return buffer_write(b, "null", 4);
@@ -875,8 +855,6 @@ char *json_stringify(const json_value *v) {
 static bool json_array_equal(const json_value *a, const json_value *b) {
   json_array_node *a_node;
   json_array_node *b_node;
-  if (!a || !b)
-    return a == b;
   if (a->type != J_ARRAY || b->type != J_ARRAY)
     return false;
   size_t a_len = 0;
@@ -906,8 +884,6 @@ static bool json_object_equal(const json_value *a, const json_value *b) {
   json_object_node *b_node;
   json_object *e;
   json_value *b_val;
-  if (!a || !b)
-    return a == b;
   if (a->type != J_OBJECT || b->type != J_OBJECT)
     return false;
   size_t a_len = 0;
@@ -1355,5 +1331,8 @@ void json_free(json_value *v) {
 }
 
 void json_print(const json_value *v, FILE *out) {
+  if (!v) {
+    return;
+  }
   print_value(v, 0, out);
 }
