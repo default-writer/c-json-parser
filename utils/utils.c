@@ -71,7 +71,7 @@ void utils_print_time_diff(long long start_ns, long long end_ns) {
 char *utils_get_test_json_data(const char *filename) {
 #ifdef _WIN32
   FILE *fp = NULL;
-  errno_t err = fopen_s(&fp, filename,"r");
+  errno_t err = fopen_s(&fp, filename, "r");
   if (err != 0) {
     return NULL;
   }
@@ -113,14 +113,10 @@ bool utils_test_json_equal(const char *a, const char *b) {
   const char *xb = b;
 
   while (*xa != '\0' && *xb != '\0') {
-    while (*xa != '\0') {
-      if (!isspace((unsigned char)*xa))
-        break;
+    while (*xa != '\0' && isspace((unsigned char)*xa)) {
       xa++;
     }
-    while (*xb != '\0') {
-      if (!isspace((unsigned char)*xb))
-        break;
+    while (*xb != '\0' && isspace((unsigned char)*xb)) {
       xb++;
     }
     if (*xa != *xb)

@@ -5875,6 +5875,7 @@ static const char *greek_alphabet[] = {
     "alpha", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa",
     "lambda", "mu", "nu", "xi", "omicron", "pi", "rho", "sigma", "tau", "upsilon",
     "phi", "chi", "psi", "omega"};
+
 static const int num_greek_letters = sizeof(greek_alphabet) / sizeof(char *);
 
 static void generate_random_json_value(json_value *v, int depth) {
@@ -6356,6 +6357,50 @@ TEST(test_unicode_hex4_parsing_coverage) {
   ASSERT_TRUE(utils_test_json_equal(json4, source4));
   json_free(&v4);
   free(json4);
+
+  END_TEST;
+}
+
+TEST(test_json_node_pool_allocation_coverage) {
+  /* Test to cover lines 138-140 (array pool) and 164-166 (object pool) */
+
+  /* Test array node pool allocation to hit lines 138-140 */
+  json_value array_v;
+  memset(&array_v, 0, sizeof(json_value));
+
+  /* Create many array elements to exercise pool allocation */
+  const char *array_source = "[1,2,3,4,5,6,7,8,9,10]";
+  ASSERT_TRUE(json_parse_iterative(array_source, &array_v));
+  char *array_json = json_stringify(&array_v);
+  ASSERT_PTR_NOT_NULL(array_json);
+  ASSERT_TRUE(utils_test_json_equal(array_json, array_source));
+  json_free(&array_v);
+  free(array_json);
+
+  /* Test object node pool allocation to hit lines 164-166 */
+  json_value object_v;
+  memset(&object_v, 0, sizeof(json_value));
+
+  /* Create object with many key-value pairs to exercise pool allocation */
+  const char *object_source = "{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5,\"f\":6}";
+  ASSERT_TRUE(json_parse_iterative(object_source, &object_v));
+  char *object_json = json_stringify(&object_v);
+  ASSERT_PTR_NOT_NULL(object_json);
+  ASSERT_TRUE(utils_test_json_equal(object_json, object_source));
+  json_free(&object_v);
+  free(object_json);
+
+  /* Test mixed nested structures to exercise both array and object pools */
+  json_value nested_v;
+  memset(&nested_v, 0, sizeof(json_value));
+
+  const char *nested_source = "{\"arr\":[1,2,3],\"obj\":{\"x\":7,\"y\":8,\"z\":9}}";
+  ASSERT_TRUE(json_parse_iterative(nested_source, &nested_v));
+  char *nested_json = json_stringify(&nested_v);
+  ASSERT_PTR_NOT_NULL(nested_json);
+  ASSERT_TRUE(utils_test_json_equal(nested_json, nested_source));
+  json_free(&nested_v);
+  free(nested_json);
 
   END_TEST;
 }
@@ -6864,6 +6909,98 @@ TEST(test_comprehensive_coverage_print_functions) {
   END_TEST;
 }
 
+TEST(test_whitespace_lookup) {
+  /* Test to cover line 174 (whitespace_lookup) and line 182-211 (parse_number with whitespace) */
+
+  /* Test various whitespace characters to exercise whitespace_lookup table */
+  const char *whitespace_tests[] = {
+      " 1",          /* space */
+      "\t2",         /* tab */
+      "\n3",         /* newline   */
+      "\r4",         /* carriage return */
+      " \t\n\r5",    /* mixed whitespace */
+      "   \t\n\r  6" /* lots of whitespace */
+  };
+  const char *json_whitespace_tests[] = {
+      "[ 1]",          /* space */
+      "[\t2]",         /* tab */
+      "[\n3]",         /* newline   */
+      "[\r4]",         /* carriage return */
+      "[ \t\n\r5]",    /* mixed whitespace */
+      "[   \t\n\r  6]" /* lots of whitespace */
+  };
+
+  size_t i;
+
+  const int whitespace_tests_size = sizeof(whitespace_tests) / sizeof(char *);
+  const int json_whitespace_tests_size = sizeof(json_whitespace_tests) / sizeof(char *);
+
+  for (i = 0; i < whitespace_tests_size; i++) {
+    const char *source = whitespace_tests[i];
+    json_value v;
+    memset(&v, 0, sizeof(json_value));
+    ASSERT_FALSE(json_parse_iterative(source, &v));
+
+    char *json = json_stringify(&v);
+    ASSERT_PTR_NULL(json);
+  }
+
+  for (i = 0; i < json_whitespace_tests_size; i++) {
+    const char *source = json_whitespace_tests[i];
+    json_value v;
+    memset(&v, 0, sizeof(json_value));
+
+    ASSERT_TRUE(json_parse_iterative(source, &v));
+
+    char *json = json_stringify(&v);
+    ASSERT_PTR_NOT_NULL(json);
+
+    /* Verify parsing works regardless of whitespace */
+    if (strstr(source, "1")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "[1]"));
+    } else if (strstr(source, "2")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "[2]"));
+    } else if (strstr(source, "3")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "[3]"));
+    } else if (strstr(source, "4")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "[4]"));
+    } else if (strstr(source, "5")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "[5]"));
+    } else if (strstr(source, "6")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "[6]"));
+    }
+
+    json_free(&v);
+    free(json);
+  }
+
+  /* Test numbers with whitespace to hit lines 182-211 */
+  const char *number_with_whitespace_tests[] = {
+      "{\"key\": 123}",       /* positive integer with leading space */
+      "{\"key\":\t-456}",     /* negative integer with leading tab */
+      "{\"key\":\n78.9}",     /* float with leading newline */
+      "{\"key\":\r1.23e4}",   /* scientific notation with leading carriage return */
+      "{\"key\":   -5.67e-8}" /* mixed whitespace before scientific */
+  };
+
+  const int number_with_whitespace_tests_size = sizeof(number_with_whitespace_tests) / sizeof(char *);
+
+  for (i = 0; i < number_with_whitespace_tests_size; i++) {
+    const char *source = number_with_whitespace_tests[i];
+    json_value v;
+    memset(&v, 0, sizeof(json_value));
+    ASSERT_TRUE(json_parse_iterative(source, &v));
+    char *json = json_stringify(&v);
+    ASSERT_PTR_NOT_NULL(json);
+    ASSERT_TRUE(utils_test_json_equal(json, source));
+
+    json_free(&v);
+    free(json);
+  }
+
+  END_TEST;
+}
+
 TEST(test_print_value_object_with_multiple_keys) {
   /* Test to cover lines 658-664 for print_value with multiple object keys and commas */
   json_value v;
@@ -6910,7 +7047,7 @@ TEST(test_print_value_object_with_multiple_keys) {
   ASSERT_NOT_EQUAL(strstr(buffer, "\"a\":"), NULL, char *);
   ASSERT_NOT_EQUAL(strstr(buffer, "\"b\":"), NULL, char *);
   ASSERT_NOT_EQUAL(strstr(buffer, "\"c\":"), NULL, char *);
-  ASSERT_NOT_EQUAL(strstr(buffer, ", "), NULL, char *); // Tests line 664 comma logic
+  ASSERT_NOT_EQUAL(strstr(buffer, ", "), NULL, char *);
   ASSERT_NOT_EQUAL(strstr(buffer, "1"), NULL, char *);
   ASSERT_NOT_EQUAL(strstr(buffer, "2"), NULL, char *);
   ASSERT_NOT_EQUAL(strstr(buffer, "3"), NULL, char *);
@@ -7361,20 +7498,17 @@ TEST(test_utils_functions) {
 
   FILE *mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
   ASSERT_NOT_EQUAL(mem_stream, (FILE *)NULL, FILE *);
-  
+
   /* Redirect stdout to suppress output from utils functions */
   FILE *original_stdout = stdout;
   stdout = mem_stream;
 
   /* The input was an array with object, so output should contain '[', not just '{' */
-  // Test for utils_print_time_diff
   utils_print_time_diff(0, MAX_TICK_COUNTER);
 
-  // Test for utils_output
   utils_output("test output");
   utils_output(NULL);
 
-  // Test for utils_itoa
   char itoa_buf[MAX_BUFFER_SIZE];
   const int value1 = 123;
   const int value2 = -456;
@@ -7385,7 +7519,6 @@ TEST(test_utils_functions) {
   utils_itoa(0, itoa_buf);
   ASSERT_TRUE(strcmp(itoa_buf, "0") == 0);
 
-  // Test for utils_get_test_json_data
   const char *trailing_whitespace_filename = "trailing_whitespace.json";
   FILE *fp = fopen(trailing_whitespace_filename, "w");
   fprintf(fp, "{\"key\": \"value\"}  \n");
@@ -7400,7 +7533,6 @@ TEST(test_utils_functions) {
   fclose(fp);
   json_data = utils_get_test_json_data(trailing_whitespace_filename);
 
-  // it should be an empty string, but the while loop will make it empty
   ASSERT_EQUAL(json_data, NULL, char *);
 
   const char *empty_filename = "empty.json";
@@ -7408,17 +7540,14 @@ TEST(test_utils_functions) {
   fclose(fp);
   json_data = utils_get_test_json_data(empty_filename);
 
-  // it should be an empty string, but the while loop will make it empty
   ASSERT_EQUAL(json_data, NULL, char *);
 
   json_data = utils_get_test_json_data(empty_filename);
-  // it should be an empty string, but the while loop will make it empty
   ASSERT_EQUAL(json_data, NULL, char *);
 
   remove(empty_filename);
   remove(trailing_whitespace_filename);
 
-  // Test for utils_test_json_equal
   ASSERT_FALSE(utils_test_json_equal("{\"a\":1}", "{\"a\":2}"));
   ASSERT_FALSE(utils_test_json_equal("{\"a\":1}", "{\"b\":1}"));
   ASSERT_FALSE(utils_test_json_equal("{\"a\":1}", "{\"a\":1, \"b\":2}"));
@@ -7796,6 +7925,8 @@ int main(void) {
   test_validate_array_mailformed_json();
   test_validate_expected_string();
   test_unicode_hex4_parsing_coverage();
+  test_json_node_pool_allocation_coverage();
+  test_whitespace_lookup();
   test_validate_expected_array_value();
   test_validate_expected_boolean();
   test_validate_expected_null();
