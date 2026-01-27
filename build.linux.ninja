@@ -22,8 +22,8 @@ rule link
 rule asm
   command = $cc $cflags -S -o $out $in
 
-cflags_perf = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION -DNDEBUG -Wno-initializer-overrides
-ldflags_perf = $ldflags -O3 -march=native -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -flto -fvectorize -funroll-loops
+cflags_perf = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION -DNDEBUG -Wno-initializer-overrides
+ldflags_perf = $ldflags -O3 -march=native -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -flto=auto -fvectorize -funroll-loops
 
 # --- test-perf-c-json-parser target ---
 build main.o.perf: cc perf/test_c_json_parser.c
@@ -40,7 +40,7 @@ build perf.stamp: link main.o.perf json.o.perf utils.o.perf whitespace_lookup.o.
 build perf-c-json-parser: phony perf.stamp
 
 # --- test-perf-c-json-parser-no-string-validation target ---
-cflags_perf_no_string_validation = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DNDEBUG
+cflags_perf_no_string_validation = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DNDEBUG
 build main.o.perf_no_string_validation: cc perf/test_c_json_parser.c
   cflags = $cflags_perf_no_string_validation
 build json.o.perf_no_string_validation: cc src/json.c
@@ -71,7 +71,7 @@ build perf_long.stamp: link main.o.perf_long json.o.perf_long utils.o.perf_long 
 build perf-c-json-parser-long: phony perf_long.stamp
 
 # --- test-perf-c-json-parser-no-string-validation-long target ---
-cflags_perf_no_string_validation_long = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DLONG_TEST -DNDEBUG
+cflags_perf_no_string_validation_long = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DLONG_TEST -DNDEBUG
 build main.o.perf_no_string_validation_long: cc perf/test_c_json_parser.c
   cflags = $cflags_perf_no_string_validation_long
 build json.o.perf_no_string_validation_long: cc src/json.c
@@ -83,8 +83,8 @@ build perf_no_string_validation_long.stamp: link main.o.perf_no_string_validatio
 build perf-c-json-parser-no-string-validation-long: phony perf_no_string_validation_long.stamp
 
 # --- test-perf-json-c target ---
-cflags_perf_json_c = -msse2 -Wall -Wextra -std=c17 -Ilibs/json-c/include -O3 -march=native -flto -fomit-frame-pointer -DNDEBUG
-ldflags_perf_json_c = $ldflags -flto -flto=thin -fvectorize -funroll-loops -Llibs/json-c/lib -ljson-c
+cflags_perf_json_c = -msse2 -Wall -Wextra -std=c17 -Ilibs/json-c/include -O3 -march=native -flto=auto -fomit-frame-pointer -DNDEBUG
+ldflags_perf_json_c = $ldflags -flto=auto -fvectorize -funroll-loops -Llibs/json-c/lib -ljson-c
 build main.o.perf_json_c: cc perf/test_json_c.c
   cflags = $cflags_perf_json_c
 build json.o.perf_json_c: cc src/json.c
@@ -113,8 +113,8 @@ build perf_json_c_long.stamp: link main.o.perf_json_c_long json.o.perf_json_c_lo
 build perf-json-c-long: phony perf_json_c_long.stamp
 
 # --- test-perf-simdjson target ---
-cflags_perf_simdjson = -msse2 -Wall -Wextra -std=c++17 -O3 -march=native -flto -fomit-frame-pointer -DNDEBUG
-ldflags_perf_simdjson = $ldflags -flto -flto=thin -fvectorize -funroll-loops -lstdc++
+cflags_perf_simdjson = -msse2 -Wall -Wextra -std=c++17 -O3 -march=native -flto=auto -fomit-frame-pointer -DNDEBUG
+ldflags_perf_simdjson = $ldflags -flto=auto -fvectorize -funroll-loops -lstdc++
 build simdjson.o.perf: cc libs/simdjson/simdjson.cpp
   cflags = $cflags_perf_simdjson
 build main.o.perf_perf_simdjson: cc perf/test_simdjson.cpp
@@ -157,9 +157,9 @@ build utils.utils.s: asm utils/utils.c
 build .s: phony test.test.s src.json.s utils.utils.s
 
 # --- test-gprof-coverage target (gcc) ---
-cflags_gprof_coverage = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections -DNDEBUG -fprofile-arcs -ftest-coverage
+cflags_gprof_coverage = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -DSTRING_VALIDATION -DNDEBUG -fprofile-arcs -ftest-coverage
 ldflags_gprof_coverage = -pg --coverage
-build coverage_test.o.gprof: cc test/test_gprof.c
+build coverage_test.o.gprof: cc test/test.c
   cc = gcc
   cflags = $cflags_gprof_coverage
 build coverage_json.o.gprof: cc src/json.c
@@ -178,7 +178,7 @@ build gprof_coverage.stamp: link coverage_test.o.gprof coverage_json.o.gprof cov
 build gprof-coverage: phony gprof_coverage.stamp
 
 # --- gprof target (gcc) ---
-cflags_gprof = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections -DNDEBUG -fprofile-arcs -ftest-coverage
+cflags_gprof = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -DNDEBUG -fprofile-arcs -ftest-coverage
 ldflags_gprof = -pg --coverage
 build test.o.gprof: cc test/test_gprof.c
   cc = gcc
@@ -205,7 +205,7 @@ build gprof.utils.utils.s: asm utils/utils.c
 build gprof.s: phony gprof.test.test.s gprof.src.json.s gprof.utils.utils.s
 
 # --- perf-gprof target (gcc) ---
-cflags_perf_gprof = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto -ffunction-sections -fdata-sections -DNDEBUG -fprofile-arcs -ftest-coverage
+cflags_perf_gprof = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -DNDEBUG -fprofile-arcs -ftest-coverage
 ldflags_perf_gprof = -pg --coverage
 build perf.o.gprof: cc perf/test_c_json_parser.c
   cc = gcc

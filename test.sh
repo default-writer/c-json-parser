@@ -19,13 +19,12 @@ if [[ -z "$1" ]]; then
   target="main"
 fi
 
-
 if [[ "${BASHOPTS}" != *extdebug* ]]; then
     set -e
 fi
 
 err_report() {
-    cd ${source}
+    cd ${cwd}
     echo "ERROR: $0:$*"
     exit 8
 }
@@ -36,6 +35,8 @@ fi
 
 cwd=$(cd "$(dirname $(dirname "${BASH_SOURCE[0]}"))" &> /dev/null && pwd)
 cd ${cwd}
+
+./cleanup.sh
 
 # cleanup
 ninja -f $NINJA_FILE -t clean > /dev/null 2>&1 

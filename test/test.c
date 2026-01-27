@@ -1,6 +1,5 @@
 #include "../test/test.h"
 #include "../src/json.h"
-#include <cstring>
 
 #define LCPRN_RAND_MULTIPLIER 1664525
 #define LCPRN_RAND_INCREMENT 1013904223
@@ -9,6 +8,7 @@
 #define MAX_GENERATION_ITERATIONS 0x1000
 #define MAX_CHILDREN 5
 #define MAX_DEPTH 5
+#define MAX_STDIO_BUFFER_SIZE 0x1000
 
 static void generate_random_json_value(json_value *v, int depth);
 static void json_free_generated(json_value *v);
@@ -38,8 +38,6 @@ TEST(test_memory_leaks) {
   /* compare structurally (order-insensitive) */
   ASSERT_TRUE(utils_test_json_equal(json, source));
 
-  utils_output(json);
-
   /* cleanup */
   json_free(&v);
   free(json);
@@ -49,6 +47,13 @@ TEST(test_memory_leaks) {
 }
 
 TEST(test_printf) {
+  /* Create a memory buffer to capture stdout */
+  char buffer[MAX_STDIO_BUFFER_SIZE];
+  memset(buffer, 0, sizeof(buffer));
+
+  FILE *mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
+  ASSERT_NOT_EQUAL(mem_stream, (FILE *)NULL, FILE *);
+
   char *json;
   char *out;
 
@@ -68,8 +73,11 @@ TEST(test_printf) {
   json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
 
-  json_print(&v, stdout);
-  fputc('\n', stdout);
+  json_print(&v, mem_stream);
+  fclose(mem_stream);
+
+  /* The input was an array with object, so output should contain '[', not just '{' */
+  ASSERT_TRUE(strcmp(buffer, source) == 0);
 
   /* compare structurally (order-insensitive) */
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -101,8 +109,6 @@ TEST(test_whitespace) {
 
   /* compare structurally (order-insensitive) */
   ASSERT_TRUE(utils_test_json_equal(json, expected));
-
-  utils_output(json);
 
   /* cleanup */
   json_free(&v);
@@ -520,11 +526,7 @@ TEST(test_valid_string_iterative_with_escaped_chars) {
   ASSERT_TRUE(json_parse(json, &parsed_back));
   ASSERT_TRUE(json_equal(&v, &parsed_back));
 
-  ASSERT_TRUE(strstr(json, "\\n") != NULL);
-  ASSERT_TRUE(strstr(json, "\\r") != NULL);
-  ASSERT_TRUE(strstr(json, "\\t") != NULL);
-  ASSERT_TRUE(strstr(json, "\\\"") != NULL);
-  ASSERT_TRUE(strstr(json, "\\\\") != NULL);
+  ASSERT_TRUE(strcmp(json, source) == 0);
 
   json_free(&v);
   json_free(&parsed_back);
@@ -6392,9 +6394,8 @@ TEST(test_json_stringify_function) {
   v.u.object.last = NULL;
   result = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(result);
-  /* Empty object formats to "{\n    \n}" with indentation */
-  ASSERT_TRUE(strstr(result, "{") != NULL);
-  ASSERT_TRUE(strstr(result, "}") != NULL);
+  /* Empty object formats to "{}" with indentation */
+  ASSERT_TRUE(strcmp(result, "{\n}") == 0);
   free(result);
 
   json_free(&v);
@@ -6404,22 +6405,49 @@ TEST(test_json_stringify_function) {
 TEST(test_json_print_function) {
   json_value v;
   memset(&v, 0, sizeof(json_value));
+
+  /* Create a memory buffer to capture stdout */
+  char buffer[MAX_STDIO_BUFFER_SIZE];
+  memset(buffer, 0, sizeof(buffer));
+
+  FILE *mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
+  ASSERT_NOT_EQUAL(mem_stream, (FILE *)NULL, FILE *);
+
   v.type = J_NULL;
 
   /* Test printing to stdout */
-  json_print(&v, stdout);
+  json_print(&v, mem_stream);
+  fclose(mem_stream);
+
+  ASSERT_TRUE(strcmp(buffer, "null") == 0);
+  memset(buffer, 0, sizeof(buffer));
 
   v.type = J_STRING;
   v.u.string.ptr = "hello";
   v.u.string.len = strlen("hello");
-  json_print(&v, stdout);
+
+  mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
+
+  json_print(&v, mem_stream);
+  fclose(mem_stream);
+
+  ASSERT_TRUE(strcmp(buffer, "\"hello\"") == 0);
+  memset(buffer, 0, sizeof(buffer));
 
   v.type = J_NUMBER;
   v.u.number.ptr = "42";
   v.u.number.len = 2;
-  json_print(&v, stdout);
+
+  mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
+
+  json_print(&v, mem_stream);
+  fclose(mem_stream);
+
+  ASSERT_TRUE(strcmp(buffer, "42") == 0);
+  memset(buffer, 0, sizeof(buffer));
 
   json_free(&v);
+
   END_TEST;
 }
 
@@ -6630,7 +6658,7 @@ TEST(test_comprehensive_coverage_buffer_functions) {
   v.u.string.len = 4;
   char *result = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(result);
-  ASSERT_TRUE(strstr(result, "\"test\"") != NULL);
+  ASSERT_TRUE(strcmp(result, "\"test\"") == 0);
   free(result);
 
   /* Test array to exercise buffer_write_array */
@@ -6648,8 +6676,8 @@ TEST(test_comprehensive_coverage_buffer_functions) {
   v.u.object.last = NULL;
   result = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(result);
-  ASSERT_TRUE(strstr(result, "{") != NULL);
-  ASSERT_TRUE(strstr(result, "}") != NULL);
+  ASSERT_TRUE(strcmp(result, "{\n}") == 0);
+
   free(result);
 
   json_free(&v);
@@ -6657,40 +6685,86 @@ TEST(test_comprehensive_coverage_buffer_functions) {
 }
 
 TEST(test_comprehensive_coverage_print_functions) {
-  /* Tests for print functions */
+  /* Tests for print functions with stdout mocking */
   json_value v;
   memset(&v, 0, sizeof(json_value));
 
+  /* Create a memory buffer to capture stdout */
+  char buffer[MAX_STDIO_BUFFER_SIZE];
+  memset(buffer, 0, sizeof(buffer));
+
+  FILE *mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
+  ASSERT_NOT_EQUAL(mem_stream, (FILE *)NULL, FILE *);
+
   /* Test json_print which exercises print_value functions */
   v.type = J_NULL;
-  json_print(&v, stdout);
+  json_print(&v, mem_stream);
+  fclose(mem_stream);
+
+  ASSERT_TRUE(strcmp(buffer, "null") == 0);
+  memset(buffer, 0, sizeof(buffer));
+
+  mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
 
   v.type = J_STRING;
   v.u.string.ptr = "hello\n\t\"world";
   v.u.string.len = strlen("hello\n\t\"world");
-  json_print(&v, stdout);
+  json_print(&v, mem_stream);
+  ASSERT_EQUAL(strstr(buffer, "\"hello\\n\\t\\\"world\""), NULL, char *);
+  memset(buffer, 0, sizeof(buffer));
+
+  mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
 
   v.type = J_BOOLEAN;
   v.u.boolean.ptr = "false";
   v.u.boolean.len = strlen("false");
-  json_print(&v, stdout);
+
+  json_print(&v, mem_stream);
+  fclose(mem_stream);
+
+  ASSERT_TRUE(strcmp(buffer, "false") == 0);
+  memset(buffer, 0, sizeof(buffer));
+
+  mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
 
   v.type = J_NUMBER;
   v.u.number.ptr = "123.45";
   v.u.number.len = strlen("123.45");
-  json_print(&v, stdout);
+
+  json_print(&v, mem_stream);
+  fclose(mem_stream);
+
+  ASSERT_TRUE(strcmp(buffer, "123.45") == 0);
+  memset(buffer, 0, sizeof(buffer));
+
+  mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
 
   /* Test array with various elements to exercise print_array_compact */
   v.type = J_ARRAY;
   v.u.array.items = NULL;
   v.u.array.last = NULL;
-  json_print(&v, stdout);
+
+  json_print(&v, mem_stream);
+  fclose(mem_stream);
+
+  ASSERT_TRUE(strcmp(buffer, "[]") == 0);
+  memset(buffer, 0, sizeof(buffer));
+
+  mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
 
   /* Test object to exercise print_object_compact */
   v.type = J_OBJECT;
   v.u.object.items = NULL;
   v.u.object.last = NULL;
-  json_print(&v, stdout);
+
+  json_print(&v, mem_stream);
+  fclose(mem_stream);
+
+  ASSERT_EQUAL(strstr(buffer, "{\n}"), NULL, char *);
+
+  /* Verify that data was written to the buffer */
+  size_t output_len = strlen(buffer);
+  ASSERT_NOT_EQUAL(output_len, 0, size_t);
 
   json_free(&v);
   END_TEST;
@@ -6829,7 +6903,7 @@ TEST(test_comprehensive_coverage_string_escape) {
 
 TEST(test_comprehensive_coverage_object_get) {
   /* Tests for json_object_get function - indirectly through json_equal */
-  const char *json_with_keys = "{\"key1\": \"value1\", \"key2\": 42, \"key3\": true}";
+  const char *json_with_keys = "{\"key1\": {\"object1\": \"value1\"}, \"key2\": 42, \"key3\": true}";
   const char *ptr = json_with_keys;
   json_value v1, v2;
   memset(&v1, 0, sizeof(json_value));

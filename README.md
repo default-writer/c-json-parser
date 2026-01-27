@@ -32,8 +32,8 @@
 | total heap usage (100K runs)            |                   - |                   0 |                   0 |         806,400,000 |       4,179,600,000 |
 | total heap usage (1M runs)              |                   - |                   0 |                   0 |       8,064,000,000 |      41,796,000,000 |
 
-(*) - 0-alloc version without string escape symbols validation
-(**) - 0-alloc version with string escape symbols validation
+(*) - 0-alloc version without strings validation
+(**) - 0-alloc version with strings validation
 
 ## docs
 

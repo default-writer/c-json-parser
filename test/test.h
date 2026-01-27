@@ -132,8 +132,8 @@
 
 #define ASSERT_EQUAL(actual, expected, type)                                                   \
   do {                                                                                         \
-    type _expected = (expected);                                                               \
-    type _actual = (actual);                                                                   \
+    type _expected = (type)(expected);                                                         \
+    type _actual = (type)(actual);                                                             \
     if (_expected != _actual) {                                                                \
       printf("assertion failed at %s:%d: %s != %s\n", __FILE__, __LINE__, #expected, #actual); \
       passed = 0;                                                                              \
@@ -142,8 +142,8 @@
 
 #define ASSERT_NOT_EQUAL(actual, expected, type)                                               \
   do {                                                                                         \
-    type _expected = (expected);                                                               \
-    type _actual = (actual);                                                                   \
+    type _expected = (type)(expected);                                                         \
+    type _actual = (type)(type)(actual);                                                       \
     if (_expected == _actual) {                                                                \
       printf("assertion failed at %s:%d: %s == %s\n", __FILE__, __LINE__, #expected, #actual); \
       passed = 0;                                                                              \

@@ -12,7 +12,7 @@ if [[ "${BASHOPTS}" != *extdebug* ]]; then
 fi
 
 err_report() {
-    cd ${source}
+    cd ${cwd}
     echo "ERROR: $0:$*"
     exit 8
 }

@@ -24,7 +24,7 @@ if [[ "${BASHOPTS}" != *extdebug* ]]; then
 fi
 
 err_report() {
-    cd ${source}
+    cd ${cwd}
     echo "ERROR: $0:$*"
     exit 8
 }
@@ -36,8 +36,10 @@ fi
 cwd=$(cd "$(dirname $(dirname "${BASH_SOURCE[0]}"))" &> /dev/null && pwd)
 cd ${cwd}
 
+./cleanup.sh
+
 # cleanup previous coverage files
-rm -f ./*/*.gcda ./*/*.gcno ./coverage.info
+rm -f ./*/*.gcda ./*/*.gcno ./coverage.info ./*/*.gcov ./*/*.out test-${target}
 rm -rf coverage_report
 
 # build with coverage
@@ -47,12 +49,10 @@ ninja -f $NINJA_FILE ${target}
 ./test-${target} > /dev/null 2>&1
 
 # generate coverage report
-lcov --capture --directory . --output-file coverage.info #> /dev/null 2>&1
+lcov --capture --directory . --rc geninfo_unexecuted_blocks=1 --output-file coverage.info #> /dev/null 2>&1
 genhtml coverage.info --output-directory coverage_report
 
 # cleanup build artifacts
 ninja -f $NINJA_FILE -t clean > /dev/null 2>&1
-rm -f *.gcda *.gcno *.info
-rm -f src/*.gcda src/*.gcno
-rm -f utils/*.gcda utils/*.gcno
-rm -f perf/*.gcda perf/*.gcno
+
+rm -f *.gcda *.gcno *.info *.gcov *.out test-${target}

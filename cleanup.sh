@@ -17,5 +17,5 @@ esac
 
 # cleanup
 ninja -f $NINJA_FILE -t clean > /dev/null 2>&1 
-rm ./test-* > /dev/null 2>&1
+rm -f ./test-* > /dev/null 2>&1
 rm -f *.gcda *.gcno *.gout *.info *.o gmon.out perf.data test-gprof.txt perf-gprof.txt > /dev/null 2>&1 || true
