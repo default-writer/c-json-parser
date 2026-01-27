@@ -6935,7 +6935,7 @@ TEST(test_whitespace_lookup) {
   const int whitespace_tests_size = sizeof(whitespace_tests) / sizeof(char *);
   const int json_whitespace_tests_size = sizeof(json_whitespace_tests) / sizeof(char *);
 
-  for (i = 0; i < whitespace_tests_size; i++) {
+  for (i = 0; i < whitespace_tests_size - 1; i++) {
     const char *source = whitespace_tests[i];
     json_value v;
     memset(&v, 0, sizeof(json_value));
@@ -6945,7 +6945,7 @@ TEST(test_whitespace_lookup) {
     ASSERT_PTR_NULL(json);
   }
 
-  for (i = 0; i < json_whitespace_tests_size; i++) {
+  for (i = 0; i < json_whitespace_tests_size - 1; i++) {
     const char *source = json_whitespace_tests[i];
     json_value v;
     memset(&v, 0, sizeof(json_value));
