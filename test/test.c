@@ -6910,33 +6910,34 @@ TEST(test_comprehensive_coverage_print_functions) {
 }
 
 TEST(test_whitespace_lookup) {
-  /* Test to cover line 174 (whitespace_lookup) and line 182-211 (parse_number with whitespace) */
+  /* Test to cover line 174 (whitespace_lookup) and lines 182-211 (parse_number with whitespace) */
 
-  /* Test various whitespace characters to exercise whitespace_lookup table */
-  const char *whitespace_tests[] = {
-      " 1",          /* space */
-      "\t2",         /* tab */
-      "\n3",         /* newline   */
-      "\r4",         /* carriage return */
-      " \t\n\r5",    /* mixed whitespace */
-      "   \t\n\r  6" /* lots of whitespace */
+  /* Valid JSON tests: arrays/objects with leading whitespace (should parse) */
+  const char *valid_whitespace_tests[] = {
+      "[1,2,3]",                 /* space before array */
+      "{\t\"a\":1}",             /* tab before object */
+      "[\r{\n\"key\"\t:\r\"value\"}\t]", /* newline before array containing object */
+      "{\r\"nested\":\n[1,2]\t}",  /* carriage return before nested structure */
+      "{\r\"x\"\t:5\n}",           /* mixed whitespace before object */
+      "[   \t\r  null\n ]"       /* lots of whitespace before null */
   };
-  const char *json_whitespace_tests[] = {
-      "[ 1]",          /* space */
-      "[\t2]",         /* tab */
-      "[\n3]",         /* newline   */
-      "[\r4]",         /* carriage return */
-      "[ \t\n\r5]",    /* mixed whitespace */
-      "[   \t\n\r  6]" /* lots of whitespace */
+
+  /* Test numbers with whitespace to hit lines 182-211 in parse_number */
+  const char *invalid_whitespace_tests[] = {
+      " 123",       /* positive integer with leading space */
+      "\t-456",     /* negative integer with leading tab */
+      "\n78.9",     /* float with leading newline */
+      "\r1.23e4",   /* scientific notation with leading carriage return */
+      "   -5.67e-8" /* mixed whitespace before scientific */
   };
+
+  const int valid_whitespace_tests_size = sizeof(valid_whitespace_tests) / sizeof(char *);
+  const int invalid_whitespace_tests_size = sizeof(invalid_whitespace_tests) / sizeof(char *);
 
   size_t i;
 
-  const int whitespace_tests_size = sizeof(whitespace_tests) / sizeof(char *);
-  const int json_whitespace_tests_size = sizeof(json_whitespace_tests) / sizeof(char *);
-
-  for (i = 0; i < whitespace_tests_size; i++) {
-    const char *source = whitespace_tests[i];
+  for (i = 0; i < invalid_whitespace_tests_size; i++) {
+    const char *source = invalid_whitespace_tests[i];
     json_value v;
     memset(&v, 0, sizeof(json_value));
     ASSERT_FALSE(json_parse_iterative(source, &v));
@@ -6945,8 +6946,8 @@ TEST(test_whitespace_lookup) {
     ASSERT_PTR_NULL(json);
   }
 
-  for (i = 0; i < json_whitespace_tests_size; i++) {
-    const char *source = json_whitespace_tests[i];
+  for (i = 0; i < valid_whitespace_tests_size; i++) {
+    const char *source = valid_whitespace_tests[i];
     json_value v;
     memset(&v, 0, sizeof(json_value));
 
@@ -6956,18 +6957,18 @@ TEST(test_whitespace_lookup) {
     ASSERT_PTR_NOT_NULL(json);
 
     /* Verify parsing works regardless of whitespace */
-    if (strstr(source, "1")) {
-      ASSERT_TRUE(utils_test_json_equal(json, "[1]"));
-    } else if (strstr(source, "2")) {
-      ASSERT_TRUE(utils_test_json_equal(json, "[2]"));
-    } else if (strstr(source, "3")) {
-      ASSERT_TRUE(utils_test_json_equal(json, "[3]"));
-    } else if (strstr(source, "4")) {
-      ASSERT_TRUE(utils_test_json_equal(json, "[4]"));
-    } else if (strstr(source, "5")) {
-      ASSERT_TRUE(utils_test_json_equal(json, "[5]"));
-    } else if (strstr(source, "6")) {
-      ASSERT_TRUE(utils_test_json_equal(json, "[6]"));
+    if (strstr(source, "1,2,3")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "[1,2,3]"));
+    } else if (strstr(source, ":1}")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "{\"a\":1}"));
+    } else if (strstr(source, "value")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "[{\"key\":\"value\"}]"));
+    } else if (strstr(source, "[1,2]")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "{\"nested\":\n[1,2]}"));
+    } else if (strstr(source, ":5")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "{\r\"x\"\t:5}"));
+    } else if (strstr(source, "null")) {
+      ASSERT_TRUE(utils_test_json_equal(json, "[null]"));
     }
 
     json_free(&v);
