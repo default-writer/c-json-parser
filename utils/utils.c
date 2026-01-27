@@ -65,7 +65,7 @@ void utils_print_time_diff(long long start_ns, long long end_ns) {
   long long seconds = diff_ns / ns_per_s;
   diff_ns %= ns_per_s;
   long long milliseconds = diff_ns / ns_per_ms;
-  printf("%s                                                    %02lld:%02lld:%02lld.%03lld\n", "execution time:", hours, minutes, seconds, milliseconds);
+  fprintf(stdout, "%s                                                    %02lld:%02lld:%02lld.%03lld\n", "execution time:", hours, minutes, seconds, milliseconds);
 }
 
 char *utils_get_test_json_data(const char *filename) {
@@ -84,11 +84,6 @@ char *utils_get_test_json_data(const char *filename) {
   fseek(fp, 0, SEEK_END);
   long size = ftell(fp);
   fseek(fp, 0, SEEK_SET);
-
-  if (size == -1) {
-    fclose(fp);
-    return NULL;
-  }
 
   char *json = (char *)calloc(1, size + 1);
   size_t bytes = fread(json, 1, size, fp);
@@ -154,23 +149,23 @@ bool utils_test_json_equal(const char *a, const char *b) {
   size_t start_a = (off_a > ctx_before) ? off_a - ctx_before : 0;
   size_t start_b = (off_b > ctx_before) ? off_b - ctx_before : 0;
 
-  fprintf(stderr, "mismatch: first diff byte offsets a=%zu b=%zu\n", off_a, off_b);
-  fprintf(stderr, "a context: \"");
+  fprintf(stdout, "mismatch: first diff byte offsets a=%zu b=%zu\n", off_a, off_b);
+  fprintf(stdout, "a context: \"");
   unsigned long i;
   for (i = start_a; i < off_a + ctx_after && pa[i] != '\0'; ++i) {
     char c = pa[i];
-    fputc(c, stderr);
+    fputc(c, stdout);
   }
 
-  fprintf(stderr, "\"\n");
-  fprintf(stderr, "b context: \"");
+  fprintf(stdout, "\"\n");
+  fprintf(stdout, "b context: \"");
 
   for (i = start_b; i < off_b + ctx_after && pb[i] != '\0'; ++i) {
     char c = pb[i];
-    fputc(c, stderr);
+    fputc(c, stdout);
   }
 
-  fprintf(stderr, "\"\n");
+  fprintf(stdout, "\"\n");
 
   return false;
 }

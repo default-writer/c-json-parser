@@ -9,6 +9,7 @@
 #define MAX_CHILDREN 5
 #define MAX_DEPTH 25
 #define MAX_STDIO_BUFFER_SIZE 0x1000
+#define MAX_TICK_COUNTER 1000000000
 
 static void generate_random_json_value(json_value *v, int depth);
 static void json_free_generated(json_value *v);
@@ -482,6 +483,56 @@ TEST(test_valid_number_iterative_scientific_notation) {
   ASSERT_TRUE(utils_test_json_equal(json, source));
   json_free(&v);
   free(json);
+  END_TEST;
+}
+
+TEST(test_valid_number_scientific_notation_coverage) {
+  /* Test to cover lines 182 (negative sign), 202 (decimal loop), 211 (exponent sign) */
+
+  /* Test negative scientific number to hit line 182 */
+  const char *source1 = "[-1e5]";
+  json_value v1;
+  memset(&v1, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source1, &v1));
+  char *json1 = json_stringify(&v1);
+  ASSERT_PTR_NOT_NULL(json1);
+  ASSERT_TRUE(utils_test_json_equal(json1, source1));
+  json_free(&v1);
+  free(json1);
+
+  /* Test decimal number to hit line 202 */
+  const char *source2 = "[1.23456789]";
+  json_value v2;
+  memset(&v2, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source2, &v2));
+  char *json2 = json_stringify(&v2);
+  ASSERT_PTR_NOT_NULL(json2);
+  ASSERT_TRUE(utils_test_json_equal(json2, source2));
+  json_free(&v2);
+  free(json2);
+
+  /* Test scientific notation with positive exponent to hit line 211 */
+  const char *source3 = "[1e+10]";
+  json_value v3;
+  memset(&v3, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source3, &v3));
+  char *json3 = json_stringify(&v3);
+  ASSERT_PTR_NOT_NULL(json3);
+  ASSERT_TRUE(utils_test_json_equal(json3, source3));
+  json_free(&v3);
+  free(json3);
+
+  /* Test scientific notation with negative exponent to hit line 211 */
+  const char *source4 = "[1e-10]";
+  json_value v4;
+  memset(&v4, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source4, &v4));
+  char *json4 = json_stringify(&v4);
+  ASSERT_PTR_NOT_NULL(json4);
+  ASSERT_TRUE(utils_test_json_equal(json4, source4));
+  json_free(&v4);
+  free(json4);
+
   END_TEST;
 }
 
@@ -6014,6 +6065,26 @@ TEST(test_randomization) {
   }
   END_TEST;
 }
+TEST(test_json_cleanup) {
+  const char *source = "{\"key\": \"value\"}";
+  json_value v;
+
+  memset(&v, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse(source, &v));
+
+  char *json = json_stringify(&v);
+  ASSERT_PTR_NOT_NULL(json);
+  ASSERT_TRUE(utils_test_json_equal(json, source));
+
+  json_free(&v);
+
+  json_cleanup();
+  json_reset();
+
+  free(json);
+
+  END_TEST;
+}
 
 TEST(test_replacement) {
   const char *test_cases[] = {
@@ -6236,6 +6307,56 @@ TEST(test_validate_expected_string) {
   const char *source = "[\"\\u123\"]";
   const char *position = source;
   ASSERT_EQUAL(json_validate(&position), E_EXPECTED_STRING, json_error);
+  END_TEST;
+}
+
+TEST(test_unicode_hex4_parsing_coverage) {
+  /* Test to cover lines 268 (lowercase hex), 269 (lowercase hex with offset), 271 (uppercase hex) */
+
+  /* Test lowercase hex characters to hit lines 268-269 */
+  const char *source1 = "[\"\\uabcd\"]";
+  json_value v1;
+  memset(&v1, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source1, &v1));
+  char *json1 = json_stringify(&v1);
+  ASSERT_PTR_NOT_NULL(json1);
+  ASSERT_TRUE(utils_test_json_equal(json1, source1));
+  json_free(&v1);
+  free(json1);
+
+  /* Test uppercase hex characters to hit line 271 */
+  const char *source2 = "[\"\\uABCD\"]";
+  json_value v2;
+  memset(&v2, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source2, &v2));
+  char *json2 = json_stringify(&v2);
+  ASSERT_PTR_NOT_NULL(json2);
+  ASSERT_TRUE(utils_test_json_equal(json2, source2));
+  json_free(&v2);
+  free(json2);
+
+  /* Test mixed case hex characters */
+  const char *source3 = "[\"\\ua1b2\"]";
+  json_value v3;
+  memset(&v3, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source3, &v3));
+  char *json3 = json_stringify(&v3);
+  ASSERT_PTR_NOT_NULL(json3);
+  ASSERT_TRUE(utils_test_json_equal(json3, source3));
+  json_free(&v3);
+  free(json3);
+
+  /* Test all valid hex ranges */
+  const char *source4 = "[\"\\u0f9E\"]";
+  json_value v4;
+  memset(&v4, 0, sizeof(json_value));
+  ASSERT_TRUE(json_parse_iterative(source4, &v4));
+  char *json4 = json_stringify(&v4);
+  ASSERT_PTR_NOT_NULL(json4);
+  ASSERT_TRUE(utils_test_json_equal(json4, source4));
+  json_free(&v4);
+  free(json4);
+
   END_TEST;
 }
 
@@ -6743,6 +6864,61 @@ TEST(test_comprehensive_coverage_print_functions) {
   END_TEST;
 }
 
+TEST(test_print_value_object_with_multiple_keys) {
+  /* Test to cover lines 658-664 for print_value with multiple object keys and commas */
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+
+  /* Create a memory buffer to capture stdout */
+  char buffer[MAX_STDIO_BUFFER_SIZE];
+  memset(buffer, 0, sizeof(buffer));
+  FILE *mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
+  ASSERT_NOT_EQUAL(mem_stream, (FILE *)NULL, FILE *);
+
+  /* Create an object with multiple key-value pairs to exercise comma logic */
+  v.type = J_OBJECT;
+
+  /* Create first key-value pair: {"a": 1} */
+  json_value value1;
+  memset(&value1, 0, sizeof(json_value));
+  value1.type = J_NUMBER;
+  value1.u.number.ptr = "1";
+  value1.u.number.len = 1;
+
+  json_value value2;
+  memset(&value2, 0, sizeof(json_value));
+  value2.type = J_NUMBER;
+  value2.u.number.ptr = "2";
+  value2.u.number.len = 1;
+
+  json_value value3;
+  memset(&value3, 0, sizeof(json_value));
+  value3.type = J_NUMBER;
+  value3.u.number.ptr = "3";
+  value3.u.number.len = 1;
+
+  /* Simulate object with multiple items using json_parse to create proper structure */
+  const char *source_json = "{\"a\":1,\"b\":2,\"c\":3}";
+  ASSERT_TRUE(json_parse(source_json, &v));
+
+  /* Test printing to exercise lines 658-664 */
+  json_print(&v, mem_stream);
+  fclose(mem_stream);
+
+  /* Verify the printed object contains expected structure with commas */
+  ASSERT_NOT_EQUAL(strstr(buffer, "{\n"), NULL, char *);
+  ASSERT_NOT_EQUAL(strstr(buffer, "\"a\":"), NULL, char *);
+  ASSERT_NOT_EQUAL(strstr(buffer, "\"b\":"), NULL, char *);
+  ASSERT_NOT_EQUAL(strstr(buffer, "\"c\":"), NULL, char *);
+  ASSERT_NOT_EQUAL(strstr(buffer, ", "), NULL, char *); // Tests line 664 comma logic
+  ASSERT_NOT_EQUAL(strstr(buffer, "1"), NULL, char *);
+  ASSERT_NOT_EQUAL(strstr(buffer, "2"), NULL, char *);
+  ASSERT_NOT_EQUAL(strstr(buffer, "3"), NULL, char *);
+
+  json_free(&v);
+  END_TEST;
+}
+
 TEST(test_comprehensive_coverage_equality_functions) {
   /* Tests for equality functions */
   json_value a, b;
@@ -7065,6 +7241,17 @@ TEST(test_all_json_types_comprehensive) {
 }
 
 TEST(test_equality_functions_full) {
+  /* Create a memory buffer to capture stdout and suppress diff output */
+  char buffer[MAX_STDIO_BUFFER_SIZE];
+  memset(buffer, 0, sizeof(buffer));
+
+  FILE *mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
+  ASSERT_NOT_EQUAL(mem_stream, (FILE *)NULL, FILE *);
+
+  /* Redirect stdout to suppress diff output from utils_test_json_equal */
+  FILE *original_stdout = stdout;
+  stdout = mem_stream;
+
   /* Test equality functions with all type combinations */
   json_value a, b;
   memset(&a, 0, sizeof(json_value));
@@ -7158,6 +7345,95 @@ TEST(test_equality_functions_full) {
 
   json_free(&a);
   json_free(&b);
+
+  fclose(mem_stream);
+
+  stdout = original_stdout;
+
+  END_TEST;
+}
+
+TEST(test_utils_functions) {
+
+  /* Create a memory buffer to capture stdout and suppress diff output */
+  char buffer[MAX_STDIO_BUFFER_SIZE];
+  memset(buffer, 0, sizeof(buffer));
+
+  FILE *mem_stream = fmemopen(buffer, sizeof(buffer) - 1, "w");
+  ASSERT_NOT_EQUAL(mem_stream, (FILE *)NULL, FILE *);
+  
+  /* Redirect stdout to suppress output from utils functions */
+  FILE *original_stdout = stdout;
+  stdout = mem_stream;
+
+  /* The input was an array with object, so output should contain '[', not just '{' */
+  // Test for utils_print_time_diff
+  utils_print_time_diff(0, MAX_TICK_COUNTER);
+
+  // Test for utils_output
+  utils_output("test output");
+  utils_output(NULL);
+
+  // Test for utils_itoa
+  char itoa_buf[MAX_BUFFER_SIZE];
+  const int value1 = 123;
+  const int value2 = -456;
+  utils_itoa(value1, itoa_buf);
+  ASSERT_TRUE(strcmp(itoa_buf, "123") == 0);
+  utils_itoa(value2, itoa_buf);
+  ASSERT_TRUE(strcmp(itoa_buf, "-456") == 0);
+  utils_itoa(0, itoa_buf);
+  ASSERT_TRUE(strcmp(itoa_buf, "0") == 0);
+
+  // Test for utils_get_test_json_data
+  const char *trailing_whitespace_filename = "trailing_whitespace.json";
+  FILE *fp = fopen(trailing_whitespace_filename, "w");
+  fprintf(fp, "{\"key\": \"value\"}  \n");
+  fclose(fp);
+
+  char *json_data = utils_get_test_json_data(trailing_whitespace_filename);
+  ASSERT_TRUE(strcmp(json_data, "{\"key\": \"value\"}") == 0);
+  free(json_data);
+
+  remove(trailing_whitespace_filename);
+  fp = fopen(trailing_whitespace_filename, "w");
+  fclose(fp);
+  json_data = utils_get_test_json_data(trailing_whitespace_filename);
+
+  // it should be an empty string, but the while loop will make it empty
+  ASSERT_EQUAL(json_data, NULL, char *);
+
+  const char *empty_filename = "empty.json";
+  fp = fopen(empty_filename, "w");
+  fclose(fp);
+  json_data = utils_get_test_json_data(empty_filename);
+
+  // it should be an empty string, but the while loop will make it empty
+  ASSERT_EQUAL(json_data, NULL, char *);
+
+  json_data = utils_get_test_json_data(empty_filename);
+  // it should be an empty string, but the while loop will make it empty
+  ASSERT_EQUAL(json_data, NULL, char *);
+
+  remove(empty_filename);
+  remove(trailing_whitespace_filename);
+
+  // Test for utils_test_json_equal
+  ASSERT_FALSE(utils_test_json_equal("{\"a\":1}", "{\"a\":2}"));
+  ASSERT_FALSE(utils_test_json_equal("{\"a\":1}", "{\"b\":1}"));
+  ASSERT_FALSE(utils_test_json_equal("{\"a\":1}", "{\"a\":1, \"b\":2}"));
+  ASSERT_FALSE(utils_test_json_equal("{\"a\":1, \"b\":2}", "{\"a\":1}"));
+  ASSERT_TRUE(utils_test_json_equal("{\"a\":1} ", "{\"a\":1}"));
+  ASSERT_TRUE(utils_test_json_equal("{\"a\":1}", "{\"a\":1} "));
+  ASSERT_FALSE(utils_test_json_equal(NULL, "{\"a\":1}"));
+  ASSERT_FALSE(utils_test_json_equal("{\"a\":1}", NULL));
+  ASSERT_FALSE(utils_test_json_equal("{\"a\":1}", "{\"a\":1, \"b\":2}   "));
+  ASSERT_FALSE(utils_test_json_equal("{\"a\":1, \"b\":2}   ", "{\"a\":1}"));
+
+  fclose(mem_stream);
+
+  stdout = original_stdout;
+
   END_TEST;
 }
 
@@ -7198,6 +7474,7 @@ int main(void) {
   test_valid_number_iterative_positive_float();
   test_valid_number_iterative_negative_float();
   test_valid_number_iterative_scientific_notation();
+  test_valid_number_scientific_notation_coverage();
   test_valid_string_iterative_empty();
   test_valid_string_iterative_with_spaces();
   test_valid_string_iterative_with_escaped_chars();
@@ -7518,6 +7795,7 @@ int main(void) {
   test_validate_expected_object_key();
   test_validate_array_mailformed_json();
   test_validate_expected_string();
+  test_unicode_hex4_parsing_coverage();
   test_validate_expected_array_value();
   test_validate_expected_boolean();
   test_validate_expected_null();
@@ -7532,6 +7810,7 @@ int main(void) {
   test_validate_expected_object_element_null();
   test_validate_no_error();
   test_randomization();
+  test_json_cleanup();
   test_replacement();
   test_generation();
   test_json_stringify_function();
@@ -7544,6 +7823,7 @@ int main(void) {
   test_json_validate_function();
   test_comprehensive_coverage_buffer_functions();
   test_comprehensive_coverage_print_functions();
+  test_print_value_object_with_multiple_keys();
   test_comprehensive_coverage_equality_functions();
   test_comprehensive_coverage_parsing_functions();
   test_comprehensive_coverage_string_escape();
@@ -7552,6 +7832,7 @@ int main(void) {
   test_complex_nested_json_coverage();
   test_all_json_types_comprehensive();
   test_equality_functions_full();
+  test_utils_functions();
 
   TEST_FINALIZE;
 }
