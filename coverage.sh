@@ -49,7 +49,7 @@ ninja -f $NINJA_FILE ${target}
 ./test-${target} > /dev/null 2>&1
 
 # generate coverage report
-lcov --capture --directory . --rc geninfo_unexecuted_blocks=1 --output-file coverage.info #> /dev/null 2>&1
+lcov --capture --directory . --rc geninfo_unexecuted_blocks=1 --output-file coverage.info > /dev/null 2>&1
 genhtml coverage.info --output-directory coverage_report
 
 # cleanup build artifacts
