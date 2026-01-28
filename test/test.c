@@ -16,6 +16,7 @@ extern void test_print_value_compact_coverage(void);
 extern void test_print_value_all_types_coverage(void);
 extern void test_json_stringify_buffer_error_coverage(void);
 extern void test_free_array_node_coverage(void);
+extern void test_parse_string_full_coverage(void);
 
 #define LCPRN_RAND_MULTIPLIER 1664525
 #define LCPRN_RAND_INCREMENT 1013904223
@@ -75,7 +76,7 @@ TEST(test_printf) {
   char *json;
   char *out;
 
-  const char *source = "[null,false,true,{\"key\": \"value\"}]";
+  const char *source = "[null,false,true,1,-1,1e+2,-1.0e-2,0.0001,0.01,0.01e+01,\"\\n\\t\\r\\b\",[],{\"key1\": \"value\",\"key2\": \"value\"}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
 
@@ -8350,7 +8351,7 @@ int main(void) {
   test_utils_functions();
   test_new_coverage_and_whitespace();
 
-  /* Coverage tests for uncovered lines */
+/* Coverage tests for uncovered lines */
   test_large_array_0xfffe_elements();
   test_comprehensive_uncovered_lines();
   test_free_array_node_coverage();
@@ -8362,5 +8363,6 @@ int main(void) {
   test_print_value_compact_coverage();
   test_print_value_all_types_coverage();
   test_json_stringify_buffer_error_coverage();
+  test_parse_string_full_coverage();
   TEST_FINALIZE;
 }

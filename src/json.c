@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 27, 2026 at 6:22:00 PM UTC
+ *   January 28, 2026 at 6:38:53 AM UTC
  *
  */
 /*
@@ -78,7 +78,6 @@ static bool parse_array_value(const char **s, json_value *v);
 static bool parse_object_value(const char **s, json_value *v);
 static bool parse_value_build(const char **s, json_value *v);
 
-static void print_string_escaped(FILE *out, const char *s, size_t len);
 static void print_indent(FILE *out, int indent);
 static void print_array_compact(const json_value *v, FILE *out);
 static void print_object_compact(const json_value *v, FILE *out);
@@ -277,21 +276,23 @@ static bool parse_hex4(const char **s, uint16_t *result) {
 
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) {
   const char *p = *s + 1;
-  v->u.string.ptr = p;
   const char *end = p;
+  v->u.string.ptr = p;
   while (true) {
     size_t span = strcspn(end, "\"\\");
-#ifdef STRING_VALIDATION
-    if (!validate_string_chunk(end, span)) {
-      return false;
-    }
-#endif
     end += span;
-    if (*end == '"') {
-      v->u.string.len = end - p;
+    if (*end == '\0')
+      return false;
+#ifdef STRING_VALIDATION    
+    if (!validate_string_chunk(end - span, span))
+      return false;
+#endif    
+    if (*end == '\"') {
+      v->u.string.len = (size_t)(end - p);
       *s = end + 1;
       return true;
-    } else if (*end == '\\') {
+    }
+    if (*end == '\\') {
       end++;
       if (*end == '\0')
         return false;
@@ -313,21 +314,18 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
         if (*end == '\0')
           return false;
         uint16_t codepoint;
-        if (!parse_hex4(&end, &codepoint)) {
+        if (!parse_hex4(&end, &codepoint))
           return false;
-        }
         if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) {
-          if (end[0] != '\\' || end[1] != 'u') {
+          if (end[0] != '\\' || end[1] != 'u')
             return false;
-          }
           end += 2;
           uint16_t low_surrogate;
-          if (!parse_hex4(&end, &low_surrogate)) {
+          if (!parse_hex4(&end, &low_surrogate))
             return false;
-          }
-          if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END) {
+
+          if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END)
             return false;
-          }
         } else if (codepoint >= LOW_SURROGATE_START && codepoint <= LOW_SURROGATE_END) {
           return false;
         }
@@ -389,7 +387,7 @@ static bool parse_object_value(const char **s, json_value *v) {
     skip_whitespace(s);
     if (**s == '\0')
       return false;
-    if (**s != '"') {
+    if (**s != '\"') {
       return false;
     }
     json_value key;
@@ -489,7 +487,7 @@ static bool parse_value_build(const char **s, json_value *v) {
     }
     return parse_array_value(s, v);
   }
-  if (**s == '"') {
+  if (**s == '\"') {
     v->type = J_STRING;
     return parse_string(s, v);
   }
@@ -523,44 +521,6 @@ static bool parse_value_build(const char **s, json_value *v) {
 
 /* --- pretty-print helpers --- */
 
-static void print_string_escaped(FILE *out, const char *s, size_t len) {
-  size_t i;
-  fputc('"', out);
-  for (i = 0; i < len; i++) {
-    char c = s[i];
-    switch (c) {
-    case '\"':
-      fputs("\\\"", out);
-      break;
-    case '\\':
-      fputs("\\\\", out);
-      break;
-    case '\b':
-      fputs("\\b", out);
-      break;
-    case '\f':
-      fputs("\\f", out);
-      break;
-    case '\n':
-      fputs("\\n", out);
-      break;
-    case '\r':
-      fputs("\\r", out);
-      break;
-    case '\t':
-      fputs("\\t", out);
-      break;
-    default:
-      if (c >= MIN_PRINTABLE_ASCII && c <= MAX_PRINTABLE_ASCII)
-        fputc(c, out);
-      else
-        fprintf(out, "\\u%04x", (unsigned char)c);
-      break;
-    }
-  }
-  fputc('"', out);
-}
-
 static void print_indent(FILE *out, int indent) {
   int i;
   for (i = 0; i < indent; ++i)
@@ -585,7 +545,7 @@ static void print_object_compact(const json_value *v, FILE *out) {
   json_object_node *object_items = v->u.object.items;
   while (object_items) {
     json_object_node *next = object_items->next;
-    print_string_escaped(out, object_items->item.key.ptr, object_items->item.key.len);
+    fprintf(out, "\"%.*s\"", (int)object_items->item.key.len, object_items->item.key.ptr);
     fputs(": ", out);
     print_value_compact(&object_items->item.value, out);
     if (next)
@@ -607,7 +567,7 @@ static void print_value_compact(const json_value *v, FILE *out) {
     fprintf(out, "%.*s", (int)v->u.number.len, v->u.number.ptr);
     break;
   case J_STRING:
-    print_string_escaped(out, v->u.string.ptr, v->u.string.len);
+    fprintf(out, "\"%.*s\"", (int)v->u.string.len, v->u.string.ptr);
     break;
   case J_ARRAY:
     print_array_compact(v, out);
@@ -630,7 +590,7 @@ static void print_value(const json_value *v, int indent, FILE *out) {
     fprintf(out, "%.*s", (int)v->u.number.len, v->u.number.ptr);
     break;
   case J_STRING:
-    print_string_escaped(out, v->u.string.ptr, v->u.string.len);
+    fprintf(out, "\"%.*s\"", (int)v->u.string.len, v->u.string.ptr);
     break;
   case J_ARRAY:
     print_array_compact(v, out);
@@ -641,7 +601,7 @@ static void print_value(const json_value *v, int indent, FILE *out) {
     while (object_items) {
       json_object_node *next = object_items->next;
       print_indent(out, indent + 1);
-      print_string_escaped(out, object_items->item.key.ptr, object_items->item.key.len);
+      fprintf(out, "\"%.*s\"", (int)object_items->item.key.len, object_items->item.key.ptr);
       fputs(": ", out);
       print_value(&object_items->item.value, indent + 1, out);
       if (next)
@@ -665,11 +625,11 @@ static int buffer_write_indent(buffer *b, int indent) {
 }
 
 static int buffer_write_string(buffer *b, const char *s, size_t len) {
-  if (buffer_putc(b, '"') < 0)
+  if (buffer_putc(b, '\"') < 0)
     return -1;
   if (buffer_write(b, s, len) < 0)
     return -1;
-  if (buffer_putc(b, '"') < 0)
+  if (buffer_putc(b, '\"') < 0)
     return -1;
   return 0;
 }
@@ -950,7 +910,7 @@ json_error json_validate(const char **s) {
           current = NULL;
           break;
         }
-        if (**s == '"') {
+        if (**s == '\"') {
           current->type = J_STRING;
           if (parse_string(s, current)) {
             current = NULL;
@@ -1025,7 +985,7 @@ json_error json_validate(const char **s) {
           return E_EXPECTED_OBJECT;
         }
       }
-      if (**s != '"') {
+      if (**s != '\"') {
         return E_OBJECT_KEY;
       }
       json_value key;
@@ -1200,7 +1160,7 @@ bool json_parse_iterative(const char *s, json_value *root) {
           return false;
         }
       }
-      if (*s != '"')
+      if (*s != '\"')
         return false;
       json_value key;
       if (!parse_string(&s, &key))
