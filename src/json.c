@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 28, 2026 at 6:52:07 AM UTC
+ *   January 28, 2026 at 7:32:21 PM UTC
  *
  */
 /*
@@ -103,7 +103,7 @@ static json_object_node *new_object_node();
 static bool free_array_node(json_array_node *array_node);
 static bool free_object_node(json_object_node *object_node);
 
-static json_value  *json_object_get(const json_value *obj, const char *key, size_t len) {
+static INLINE json_value INLINE_ATTRIBUTE *json_object_get(const json_value *obj, const char *key, size_t len) {
   if (!obj || obj->type != J_OBJECT || !key)
     return NULL;
   json_object_node *object_items = obj->u.object.items;
@@ -116,7 +116,7 @@ static json_value  *json_object_get(const json_value *obj, const char *key, size
   return NULL;
 }
 
-static json_array_node * new_array_node() {
+static INLINE json_array_node *INLINE_ATTRIBUTE new_array_node() {
 #ifdef USE_ALLOC
   return (json_array_node *)calloc(1, sizeof(json_array_node));
 #else
@@ -128,7 +128,7 @@ static json_array_node * new_array_node() {
 #endif
 }
 
-static bool  free_array_node(json_array_node *array_node) {
+static INLINE bool INLINE_ATTRIBUTE free_array_node(json_array_node *array_node) {
 #ifdef USE_ALLOC
   free(array_node);
   return true;
@@ -142,7 +142,7 @@ static bool  free_array_node(json_array_node *array_node) {
 #endif
 }
 
-static json_object_node * new_object_node() {
+static INLINE json_object_node *INLINE_ATTRIBUTE new_object_node() {
 #ifdef USE_ALLOC
   return (json_object_node *)calloc(1, sizeof(json_object_node));
 #else
@@ -154,7 +154,7 @@ static json_object_node * new_object_node() {
 #endif
 }
 
-static bool  free_object_node(json_object_node *object_node) {
+static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_node) {
 #ifdef USE_ALLOC
   free(object_node);
   return true;
@@ -168,13 +168,13 @@ static bool  free_object_node(json_object_node *object_node) {
 #endif
 }
 
-static void  skip_whitespace(const char **s) {
+static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
   while (whitespace_lookup[(unsigned char)**s]) {
     (*s)++;
   }
 }
 
-static bool  parse_number(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) {
   const char *start_p = *s;
   const char *p = *s;
   if (*p == '-') {
@@ -228,7 +228,7 @@ static bool  parse_number(const char **s, json_value *v) {
 }
 
 #ifdef STRING_VALIDATION
-static bool  validate_string_chunk(const char *s, size_t len) {
+static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t len) {
   size_t i = 0;
 #if defined(__SSE2__)
   const __m128i limit = _mm_set1_epi8(0x20);
@@ -252,7 +252,7 @@ static bool  validate_string_chunk(const char *s, size_t len) {
 }
 #endif
 
-static bool  parse_hex4(const char **s, uint16_t *result) {
+static INLINE bool INLINE_ATTRIBUTE parse_hex4(const char **s, uint16_t *result) {
   *result = 0;
   int i;
   for (i = 0; i < 4; ++i) {
@@ -274,7 +274,7 @@ static bool  parse_hex4(const char **s, uint16_t *result) {
   return true;
 }
 
-static bool  parse_string(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) {
   const char *p = *s + 1;
   const char *end = p;
   v->u.string.ptr = p;
@@ -339,7 +339,7 @@ static bool  parse_string(const char **s, json_value *v) {
   }
 }
 
-static bool  parse_array_value(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, json_value *v) {
   while (true) {
     skip_whitespace(s);
     if (**s == '\0')
@@ -382,7 +382,7 @@ static bool  parse_array_value(const char **s, json_value *v) {
   }
 }
 
-static bool  parse_object_value(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, json_value *v) {
   while (true) {
     skip_whitespace(s);
     if (**s == '\0')
@@ -458,7 +458,7 @@ static bool  parse_object_value(const char **s, json_value *v) {
   }
 }
 
-static bool  parse_value_build(const char **s, json_value *v) {
+static bool parse_value_build(const char **s, json_value *v) {
   if (**s == '{') {
     v->type = J_OBJECT;
     v->u.object.items = NULL;
@@ -521,13 +521,13 @@ static bool  parse_value_build(const char **s, json_value *v) {
 
 /* --- pretty-print helpers --- */
 
-static void  print_indent(FILE *out, int indent) {
+static INLINE void INLINE_ATTRIBUTE print_indent(FILE *out, int indent) {
   int i;
   for (i = 0; i < indent; ++i)
     fputs("    ", out);
 }
 
-static void  print_array_compact(const json_value *v, FILE *out) {
+static INLINE void INLINE_ATTRIBUTE print_array_compact(const json_value *v, FILE *out) {
   fputc('[', out);
   json_array_node *array_items = v->u.array.items;
   while (array_items) {
@@ -540,7 +540,7 @@ static void  print_array_compact(const json_value *v, FILE *out) {
   fputc(']', out);
 }
 
-static void  print_object_compact(const json_value *v, FILE *out) {
+static INLINE void INLINE_ATTRIBUTE print_object_compact(const json_value *v, FILE *out) {
   fputc('{', out);
   json_object_node *object_items = v->u.object.items;
   while (object_items) {
@@ -555,7 +555,7 @@ static void  print_object_compact(const json_value *v, FILE *out) {
   fputc('}', out);
 }
 
-static void  print_value_compact(const json_value *v, FILE *out) {
+static void print_value_compact(const json_value *v, FILE *out) {
   switch (v->type) {
   case J_NULL:
     fputs("null", out);
@@ -578,7 +578,7 @@ static void  print_value_compact(const json_value *v, FILE *out) {
   }
 }
 
-static void  print_value(const json_value *v, int indent, FILE *out) {
+static void print_value(const json_value *v, int indent, FILE *out) {
   switch (v->type) {
   case J_NULL:
     fputs("null", out);
@@ -615,7 +615,7 @@ static void  print_value(const json_value *v, int indent, FILE *out) {
   }
 }
 
-static int  buffer_write_indent(buffer *b, int indent) {
+static INLINE int INLINE_ATTRIBUTE buffer_write_indent(buffer *b, int indent) {
   int i;
   for (i = 0; i < indent; ++i) {
     if (buffer_write(b, "    ", 4) < 0)
@@ -624,7 +624,7 @@ static int  buffer_write_indent(buffer *b, int indent) {
   return 0;
 }
 
-static int  buffer_write_string(buffer *b, const char *s, size_t len) {
+static INLINE int INLINE_ATTRIBUTE buffer_write_string(buffer *b, const char *s, size_t len) {
   if (buffer_putc(b, '\"') < 0)
     return -1;
   if (buffer_write(b, s, len) < 0)
@@ -634,7 +634,7 @@ static int  buffer_write_string(buffer *b, const char *s, size_t len) {
   return 0;
 }
 
-static int  buffer_write_array(buffer *b, const json_value *v) {
+static INLINE int INLINE_ATTRIBUTE buffer_write_array(buffer *b, const json_value *v) {
   if (buffer_putc(b, '[') < 0)
     return -1;
   json_array_node *array_items = v->u.array.items;
@@ -653,7 +653,7 @@ static int  buffer_write_array(buffer *b, const json_value *v) {
   return 0;
 }
 
-static int  buffer_write_object_indent(buffer *b, const json_value *v, int indent) {
+static INLINE int INLINE_ATTRIBUTE buffer_write_object_indent(buffer *b, const json_value *v, int indent) {
   json_object_node *object_items = v->u.object.items;
   if (object_items == NULL) {
     if (buffer_write(b, "{\n", 2) < 0)
@@ -692,7 +692,7 @@ static int  buffer_write_object_indent(buffer *b, const json_value *v, int inden
   return 0;
 }
 
-static int  buffer_write_object(buffer *b, const json_value *v) {
+static INLINE int INLINE_ATTRIBUTE buffer_write_object(buffer *b, const json_value *v) {
   json_object_node *object_items = v->u.object.items;
   if (object_items == NULL)
     return buffer_write(b, "{}", 2);
@@ -718,7 +718,7 @@ static int  buffer_write_object(buffer *b, const json_value *v) {
   return 0;
 }
 
-static int  buffer_write_value_indent(buffer *b, const json_value *v, int indent) {
+static INLINE int buffer_write_value_indent(buffer *b, const json_value *v, int indent) {
   switch (v->type) {
   case J_NULL:
     return buffer_write(b, "null", 4);
@@ -736,7 +736,7 @@ static int  buffer_write_value_indent(buffer *b, const json_value *v, int indent
   return -1;
 }
 
-static int  buffer_write_value(buffer *b, const json_value *v) {
+static INLINE int buffer_write_value(buffer *b, const json_value *v) {
   switch (v->type) {
   case J_NULL:
     return buffer_write(b, "null", 4);
@@ -756,7 +756,7 @@ static int  buffer_write_value(buffer *b, const json_value *v) {
 
 /* --- buffer helpers --- */
 
-static int  buffer_write(buffer *b, const char *data, int len) {
+static INLINE int INLINE_ATTRIBUTE buffer_write(buffer *b, const char *data, int len) {
   if (len <= 0)
     return 0;
   if (b->pos + len + 1 >= b->cap) {
@@ -775,7 +775,7 @@ static int  buffer_write(buffer *b, const char *data, int len) {
   return 0;
 }
 
-static int  buffer_putc(buffer *b, char c) {
+static INLINE int INLINE_ATTRIBUTE buffer_putc(buffer *b, char c) {
   if (b->pos + 1 >= b->cap) {
     int new_cap = b->cap * 2;
     char *new_buf = (char *)realloc(b->buf, new_cap);
@@ -790,7 +790,7 @@ static int  buffer_putc(buffer *b, char c) {
 
 /* --- json helpers --- */
 
-char *json_stringify(const json_value *v) {
+INLINE char * INLINE_ATTRIBUTE json_stringify(const json_value *v) {
   if (!v)
     return NULL;
   buffer b;
@@ -812,7 +812,7 @@ char *json_stringify(const json_value *v) {
   return final_buf;
 }
 
-static bool  json_array_equal(const json_value *a, const json_value *b) {
+static INLINE bool INLINE_ATTRIBUTE json_array_equal(const json_value *a, const json_value *b) {
   json_array_node *a_node;
   json_array_node *b_node;
   if (a->type != J_ARRAY || b->type != J_ARRAY)
@@ -839,7 +839,7 @@ static bool  json_array_equal(const json_value *a, const json_value *b) {
   return true;
 }
 
-static bool  json_object_equal(const json_value *a, const json_value *b) {
+static INLINE bool INLINE_ATTRIBUTE json_object_equal(const json_value *a, const json_value *b) {
   json_object_node *a_node;
   json_object_node *b_node;
   json_object *e;
@@ -869,7 +869,7 @@ static bool  json_object_equal(const json_value *a, const json_value *b) {
 
 /* --- public API --- */
 
-json_error json_validate(const char **s) {
+INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
   if (**s == '\0')
     return E_NO_DATA;
   if (**s != '{' && **s != '[') {
@@ -1059,7 +1059,7 @@ json_error json_validate(const char **s) {
   return E_INVALID_JSON_DATA;
 }
 
-bool json_parse_iterative(const char *s, json_value *root) {
+INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, json_value *root) {
   if (*s == '\0')
     return false;
   if (*s != '{' && *s != '[') {
@@ -1209,7 +1209,7 @@ bool json_parse_iterative(const char *s, json_value *root) {
   return *s == '\0' && top == -1;
 }
 
-bool json_parse(const char *s, json_value *root) {
+INLINE bool INLINE_ATTRIBUTE json_parse(const char *s, json_value *root) {
   if (*s == '\0')
     return false;
   if (*s != '{' && *s != '[') {
@@ -1246,14 +1246,14 @@ bool json_equal(const json_value *a, const json_value *b) {
   }
 }
 
-void json_reset(void) {
+INLINE void INLINE_ATTRIBUTE json_reset(void) {
   next_array_index = 0;
   next_object_index = 0;
   json_object_node_free_count = JSON_VALUE_POOL_SIZE;
   json_array_node_free_count = JSON_VALUE_POOL_SIZE;
 }
 
-void json_cleanup(void) {
+INLINE void INLINE_ATTRIBUTE json_cleanup(void) {
   memset(json_array_node_pool, 0, JSON_VALUE_POOL_SIZE * sizeof(json_array_node));
   memset(json_object_node_pool, 0, JSON_VALUE_POOL_SIZE * sizeof(json_object_node));
 }
@@ -1290,7 +1290,7 @@ void json_free(json_value *v) {
   v->type = J_NULL;
 }
 
-void json_print(const json_value *v, FILE *out) {
+INLINE void INLINE_ATTRIBUTE json_print(const json_value *v, FILE *out) {
   if (!v) {
     return;
   }

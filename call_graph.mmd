@@ -1,0 +1,11 @@
+graph TD
+    subgraph "Parsing Functions"
+        parse_value_build["parse_value_build"]
+        parse_object_value["parse_object_value"]
+        parse_array_value["parse_array_value"]
+    end
+
+    parse_value_build -- calls --> parse_object_value;
+    parse_value_build -- calls --> parse_array_value;
+    parse_object_value -- recursively calls --> parse_value_build;
+    parse_array_value -- recursively calls --> parse_value_build;
