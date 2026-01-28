@@ -27,6 +27,7 @@
         "ms-python.vscode-python-envs",
         "ms-vscode.test-adapter-converter",
         "cs128.cs128-clang-tidy",
-        "github.copilot"
-    ]
+        "github.copilot",
+        "mermaidchart.vscode-mermaid-chart"
+      ]
 }
