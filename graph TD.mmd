@@ -1,0 +1,21 @@
+graph TD
+    A[json_value] --> B[type: json_type]
+    A --> C[u.string: json_string]
+    A --> D[u.number: json_number]
+    A --> E[u.boolean: json_boolean]
+    A --> F[u.array: json_array]
+    A --> G[u.object: json_object_container]
+
+    F --> H[json_array_node]
+    H --> I[json_value]
+    H --> J[json_array_node]
+
+    G --> K[json_object_node]
+    K --> L[json_object]
+    L --> M[key: json_string]
+    L --> N[value: json_value]
+    K --> O[json_object_node]
+
+    click A "type" _self
+    click H "array element" _self
+    click K "key-value pair" _self

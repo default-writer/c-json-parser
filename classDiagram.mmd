@@ -1,0 +1,76 @@
+classDiagram
+    direction BT
+
+    class json_value {
+        +json_type type
+        +union u
+    }
+
+    class json_type {
+        <<enumeration>>
+        J_NULL
+        J_BOOLEAN
+        J_NUMBER
+        J_STRING
+        J_ARRAY
+        J_OBJECT
+    }
+
+    class json_string {
+        +const char* ptr
+        +size_t len
+    }
+
+    class json_boolean {
+        +const char* ptr
+        +size_t len
+    }
+
+    class json_number {
+        +const char* ptr
+        +size_t len
+    }
+
+    class json_array {
+        +json_array_node* items
+        +json_array_node* last
+    }
+
+    class json_object {
+        +json_object_node* items
+        +json_object_node* last
+    }
+
+    class json_array_node {
+        +json_value item
+        +json_array_node* next
+    }
+
+    class json_object_node {
+        +json_object item
+        +json_object_node* next
+    }
+
+    class json_object {
+        +json_string key
+        +json_value value
+    }
+
+    json_value --> json_type : содержит тип
+    json_value --> json_string : u.string
+    json_value --> json_boolean : u.boolean
+    json_value --> json_number : u.number
+    json_value --> json_array : u.array
+    json_value --> json_object : u.object
+
+    json_array --> json_array_node : items, last
+    json_object --> json_object_node : items, last
+
+    json_array_node --> json_value : item
+    json_array_node --> json_array_node : next
+
+    json_object_node --> json_object : item
+    json_object_node --> json_object_node : next
+
+    json_object --> json_string : key
+    json_object --> json_value : value
