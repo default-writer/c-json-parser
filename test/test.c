@@ -4,7 +4,6 @@
 #define ELEMENT_SIZE 6
 #define ELEMENT_BUFFER_SIZE 10
 
-/* External coverage test declarations */
 extern void test_large_array_0xfffe_elements(void);
 extern void test_comprehensive_uncovered_lines(void);
 extern void test_free_object_node_coverage(void);
@@ -8351,8 +8350,6 @@ int main(void) {
   test_equality_functions_full();
   test_utils_functions();
   test_new_coverage_and_whitespace();
-
-/* Coverage tests for uncovered lines */
   test_large_array_0xfffe_elements();
   test_comprehensive_uncovered_lines();
   test_free_array_node_coverage();
