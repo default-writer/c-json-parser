@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 28, 2026 at 7:32:21 PM UTC
+ *   January 29, 2026 at 10:02:48 AM UTC
  *
  */
 /*
@@ -39,6 +39,7 @@
 #include "json.h"
 
 extern bool whitespace_lookup[LOOKUP_TABLE_SIZE];
+extern const signed char hex_lookup[256];
 
 #define JSON_NULL_LEN 4
 #define JSON_TRUE_LEN 4
@@ -259,16 +260,11 @@ static INLINE bool INLINE_ATTRIBUTE parse_hex4(const char **s, uint16_t *result)
     char c = (*s)[i];
     if (c == '\0')
       return false;
-    if (!isxdigit((unsigned char)c))
+    signed char hex_val = hex_lookup[(unsigned char)c];
+    if (hex_val < 0)
       return false;
     *result <<= 4;
-    if (c >= '0' && c <= '9') {
-      *result |= c - '0';
-    } else if (c >= 'a' && c <= 'f') {
-      *result |= c - 'a' + HEX_OFFSET;
-    } else {
-      *result |= c - 'A' + HEX_OFFSET;
-    }
+    *result |= (unsigned char)hex_val;
   }
   *s += 4;
   return true;
@@ -283,10 +279,10 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
     end += span;
     if (*end == '\0')
       return false;
-#ifdef STRING_VALIDATION    
+#ifdef STRING_VALIDATION
     if (!validate_string_chunk(end - span, span))
       return false;
-#endif    
+#endif
     if (*end == '\"') {
       v->u.string.len = (size_t)(end - p);
       *s = end + 1;
@@ -316,6 +312,8 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
         uint16_t codepoint;
         if (!parse_hex4(&end, &codepoint))
           return false;
+        if (hex_lookup[(unsigned char)*end] >= 0)
+          return false;
         if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) {
           if (end[0] != '\\' || end[1] != 'u')
             return false;
@@ -323,7 +321,6 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
           uint16_t low_surrogate;
           if (!parse_hex4(&end, &low_surrogate))
             return false;
-
           if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END)
             return false;
         } else if (codepoint >= LOW_SURROGATE_START && codepoint <= LOW_SURROGATE_END) {
@@ -790,7 +787,7 @@ static INLINE int INLINE_ATTRIBUTE buffer_putc(buffer *b, char c) {
 
 /* --- json helpers --- */
 
-INLINE char * INLINE_ATTRIBUTE json_stringify(const json_value *v) {
+INLINE char *INLINE_ATTRIBUTE json_stringify(const json_value *v) {
   if (!v)
     return NULL;
   buffer b;
