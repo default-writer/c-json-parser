@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 29, 2026 at 10:02:48 AM UTC
+ *   January 29, 2026 at 6:12:09 PM UTC
  *
  */
 /*
@@ -145,10 +145,12 @@ static INLINE bool INLINE_ATTRIBUTE free_array_node(json_array_node *array_node)
 
 static INLINE json_object_node *INLINE_ATTRIBUTE new_object_node() {
 #ifdef USE_ALLOC
-  return (json_object_node *)calloc(1, sizeof(json_object_node));
+  json_object_node *node = (json_object_node *)calloc(1, sizeof(json_object_node));
+  return node;
 #else
   if (next_object_index < JSON_VALUE_POOL_SIZE) {
     json_object_node *node = &json_object_node_pool[next_object_index++];
+
     return node;
   }
   return NULL;
@@ -231,7 +233,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
 #ifdef STRING_VALIDATION
 static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t len) {
   size_t i = 0;
-#if defined(__SSE2__)
+
   const __m128i limit = _mm_set1_epi8(0x20);
   const __m128i high_bit = _mm_set1_epi8(0x80);
   const __m128i limit_shifted = _mm_xor_si128(limit, high_bit);
@@ -243,7 +245,6 @@ static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t 
       return false;
     }
   }
-#endif
   for (; i < len; i++) {
     if ((unsigned char)s[i] < 0x20) {
       return false;
@@ -270,12 +271,47 @@ static INLINE bool INLINE_ATTRIBUTE parse_hex4(const char **s, uint16_t *result)
   return true;
 }
 
+#if defined(__SSE2__)
+static INLINE size_t INLINE_ATTRIBUTE fast_strcspn(const char *s) {
+  const __m128i quote_vec = _mm_set1_epi8('"');
+  const __m128i escape_vec = _mm_set1_epi8('\\');
+  const int offset = 16;
+  const int block_size = 1024;
+  size_t i = 0;
+  for (; i + offset - 1 < block_size; i += offset) {
+    __m128i chunk = _mm_loadu_si128((const __m128i *)(s + i));
+    __m128i quote_match = _mm_cmpeq_epi8(chunk, quote_vec);
+    __m128i escape_match = _mm_cmpeq_epi8(chunk, escape_vec);
+    __m128i any_match = _mm_or_si128(quote_match, escape_match);
+
+    int mask = _mm_movemask_epi8(any_match);
+    if (mask != 0) {
+      return i + __builtin_ctz(mask);
+    }
+
+    if (s[i + offset - 1] == '\0')
+      break;
+  }
+
+  for (; s[i] != '\0'; i++) {
+    if (s[i] == '"' || s[i] == '\\') {
+      return i;
+    }
+  }
+  return i;
+}
+#endif
+
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) {
   const char *p = *s + 1;
   const char *end = p;
   v->u.string.ptr = p;
   while (true) {
+#if defined(__SSE2__)
+    size_t span = fast_strcspn(end);
+#else
     size_t span = strcspn(end, "\"\\");
+#endif
     end += span;
     if (*end == '\0')
       return false;
