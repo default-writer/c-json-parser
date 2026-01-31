@@ -6992,6 +6992,7 @@ TEST(test_comprehensive_coverage_print_functions) {
   v.u.string.ptr = "hello\n\t\"world";
   v.u.string.len = strlen("hello\n\t\"world");
   json_print(&v, mem_stream);
+  fclose(mem_stream);
   ASSERT_EQUAL(strstr(buffer, "\"hello\\n\\t\\\"world\""), NULL, char *);
   memset(buffer, 0, sizeof(buffer));
 
