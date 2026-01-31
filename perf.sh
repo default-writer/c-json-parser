@@ -33,7 +33,9 @@ temp_file=$(mktemp)
 num_runs=100
 
 for i in $(seq 1 $num_runs); do
-    real_time=$( { time "./test-${target}" > /dev/null; } 2>&1 | grep real | sed 's/m/:/g' | awk -F: '{printf "%.3f", ($1*60)+$2}' )
+    program_output=$( "./test-${target}" 2>&1 )
+    raw_time=$(echo "$program_output" | grep "execution time:" | awk '{print $NF}' | sed 's/.*00:\([0-9]*\)\.\([0-9]*\)/\1\.\2/')
+    real_time=$(echo "$raw_time" | sed 's/^00\./0./')
     if [ -z "$real_time" ]; then
         continue
     fi
