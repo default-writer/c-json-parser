@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 26, 2026 at 6:07:41 PM UTC
+ *   January 30, 2026 at 5:29:37 PM UTC
  *
  */
 /*
@@ -164,23 +164,27 @@ typedef struct json_array_node {
 /**
  * @brief Parses a JSON string and creates a tree of `json_value` objects.
  * @param s The JSON string to parse.
+ * @param len The length of the JSON string.
  * @param root A pointer to the root `json_value` where the parsed JSON will be stored.
  * @return `true` if the JSON was successfully parsed, `false` otherwise.
  */
-bool json_parse(const char *s, json_value *root);
+bool json_parse(const char *s, size_t len, json_value *root);
 
 /**
  * @param s The JSON string to parse.
+ * @param len The length of the JSON string.
+ * @param root A pointer to the root json_value, or NULL on error.
  * @return A pointer to the root json_value, or NULL on error.
  */
-bool json_parse_iterative(const char *s, json_value *root);
+bool json_parse_iterative(const char *s, size_t len, json_value *root);
 
 /**
  * @brief Validates a JSON string.
  * @param s A pointer to a const char* that represents the JSON string to validate.
+ * @param len The length of the JSON string.
  * @return An error code of the last position of parsed character. Returns E_NO_ERROR if string is a valid JSON, non-zero error code otherwise
  */
-json_error json_validate(const char **s);
+json_error json_validate(const char **s, size_t len);
 
 /**
  * @brief Compares two JSON strings for structural equality.

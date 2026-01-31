@@ -10,9 +10,10 @@ TEST(test_c_json_parser) {
   /* parse into internal json_value* */
   long long start_time = utils_get_time();
   unsigned long i;
+  size_t len = strlen(json);
   for (i = 0; i < TEST_COUNT; i++) {
     memset(&v, 0, sizeof(json_value));
-    if (!json_parse_iterative(json, &v)) {
+    if (!json_parse_iterative(json, len, &v)) {
       break;
     }
     json_reset();

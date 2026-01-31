@@ -166,10 +166,10 @@ build main: phony test.stamp
 default main
 
 # --- .s target ---
-build src.json.s: asm src/json.c
-build test.test.s: asm test/test.c
-build utils.utils.s: asm utils/utils.c
-build .s: phony test.test.s src.json.s utils.utils.s
+build src/json.s: asm src/json.c
+build test/test.s: asm test/test.c
+build utils/utils.s: asm utils/utils.c
+build .s: phony test/test.s src/json.s utils/utils.s
 
 # --- test-gprof-coverage target (gcc) ---
 cflags_gprof_coverage = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -DSTRING_VALIDATION -DNDEBUG -fprofile-arcs -ftest-coverage

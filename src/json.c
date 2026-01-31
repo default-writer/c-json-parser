@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 29, 2026 at 6:12:09 PM UTC
+ *   January 31, 2026 at 10:23:03 AM UTC
  *
  */
 /*
@@ -74,10 +74,10 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
 
 static void skip_whitespace(const char **s);
 static bool parse_number(const char **s, json_value *v);
-static bool parse_string(const char **s, json_value *v);
-static bool parse_array_value(const char **s, json_value *v);
-static bool parse_object_value(const char **s, json_value *v);
-static bool parse_value_build(const char **s, json_value *v);
+static bool parse_string(const char **s, const char *end, json_value *v);
+static bool parse_array_value(const char **s, const char *end, json_value *v);
+static bool parse_object_value(const char **s, const char *end, json_value *v);
+static bool parse_value_build(const char **s, const char *end, json_value *v);
 
 static void print_indent(FILE *out, int indent);
 static void print_array_compact(const json_value *v, FILE *out);
@@ -237,7 +237,8 @@ static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t 
   const __m128i limit = _mm_set1_epi8(0x20);
   const __m128i high_bit = _mm_set1_epi8(0x80);
   const __m128i limit_shifted = _mm_xor_si128(limit, high_bit);
-  for (; i + 15 < len; i += 16) {
+  const size_t offset = 16;
+  for (; i + offset - 1 < len; i += offset) {
     __m128i chunk = _mm_loadu_si128((const __m128i *)(s + i));
     __m128i chunk_shifted = _mm_xor_si128(chunk, high_bit);
     __m128i result_mask = _mm_cmplt_epi8(chunk_shifted, limit_shifted);
@@ -254,12 +255,12 @@ static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t 
 }
 #endif
 
-static INLINE bool INLINE_ATTRIBUTE parse_hex4(const char **s, uint16_t *result) {
+static INLINE bool INLINE_ATTRIBUTE parse_hex4(const char **s, const char* end, uint16_t *result) {
   *result = 0;
   int i;
   for (i = 0; i < 4; ++i) {
     char c = (*s)[i];
-    if (c == '\0')
+    if (*s == end)
       return false;
     signed char hex_val = hex_lookup[(unsigned char)c];
     if (hex_val < 0)
@@ -272,27 +273,23 @@ static INLINE bool INLINE_ATTRIBUTE parse_hex4(const char **s, uint16_t *result)
 }
 
 #if defined(__SSE2__)
-static INLINE size_t INLINE_ATTRIBUTE fast_strcspn(const char *s) {
+static INLINE size_t INLINE_ATTRIBUTE fast_strcspn(const char *s, size_t len) {
   const __m128i quote_vec = _mm_set1_epi8('"');
   const __m128i escape_vec = _mm_set1_epi8('\\');
-  const int offset = 16;
-  const int block_size = 1024;
+  const size_t offset = 16;
   size_t i = 0;
-  for (; i + offset - 1 < block_size; i += offset) {
+  for (; i + offset - 1 < len; i += offset) {
     __m128i chunk = _mm_loadu_si128((const __m128i *)(s + i));
     __m128i quote_match = _mm_cmpeq_epi8(chunk, quote_vec);
     __m128i escape_match = _mm_cmpeq_epi8(chunk, escape_vec);
     __m128i any_match = _mm_or_si128(quote_match, escape_match);
-
     int mask = _mm_movemask_epi8(any_match);
     if (mask != 0) {
       return i + __builtin_ctz(mask);
     }
-
     if (s[i + offset - 1] == '\0')
       break;
   }
-
   for (; s[i] != '\0'; i++) {
     if (s[i] == '"' || s[i] == '\\') {
       return i;
@@ -302,33 +299,33 @@ static INLINE size_t INLINE_ATTRIBUTE fast_strcspn(const char *s) {
 }
 #endif
 
-static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end, json_value *v) {
   const char *p = *s + 1;
-  const char *end = p;
   v->u.string.ptr = p;
   while (true) {
 #if defined(__SSE2__)
-    size_t span = fast_strcspn(end);
+    const size_t len = end - p;
+    size_t span = fast_strcspn(p, len);
 #else
-    size_t span = strcspn(end, "\"\\");
+    size_t span = strcspn(p, "\"\\");
 #endif
-    end += span;
-    if (*end == '\0')
+    p += span;
+    if (p == end)
       return false;
 #ifdef STRING_VALIDATION
-    if (!validate_string_chunk(end - span, span))
+    if (!validate_string_chunk(p - span, span))
       return false;
 #endif
-    if (*end == '\"') {
-      v->u.string.len = (size_t)(end - p);
-      *s = end + 1;
+    if (*p == '\"') {
+      v->u.string.len = p - *s - 1;
+      *s = p + 1;
       return true;
     }
-    if (*end == '\\') {
-      end++;
-      if (*end == '\0')
+    if (*p == '\\') {
+      p++;
+      if (p == end)
         return false;
-      switch (*end) {
+      switch (*p) {
       case '\"':
       case '\\':
       case '/':
@@ -337,25 +334,25 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
       case 'n':
       case 'r':
       case 't':
-        end++;
-        if (*end == '\0')
+        p++;
+        if (p == end)
           return false;
         break;
       case 'u':
-        end++;
-        if (*end == '\0')
+        p++;
+        if (p == end)
           return false;
         uint16_t codepoint;
-        if (!parse_hex4(&end, &codepoint))
+        if (!parse_hex4(&p, end, &codepoint))
           return false;
-        if (hex_lookup[(unsigned char)*end] >= 0)
+        if (p == end || hex_lookup[(unsigned char)*p] >= 0)
           return false;
         if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) {
-          if (end[0] != '\\' || end[1] != 'u')
+          if (p == end || p[0] != '\\' || p[1] != 'u')
             return false;
           end += 2;
           uint16_t low_surrogate;
-          if (!parse_hex4(&end, &low_surrogate))
+          if (!parse_hex4(&p, end, &low_surrogate))
             return false;
           if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END)
             return false;
@@ -372,10 +369,10 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, json_value *v) 
   }
 }
 
-static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, const char *end, json_value *v) {
   while (true) {
     skip_whitespace(s);
-    if (**s == '\0')
+    if (*s == end)
       return false;
     json_array_node *array_node = new_array_node();
     if (array_node == NULL) {
@@ -395,13 +392,13 @@ static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, json_value
       v->u.array.last = array_node;
       last->next = array_node;
     } while (0);
-    if (!parse_value_build(s, &array_node->item)) {
+    if (!parse_value_build(s, end, &array_node->item)) {
       free_array_node(array_node);
       v->u.array.items = NULL;
       return false;
     }
     skip_whitespace(s);
-    if (**s == '\0')
+    if (*s == end)
       return false;
     if (**s == ',') {
       (*s)++;
@@ -415,28 +412,28 @@ static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, json_value
   }
 }
 
-static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, const char *end, json_value *v) {
   while (true) {
     skip_whitespace(s);
-    if (**s == '\0')
+    if (*s == end)
       return false;
     if (**s != '\"') {
       return false;
     }
     json_value key;
     key.type = J_STRING;
-    if (!parse_string(s, &key)) {
+    if (!parse_string(s, end, &key)) {
       return false;
     }
     skip_whitespace(s);
-    if (**s == '\0')
+    if (*s == end)
       return false;
     if (**s != ':') {
       return false;
     }
     (*s)++;
     skip_whitespace(s);
-    if (**s == '\0')
+    if (*s == end)
       return false;
     json_object_node *object_node = NULL;
     json_object_node *object_items = v->u.object.items;
@@ -471,13 +468,13 @@ static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, json_valu
     } else {
       object_node = object_items;
     }
-    if (!parse_value_build(s, &object_node->item.value)) {
+    if (!parse_value_build(s, end, &object_node->item.value)) {
       free_object_node(object_node);
       v->u.object.items = NULL;
       return false;
     }
     skip_whitespace(s);
-    if (**s == '\0')
+    if (*s == end)
       return false;
     if (**s == ',') {
       (*s)++;
@@ -491,38 +488,40 @@ static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, json_valu
   }
 }
 
-static bool parse_value_build(const char **s, json_value *v) {
+static bool parse_value_build(const char **s, const char *end, json_value *v) {
   if (**s == '{') {
     v->type = J_OBJECT;
     v->u.object.items = NULL;
     v->u.object.last = NULL;
     (*s)++;
     skip_whitespace(s);
-    if (**s == '\0')
+    if (*s == end)
       return false;
     if (**s == '}') {
       (*s)++;
       return true;
     }
-    return parse_object_value(s, v);
+    return parse_object_value(s, end, v);
   }
   if (**s == '[') {
     v->type = J_ARRAY;
     v->u.array.items = NULL;
     v->u.array.last = NULL;
     (*s)++;
+    if (*s == end)
+      return false;
     skip_whitespace(s);
-    if (**s == '\0')
+    if (*s == end)
       return false;
     if (**s == ']') {
       (*s)++;
       return true;
     }
-    return parse_array_value(s, v);
+    return parse_array_value(s, end, v);
   }
   if (**s == '\"') {
     v->type = J_STRING;
-    return parse_string(s, v);
+    return parse_string(s, end, v);
   }
   if (**s == 'n' && *(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
     v->type = J_NULL;
@@ -902,22 +901,23 @@ static INLINE bool INLINE_ATTRIBUTE json_object_equal(const json_value *a, const
 
 /* --- public API --- */
 
-INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
+INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
   if (**s == '\0')
     return E_NO_DATA;
   if (**s != '{' && **s != '[') {
     return E_INVALID_JSON;
   }
+  const char *end = *s + len;
   json_value *stack[JSON_STACK_SIZE];
   json_value v;
   memset(&v, 0, sizeof(json_value));
   int top = -1;
   json_value *current = &v;
   while (true) {
-    if (**s == '\0')
+    if (*s == end)
       break;
     skip_whitespace(s);
-    if (**s == '\0')
+    if (*s == end)
       break;
     if (current) {
       do {
@@ -945,7 +945,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
         }
         if (**s == '\"') {
           current->type = J_STRING;
-          if (parse_string(s, current)) {
+          if (parse_string(s, end, current)) {
             current = NULL;
             break;
           }
@@ -1001,7 +1001,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
       if (**s == '}') {
         top--;
         (*s)++;
-        if (**s == '\0') {
+        if (*s == end) {
           break;
         }
         current = NULL;
@@ -1011,7 +1011,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
         if (**s == ',') {
           (*s)++;
           skip_whitespace(s);
-          if (**s == '\0' || **s == '}') {
+          if (*s == end || **s == '}') {
             return E_EXPECTED_OBJECT_ELEMENT;
           }
         } else {
@@ -1022,7 +1022,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
         return E_OBJECT_KEY;
       }
       json_value key;
-      if (!parse_string(s, &key))
+      if (!parse_string(s, end, &key))
         return E_EXPECTED_OBJECT_KEY;
       skip_whitespace(s);
       if (**s != ':') {
@@ -1030,7 +1030,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
       }
       (*s)++;
       skip_whitespace(s);
-      if (**s == '\0') {
+      if (*s == end) {
         return E_EXPECTED_OBJECT_VALUE;
       }
       json_object_node *node = new_object_node();
@@ -1050,7 +1050,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
       if (**s == ']') {
         top--;
         (*s)++;
-        if (**s == '\0') {
+        if (*s == end) {
           break;
         }
         current = NULL;
@@ -1060,7 +1060,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
         if (**s == ',') {
           (*s)++;
           skip_whitespace(s);
-          if (**s == '\0' || **s == ']') {
+          if (*s == end || **s == ']') {
             return E_EXPECTED_ARRAY_ELEMENT;
           }
         } else {
@@ -1084,7 +1084,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
     }
   }
   if (top == -1) {
-    if (**s == '\0')
+    if (*s == end)
       return E_NO_ERROR;
     else
       return E_INVALID_DATA;
@@ -1092,12 +1092,13 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s) {
   return E_INVALID_JSON_DATA;
 }
 
-INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, json_value *root) {
+INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, json_value *root) {
   if (*s == '\0')
     return false;
   if (*s != '{' && *s != '[') {
     return false;
   }
+  const char *end = s + len;
   json_value *stack[JSON_STACK_SIZE];
   int top = -1;
   json_value *current = root;
@@ -1129,7 +1130,7 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, json_value *roo
         break;
       case '\"':
         current->type = J_STRING;
-        if (!parse_string(&s, current))
+        if (!parse_string(&s, end, current))
           return false;
         current = NULL;
         break;
@@ -1196,7 +1197,7 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, json_value *roo
       if (*s != '\"')
         return false;
       json_value key;
-      if (!parse_string(&s, &key))
+      if (!parse_string(&s, end, &key))
         return false;
       skip_whitespace(&s);
       if (*s != ':')
@@ -1242,13 +1243,16 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, json_value *roo
   return *s == '\0' && top == -1;
 }
 
-INLINE bool INLINE_ATTRIBUTE json_parse(const char *s, json_value *root) {
+INLINE bool INLINE_ATTRIBUTE json_parse(const char *s, size_t len, json_value *root) {
   if (*s == '\0')
+    return false;
+  if (len == 0)
     return false;
   if (*s != '{' && *s != '[') {
     return false;
   }
-  return parse_value_build(&s, root) && *s == '\0';
+  const char *end = s + len;
+  return parse_value_build(&s, end, root) && *s == '\0';
 }
 
 bool json_equal(const json_value *a, const json_value *b) {

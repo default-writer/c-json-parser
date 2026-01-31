@@ -122,8 +122,8 @@
     "editor.defaultFormatter": "vscode.json-language-features"
   },
   "disasexpl.associations": {
-    "**/*.c": "${fileDirname}/${fileBasenameNoExtension}.s",
-    "**/*.cpp": "${fileDirname}/${fileBasenameNoExtension}.s"
+    "**/*.c": "${workspaceFolder}/${relativeFileDirname}/${fileBasenameNoExtension}.s",
+    "**/*.cpp": "${workspaceFolder}/${relativeFileDirname}/${fileBasenameNoExtension}.s"
   },
   "clangd.arguments": [
     "--clang-tidy-checks=-readability-magic-numbers"
