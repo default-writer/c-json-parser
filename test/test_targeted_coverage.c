@@ -20,7 +20,7 @@ TEST(test_free_array_node_coverage) {
     json_value arr;
     memset(&arr, 0, sizeof(json_value));
 
-/* Create a simple array */
+    /* Create a simple array */
     char json_str[ELEMENT_BUFFER_SIZE_20];
     sprintf(json_str, "[%d]", i);
     const size_t len = strlen(json_str);
@@ -47,7 +47,7 @@ TEST(test_free_object_node_coverage) {
     json_value obj;
     memset(&obj, 0, sizeof(json_value));
 
-/* Create a simple object */
+    /* Create a simple object */
     char json_str[ELEMENT_BUFFER_SIZE_30];
     sprintf(json_str, "{\"key%d\":%d}", i, i);
     const size_t len = strlen(json_str);
@@ -67,7 +67,7 @@ TEST(test_skip_whitespace_coverage) {
   json_value test_val;
   memset(&test_val, 0, sizeof(json_value));
 
-/* Test with leading whitespace */
+  /* Test with leading whitespace */
   const char *source1 = "[ 1,2,3 ]";
   const size_t len1 = strlen(source1);
   bool result = json_parse(source1, len1, &test_val);
@@ -82,7 +82,7 @@ TEST(test_number_parsing_edge_cases) {
   /* Test lines 182, 202, 211: number parsing edge cases */
   json_value test_val;
 
-/* Test line 182: negative number parsing */
+  /* Test line 182: negative number parsing */
   memset(&test_val, 0, sizeof(json_value));
   const char *source2 = "[ -123.456 ]";
   const size_t len2 = strlen(source2);
@@ -91,7 +91,7 @@ TEST(test_number_parsing_edge_cases) {
   ASSERT_EQ(test_val.u.array.items->item.type, J_NUMBER);
   json_free(&test_val);
 
-/* Test line 202: decimal parsing progression */
+  /* Test line 202: decimal parsing progression */
   memset(&test_val, 0, sizeof(json_value));
   const char *source3 = "[ 123.456789 ]";
   const size_t len3 = strlen(source3);
@@ -100,7 +100,7 @@ TEST(test_number_parsing_edge_cases) {
   ASSERT_EQ(test_val.u.array.items->item.type, J_NUMBER);
   json_free(&test_val);
 
-/* Test line 211: exponent with + sign */
+  /* Test line 211: exponent with + sign */
   memset(&test_val, 0, sizeof(json_value));
   const char *source4 = "[ 1e+10 ]";
   const size_t len4 = strlen(source4);
@@ -116,7 +116,7 @@ TEST(test_string_parsing_complex_cases) {
   /* Test lines 282-325: parse_string complex cases */
   json_value test_val;
 
-/* Test line 299: quote in string */
+  /* Test line 299: quote in string */
   memset(&test_val, 0, sizeof(json_value));
   const char *source5 = "[\"test\\\"quote\"]";
   const size_t len5 = strlen(source5);
@@ -126,7 +126,7 @@ TEST(test_string_parsing_complex_cases) {
     json_free(&test_val);
   }
 
-/* Test line 311: unicode escape */
+  /* Test line 311: unicode escape */
   memset(&test_val, 0, sizeof(json_value));
   const char *source6 = "[\"test\\u0041\"]";
   const size_t len6 = strlen(source6);
@@ -136,14 +136,14 @@ TEST(test_string_parsing_complex_cases) {
     json_free(&test_val);
   }
 
-/* Test line 320: invalid surrogate pair */
+  /* Test line 320: invalid surrogate pair */
   memset(&test_val, 0, sizeof(json_value));
   const char *source7 = "[\"test\\uDC00\"]";
   const size_t len7 = strlen(source7);
   bool invalid_surrogate = json_parse(source7, len7, &test_val);
   ASSERT_FALSE(invalid_surrogate); /* Should fail at line 321 */
 
-/* Test line 325: valid surrogate pair */
+  /* Test line 325: valid surrogate pair */
   memset(&test_val, 0, sizeof(json_value));
   const char *source8 = "[\"test\\uD83D\\uDE00\"]";
   const size_t len8 = strlen(source8);
@@ -161,7 +161,7 @@ TEST(test_string_escape_printing_coverage) {
   json_value test_val;
   memset(&test_val, 0, sizeof(json_value));
 
-/* Test backslash and quote escapes (lines 535-538) */
+  /* Test backslash and quote escapes (lines 535-538) */
   const char *source9 = "[\"\\\\\\\"\"]";
   const size_t len9 = strlen(source9);
   bool escape_result = json_parse(source9, len9, &test_val);
@@ -175,7 +175,7 @@ TEST(test_string_escape_printing_coverage) {
     json_free(&test_val);
   }
 
-/* Test control character escapes (lines 538-543) */
+  /* Test control character escapes (lines 538-543) */
   memset(&test_val, 0, sizeof(json_value));
   const char *source10 = "[\"test\\b\\f\\r\"]";
   const size_t len10 = strlen(source10);
@@ -198,7 +198,7 @@ TEST(test_print_value_compact_coverage) {
   json_value test_val;
   memset(&test_val, 0, sizeof(json_value));
 
-/* Test compact array printing */
+  /* Test compact array printing */
   const char *source11 = "[1,2,3]";
   const size_t len11 = strlen(source11);
   bool result = json_parse(source11, len11, &test_val);
@@ -220,7 +220,7 @@ TEST(test_print_value_all_types_coverage) {
   json_value test_val;
   memset(&test_val, 0, sizeof(json_value));
 
-/* Test J_NULL (lines 600-602) */
+  /* Test J_NULL (lines 600-602) */
   memset(&test_val, 0, sizeof(json_value));
   const char *source12 = "[null]";
   const size_t len12 = strlen(source12);
@@ -235,7 +235,7 @@ TEST(test_print_value_all_types_coverage) {
     json_free(&test_val);
   }
 
-/* Test J_BOOLEAN (lines 603-605) */
+  /* Test J_BOOLEAN (lines 603-605) */
   memset(&test_val, 0, sizeof(json_value));
   const char *source13 = "[true]";
   const size_t len13 = strlen(source13);
@@ -250,7 +250,7 @@ TEST(test_print_value_all_types_coverage) {
     json_free(&test_val);
   }
 
-/* Test J_NUMBER (lines 606-608) */
+  /* Test J_NUMBER (lines 606-608) */
   memset(&test_val, 0, sizeof(json_value));
   const char *source14 = "[123.456]";
   const size_t len14 = strlen(source14);
@@ -265,7 +265,7 @@ TEST(test_print_value_all_types_coverage) {
     json_free(&test_val);
   }
 
-/* Test J_ARRAY (lines 612-614) */
+  /* Test J_ARRAY (lines 612-614) */
   memset(&test_val, 0, sizeof(json_value));
   const char *source15 = "[1,2,3]";
   const size_t len15 = strlen(source15);
@@ -288,12 +288,12 @@ TEST(test_json_stringify_buffer_error_coverage) {
 
   /* Since forcing realloc to fail is non-deterministic, we focus on */
   /* creating a test that definitely triggers the realloc call path */
-  
+
   /* Create a JSON value that will force buffer expansion beyond initial size */
   json_value test_val;
   memset(&test_val, 0, sizeof(json_value));
   test_val.type = J_STRING;
-  
+
   /* Use a string that will exceed the initial MAX_BUFFER_SIZE (256) */
   /* to force the realloc call at line 846 in json_stringify */
   char large_string[ELEMENT_BUFFER_SIZE_300];
@@ -301,10 +301,10 @@ TEST(test_json_stringify_buffer_error_coverage) {
   large_string[ELEMENT_BUFFER_SIZE_300 - 1] = '\0';
   test_val.u.string.ptr = large_string;
   test_val.u.string.len = ELEMENT_BUFFER_SIZE_300 - 1;
-  
+
   /* This will trigger buffer growth and the realloc call */
   char *output = json_stringify(&test_val);
-  
+
   /* Whether realloc succeeds or fails, we've exercised the code path */
   /* If realloc fails (lines 848-849), output will be NULL */
   /* If realloc succeeds, output will contain the stringified JSON */
@@ -314,7 +314,7 @@ TEST(test_json_stringify_buffer_error_coverage) {
 
   /* Test with NULL input to exercise the early return path */
   char *null_output = json_stringify(NULL);
-  
+
   ASSERT_PTR_NULL(null_output);
 
   END_TEST;

@@ -13,7 +13,7 @@ TEST(test_large_array_0xfffe_elements) {
     json_value val;
     memset(&val, 0, sizeof(json_value));
 
-/* Create arrays with varying sizes to consume pool */
+    /* Create arrays with varying sizes to consume pool */
     char json_str[pool_size];
     sprintf(json_str, "[%d,%d,%d]", i, i + 1, i + 2);
     const size_t len = strlen(json_str);
