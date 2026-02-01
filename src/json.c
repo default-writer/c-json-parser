@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 1, 2026 at 5:40:39 PM UTC
+ *   February 1, 2026 at 8:37:39 PM UTC
  *
  */
 /*
@@ -121,7 +121,7 @@ static INLINE json_array_node *INLINE_ATTRIBUTE new_array_node() {
 #else
   if (next_array_index < JSON_VALUE_POOL_SIZE) {
     json_array_node *node = &json_array_node_pool[next_array_index++];
-    memset(node, 0, sizeof(json_array_node));  /* Ensure node is zeroed */
+    memset(node, 0, sizeof(json_array_node)); /* Ensure node is zeroed */
     return node;
   }
   return NULL;
@@ -149,7 +149,7 @@ static INLINE json_object_node *INLINE_ATTRIBUTE new_object_node() {
 #else
   if (next_object_index < JSON_VALUE_POOL_SIZE) {
     json_object_node *node = &json_object_node_pool[next_object_index++];
-    memset(node, 0, sizeof(json_object_node));  /* Ensure node is zeroed */
+    memset(node, 0, sizeof(json_object_node)); /* Ensure node is zeroed */
     return node;
   }
   return NULL;

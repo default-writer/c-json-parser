@@ -43,7 +43,7 @@ TEST(test_memory_leaks) {
   memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */
-  bool parsed =json_parse(source, strlen(source), &v);
+  bool parsed = json_parse(source, strlen(source), &v);
   ASSERT_TRUE(parsed);
   ASSERT_PTR_NOT_NULL(&v);
 
