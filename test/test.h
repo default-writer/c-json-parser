@@ -35,6 +35,21 @@
     tests_passed = 0;   \
   } while (0)
 
+#define RUN_TEST(test_func)                     \
+  do {                                          \
+    int i = 1;                                  \
+    if (argc == 1) {                            \
+      test_func();                              \
+    } else {                                    \
+      while (i < argc) {                        \
+        if (strcmp(argv[i], #test_func) == 0) { \
+          test_func();                          \
+        }                                       \
+        i++;                                    \
+      }                                         \
+    }                                           \
+  } while (0)
+
 #define TEST_SUITE(name)                                                                         \
   do {                                                                                           \
     printf("===============================================================================\n"); \
