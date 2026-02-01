@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 31, 2026 at 2:12:48 PM UTC
+ *   February 1, 2026 at 5:07:11 PM UTC
  *
  */
 /*
@@ -38,8 +38,6 @@
 
 #ifndef JSON_H
 #define JSON_H
-
-#include <sys/types.h>
 
 /* Memory pool and buffer size constants */
 #define DICTIONARY_SIZE 16          /* Size of lookup dictionary for parsing optimization */
