@@ -68,7 +68,54 @@ TEST(test_parse_string_full_coverage) {
   size_t test9_len = strlen(test9);
   memset(&test_val, 0, sizeof(json_value));
   bool result9 = json_parse(test9, test9_len, &test_val);
-  ASSERT_FALSE(result9);
+  ASSERT_TRUE(result9);  /* Lone low surrogate is valid according to ECMA-404 */
+  ASSERT_EQ(test_val.u.array.items->item.type, J_STRING);
+  json_free(&test_val);
+
+  /* Test lone high surrogate */
+  const char *test10 = "[\"\\uD83D\"]";
+  size_t test10_len = strlen(test10);
+  memset(&test_val, 0, sizeof(json_value));
+  bool result10 = json_parse(test10, test10_len, &test_val);
+  ASSERT_TRUE(result10);  /* Lone high surrogate is valid according to ECMA-404 */
+  ASSERT_EQ(test_val.u.array.items->item.type, J_STRING);
+  json_free(&test_val);
+
+  /* Test valid surrogate pair */
+  const char *test11 = "[\"\\uD83D\\uDE00\"]";
+  size_t test11_len = strlen(test11);
+  memset(&test_val, 0, sizeof(json_value));
+  bool result11 = json_parse(test11, test11_len, &test_val);
+  ASSERT_TRUE(result11);  /* Valid surrogate pair */
+  ASSERT_EQ(test_val.u.array.items->item.type, J_STRING);
+  json_free(&test_val);
+
+  /* Test invalid surrogate pair (low followed by high) */
+  const char *test12 = "[\"\\uDC00\\uD83D\"]";
+  size_t test12_len = strlen(test12);
+  memset(&test_val, 0, sizeof(json_value));
+  bool result12 = json_parse(test12, test12_len, &test_val);
+  ASSERT_TRUE(result12);  /* Both surrogates individually valid, order doesn't matter */
+  ASSERT_EQ(test_val.u.array.items->item.type, J_STRING);
+  json_free(&test_val);
+
+  /* Test edge of BMP Unicode characters */
+  const char *test13 = "[\"\\uFFFF\"]";
+  size_t test13_len = strlen(test13);
+  memset(&test_val, 0, sizeof(json_value));
+  bool result13 = json_parse(test13, test13_len, &test_val);
+  ASSERT_TRUE(result13);  /* Edge of BMP character (should be valid) */
+  ASSERT_EQ(test_val.u.array.items->item.type, J_STRING);
+  json_free(&test_val);
+
+  /* Test basic Latin characters */
+  const char *test14 = "[\"\\u0041\\u0042\\u0043\"]";
+  size_t test14_len = strlen(test14);
+  memset(&test_val, 0, sizeof(json_value));
+  bool result14 = json_parse(test14, test14_len, &test_val);
+  ASSERT_TRUE(result14);  /* Basic Latin 'ABC' */
+  ASSERT_EQ(test_val.u.array.items->item.type, J_STRING);
+  json_free(&test_val);
 
   END_TEST;
 }

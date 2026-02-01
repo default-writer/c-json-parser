@@ -136,22 +136,23 @@ TEST(test_string_parsing_complex_cases) {
     json_free(&test_val);
   }
 
-  /* Test line 320: invalid surrogate pair */
+  /* Test line 320: lone low surrogate (valid according to ECMA-404) */
   memset(&test_val, 0, sizeof(json_value));
   const char *source7 = "[\"test\\uDC00\"]";
   const size_t len7 = strlen(source7);
-  bool invalid_surrogate = json_parse(source7, len7, &test_val);
-  ASSERT_FALSE(invalid_surrogate); /* Should fail at line 321 */
+  bool rfc8259_valid_surrogate = json_parse(source7, len7, &test_val);
+  ASSERT_TRUE(rfc8259_valid_surrogate);
+  ASSERT_EQ(test_val.u.array.items->item.type, J_STRING);
+  json_free(&test_val);
 
   /* Test line 325: valid surrogate pair */
   memset(&test_val, 0, sizeof(json_value));
   const char *source8 = "[\"test\\uD83D\\uDE00\"]";
   const size_t len8 = strlen(source8);
   bool valid_surrogate = json_parse(source8, len8, &test_val);
-  if (valid_surrogate) {
-    ASSERT_EQ(test_val.u.array.items->item.type, J_STRING);
-    json_free(&test_val);
-  }
+  ASSERT_TRUE(valid_surrogate);
+  ASSERT_EQ(test_val.u.array.items->item.type, J_STRING);
+  json_free(&test_val);
 
   END_TEST;
 }

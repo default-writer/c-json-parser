@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   January 31, 2026 at 10:23:03 AM UTC
+ *   February 1, 2026 at 5:40:39 PM UTC
  *
  */
 /*
@@ -345,18 +345,11 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
           return false;
         if (p == end || hex_lookup[(unsigned char)*p] >= 0)
           return false;
-        if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) {
-          if (p == end || p[0] != '\\' || p[1] != 'u')
-            return false;
-          p += 2;
-          uint16_t low_surrogate;
-          if (!parse_hex4(&p, end, &low_surrogate))
-            return false;
-          if (low_surrogate < LOW_SURROGATE_START || low_surrogate > LOW_SURROGATE_END)
-            return false;
-        } else if (codepoint >= LOW_SURROGATE_START && codepoint <= LOW_SURROGATE_END) {
-          return false;
-        }
+        /* According to ECMA-404 and RFC 7159, all Unicode code points are allowed
+         * except for control characters U+0000 to U+001F, which must be escaped.
+         * Since this is an escaped sequence, all code points including lone
+         * surrogates are valid. */
+        break;
         break;
       default:
         return false;
