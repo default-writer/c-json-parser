@@ -350,7 +350,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
         if (codepoint >= HIGH_SURROGATE_START && codepoint <= HIGH_SURROGATE_END) {
           if (p == end || p[0] != '\\' || p[1] != 'u')
             return false;
-          end += 2;
+          p += 2;
           uint16_t low_surrogate;
           if (!parse_hex4(&p, end, &low_surrogate))
             return false;
@@ -1332,4 +1332,53 @@ INLINE void INLINE_ATTRIBUTE json_print(const json_value *v, FILE *out) {
     return;
   }
   print_value(v, 0, out);
+}
+
+INLINE const char *INLINE_ATTRIBUTE json_error_string(json_error error) {
+  switch (error) {
+  case E_NO_ERROR:
+    return "No error occurred";
+  case E_NO_DATA:
+    return "No data provided or empty input";
+  case E_INVALID_JSON:
+    return "Invalid JSON structure";
+  case E_INVALID_JSON_DATA:
+    return "Invalid data within JSON structure";
+  case E_STACK_OVERFLOW_OBJECT:
+    return "Stack overflow while parsing object";
+  case E_STACK_OVERFLOW_ARRAY:
+    return "Stack overflow while parsing array";
+  case E_OBJECT_KEY:
+    return "Invalid object key format";
+  case E_OBJECT_VALUE:
+    return "Invalid object value";
+  case E_EXPECTED_OBJECT:
+    return "Expected object but found different type";
+  case E_EXPECTED_ARRAY:
+    return "Expected array but found different type";
+  case E_EXPECTED_STRING:
+    return "Expected string but found different type";
+  case E_EXPECTED_BOOLEAN:
+    return "Expected boolean but found different type";
+  case E_EXPECTED_NULL:
+    return "Expected null but found different type";
+  case E_INVALID_DATA:
+    return "Invalid data format";
+  case E_MAILFORMED_JSON:
+    return "Malformed JSON structure";
+  case E_UNKNOWN_ERROR:
+    return "Unknown or unexpected error";
+  case E_NULL:
+    return "Null pointer encountered";
+  case E_EXPECTED_OBJECT_KEY:
+    return "Object key with null pointer";
+  case E_EXPECTED_OBJECT_VALUE:
+    return "Object value with null pointer";
+  case E_EXPECTED_ARRAY_ELEMENT:
+    return "Array element with null pointer";
+  case E_EXPECTED_OBJECT_ELEMENT:
+    return "Object element with null pointer";
+  default:
+    return "Invalid error code";
+  }
 }

@@ -17,6 +17,8 @@ extern void test_json_stringify_buffer_error_coverage(void);
 extern void test_free_array_node_coverage(void);
 extern void test_parse_string_full_coverage(void);
 extern void test_parse_hex4(void);
+extern void test_json_error_string_function(void);
+extern void test_json_error_string_with_validate(void);
 
 #define LCPRN_RAND_MULTIPLIER 1664525
 #define LCPRN_RAND_INCREMENT 1013904223
@@ -8401,5 +8403,7 @@ int main(void) {
   test_json_stringify_buffer_error_coverage();
   test_parse_string_full_coverage();
   test_parse_hex4();
+  test_json_error_string_function();
+  test_json_error_string_with_validate();
   TEST_FINALIZE;
 }

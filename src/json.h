@@ -304,6 +304,18 @@ void json_free(json_value *v);
  */
 void json_print(const json_value *v, FILE *out);
 
+/**
+ * @brief Returns a human-readable string description for a JSON error code.
+ *
+ * This function converts json_error enumeration values to descriptive
+ * strings that explain the specific error that occurred during JSON parsing.
+ * Useful for debugging and error reporting.
+ *
+ * @param error The json_error code to get description for
+ * @return A constant string containing the error description, never NULL
+ */
+const char *json_error_string(json_error error);
+
 #ifdef __cplusplus
 }
 #endif

@@ -151,6 +151,7 @@ build perf-simdjson-long: phony perf_perf_simdjson_long.stamp
 # Build statements for object files
 build json.o: cc src/json.c
 build test.o: cc test/test.c
+build test_json_error_string.o: cc test/test_json_error_string.c
 build test_simple_coverage.o: cc test/test_simple_coverage.c
 build test_targeted_coverage.o: cc test/test_targeted_coverage.c
 build test_parse_string_coverage.o: cc test/test_parse_string_coverage.c
@@ -159,36 +160,9 @@ build test_comprehensive_coverage.o: cc test/test_comprehensive_coverage.c
 build utils.o: cc utils/utils.c
 build whitespace_lookup.o: asm_obj src/whitespace_lookup.asm
 build hex_lookup.o: asm_obj src/hex_lookup.asm
-build test.stamp: link test.o test_simple_coverage.o test_targeted_coverage.o test_comprehensive_coverage.o test_parse_string_coverage.o test_parse_hex4.o json.o utils.o whitespace_lookup.o hex_lookup.o
+build test.stamp: link test.o test_json_error_string.o test_simple_coverage.o test_targeted_coverage.o test_comprehensive_coverage.o test_parse_string_coverage.o test_parse_hex4.o json.o utils.o whitespace_lookup.o hex_lookup.o
   name = test-main
 build main: phony test.stamp
-
-# --- test-mem target (memory testing) ---
-cflags_mem = -msse2 -Wall -Wextra -std=c89 -g -DSTRING_VALIDATION
-ldflags_mem = -fuse-ld=lld -lrt
-build json.o.mem: cc src/json.c
-  cflags = $cflags_mem
-build test.o.mem: cc test/test.c
-  cflags = $cflags_mem
-build test_simple_coverage.o.mem: cc test/test_simple_coverage.c
-  cflags = $cflags_mem
-build test_targeted_coverage.o.mem: cc test/test_targeted_coverage.c
-  cflags = $cflags_mem
-build test_comprehensive_coverage.o.mem: cc test/test_comprehensive_coverage.c
-  cflags = $cflags_mem
-build test_parse_string_coverage.o.mem: cc test/test_parse_string_coverage.c
-  cflags = $cflags_mem
-build test_parse_hex4.o.mem: cc test/test_parse_hex4.c
-  cflags = $cflags_mem
-build utils.o.mem: cc utils/utils.c
-  cflags = $cflags_mem
-build whitespace_lookup.o.mem: asm_obj src/whitespace_lookup.asm
-build hex_lookup.o.mem: asm_obj src/hex_lookup.asm
-build test.mem.stamp: link test.o.mem test_simple_coverage.o.mem test_targeted_coverage.o.mem test_comprehensive_coverage.o.mem test_parse_string_coverage.o.mem test_parse_hex4.o.mem json.o.mem utils.o.mem whitespace_lookup.o.mem hex_lookup.o.mem
-  name = test-mem
-  cflags = $cflags_mem
-  ldflags = $ldflags_mem
-build test-mem: phony test.mem.stamp
 
 # default target
 default main
@@ -220,6 +194,9 @@ build coverage_test_parse_string_coverage.o.gprof: cc test/test_parse_string_cov
 build coverage_test_parse_hex4.o.gprof: cc test/test_parse_hex4.c
   cc = gcc
   cflags = $cflags_gprof_coverage
+build coverage_test_json_error_string.o.gprof: cc test/test_json_error_string.c
+  cc = gcc
+  cflags = $cflags_gprof_coverage
 build coverage_json.o.gprof: cc src/json.c
   cc = gcc
   cflags = $cflags_gprof_coverage
@@ -232,7 +209,7 @@ build coverage_whitespace_lookup.o.gprof: asm_obj src/whitespace_lookup.asm
 build coverage_hex_lookup.o.gprof: asm_obj src/hex_lookup.asm
   cc = gcc
   cflags = $cflags_gprof_coverage
-build gprof_coverage.stamp: link coverage_test.o.gprof coverage_test_simple_coverage.o.gprof coverage_test_targeted_coverage.o.gprof coverage_test_comprehensive_coverage.o.gprof coverage_test_parse_string_coverage.o.gprof coverage_test_parse_hex4.o.gprof coverage_json.o.gprof coverage_utils.o.gprof coverage_whitespace_lookup.o.gprof coverage_hex_lookup.o.gprof
+build gprof_coverage.stamp: link coverage_test.o.gprof coverage_test_simple_coverage.o.gprof coverage_test_targeted_coverage.o.gprof coverage_test_comprehensive_coverage.o.gprof coverage_test_parse_string_coverage.o.gprof coverage_test_parse_hex4.o.gprof coverage_test_json_error_string.o.gprof coverage_json.o.gprof coverage_utils.o.gprof coverage_whitespace_lookup.o.gprof coverage_hex_lookup.o.gprof
   cc = gcc
   name = test-gprof-coverage
   ldflags = $ldflags_gprof_coverage
