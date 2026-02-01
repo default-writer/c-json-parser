@@ -62,11 +62,9 @@ typedef struct {
 
 #ifndef USE_ALLOC
 static json_array_node json_array_node_pool[JSON_VALUE_POOL_SIZE];
-static size_t json_array_node_free_count = JSON_VALUE_POOL_SIZE;
 static size_t next_array_index = 0;
 
 static json_object_node json_object_node_pool[JSON_VALUE_POOL_SIZE];
-static size_t json_object_node_free_count = JSON_VALUE_POOL_SIZE;
 static size_t next_object_index = 0;
 #endif
 
@@ -134,9 +132,9 @@ static INLINE bool INLINE_ATTRIBUTE free_array_node(json_array_node *array_node)
   free(array_node);
   return true;
 #else
-  if (json_array_node_free_count < JSON_VALUE_POOL_SIZE) {
+  if (next_array_index > 0) {
     memset(array_node, 0, sizeof(json_array_node));
-    json_array_node_free_count++;
+    next_array_index--;
     return true;
   }
   return false;
@@ -162,9 +160,9 @@ static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_no
   free(object_node);
   return true;
 #else
-  if (json_object_node_free_count < JSON_VALUE_POOL_SIZE) {
+  if (next_object_index > 0) {
     memset(object_node, 0, sizeof(json_object_node));
-    json_object_node_free_count++;
+    next_object_index--;
     return true;
   }
   return false;
@@ -1286,8 +1284,6 @@ bool json_equal(const json_value *a, const json_value *b) {
 INLINE void INLINE_ATTRIBUTE json_reset(void) {
   next_array_index = 0;
   next_object_index = 0;
-  json_object_node_free_count = JSON_VALUE_POOL_SIZE;
-  json_array_node_free_count = JSON_VALUE_POOL_SIZE;
 }
 
 INLINE void INLINE_ATTRIBUTE json_cleanup(void) {
