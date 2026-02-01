@@ -61,7 +61,7 @@ typedef struct {
 } buffer;
 
 #ifndef USE_ALLOC
-static json_array_node json_array_node_pool[JSON_VALUE_POOL_SIZE];
+extern json_array_node json_array_node_pool[JSON_VALUE_POOL_SIZE];
 static size_t next_array_index = 0;
 
 static json_object_node json_object_node_pool[JSON_VALUE_POOL_SIZE];

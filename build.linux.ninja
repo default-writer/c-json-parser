@@ -34,7 +34,9 @@ build utils.o.perf: cc utils/utils.c
   cflags = $cflags_perf
 build whitespace_lookup.o.perf: asm_obj src/whitespace_lookup.asm
 build hex_lookup.o.perf: asm_obj src/hex_lookup.asm
-build perf.stamp: link main.o.perf json.o.perf utils.o.perf whitespace_lookup.o.perf hex_lookup.o.perf
+build json_array_node_pool.o.perf: asm_obj src/json_array_node_pool.asm
+build json_object_node_pool.o.perf: asm_obj src/json_object_node_pool.asm
+build perf.stamp: link main.o.perf json.o.perf utils.o.perf whitespace_lookup.o.perf hex_lookup.o.perf json_array_node_pool.o.perf json_object_node_pool.o.perf
   name = test-perf-c-json-parser
   cflags = $cflags_perf
   ldflags = $ldflags_perf
@@ -49,8 +51,10 @@ build json.o.perf_no_string_validation: cc src/json.c
 build utils.o.perf_no_string_validation: cc utils/utils.c
   cflags = $cflags_perf_no_string_validation
 build whitespace_lookup.o.perf_no_string_validation: asm_obj src/whitespace_lookup.asm
-build hex_lookup.o.perf_no_string_validation: asm_obj src/hex_lookup.asm  
-build perf_no_string_validation.stamp: link main.o.perf_no_string_validation json.o.perf_no_string_validation utils.o.perf_no_string_validation whitespace_lookup.o.perf_no_string_validation hex_lookup.o.perf_no_string_validation
+build hex_lookup.o.perf_no_string_validation: asm_obj src/hex_lookup.asm
+build json_array_node_pool.o.perf_no_string_validation: asm_obj src/json_array_node_pool.asm
+build json_object_node_pool.o.perf_no_string_validation: asm_obj src/json_object_node_pool.asm
+build perf_no_string_validation.stamp: link main.o.perf_no_string_validation json.o.perf_no_string_validation utils.o.perf_no_string_validation whitespace_lookup.o.perf_no_string_validation hex_lookup.o.perf_no_string_validation json_array_node_pool.o.perf_no_string_validation json_object_node_pool.o.perf_no_string_validation
   name = test-perf-c-json-parser-no-string-validation
   cflags = $cflags_perf_no_string_validation
   ldflags = $ldflags_perf
@@ -69,7 +73,11 @@ build whitespace_lookup.o.perf_long: asm_obj src/whitespace_lookup.asm
   cflags = $cflags_perf_long
 build hex_lookup.o.perf_long: asm_obj src/hex_lookup.asm
   cflags = $cflags_perf_long
-build perf_long.stamp: link main.o.perf_long json.o.perf_long utils.o.perf_long whitespace_lookup.o.perf_long hex_lookup.o.perf_long
+build json_array_node_pool.o.perf_long: asm_obj src/json_array_node_pool.asm
+  cflags = $cflags_perf_long
+build json_object_node_pool.o.perf_long: asm_obj src/json_object_node_pool.asm
+  cflags = $cflags_perf_long
+build perf_long.stamp: link main.o.perf_long json.o.perf_long utils.o.perf_long whitespace_lookup.o.perf_long hex_lookup.o.perf_long json_array_node_pool.o.perf_long json_object_node_pool.o.perf_long
   name = test-perf-c-json-parser-long
   cflags = $cflags_perf_long
   ldflags = $ldflags_perf_long
@@ -85,7 +93,11 @@ build whitespace_lookup.o.perf_no_string_validation_long: asm_obj src/whitespace
   cflags = $cflags_perf_no_string_validation_long
 build hex_lookup.o.perf_no_string_validation_long: asm_obj src/hex_lookup.asm
   cflags = $cflags_perf_no_string_validation_long
-build perf_no_string_validation_long.stamp: link main.o.perf_no_string_validation_long json.o.perf_no_string_validation_long utils.o.perf whitespace_lookup.o.perf_no_string_validation_long hex_lookup.o.perf_no_string_validation_long
+build json_array_node_pool.o.perf_no_string_validation_long: asm_obj src/json_array_node_pool.asm
+  cflags = $cflags_perf_no_string_validation_long
+build json_object_node_pool.o.perf_no_string_validation_long: asm_obj src/json_object_node_pool.asm
+  cflags = $cflags_perf_no_string_validation_long
+build perf_no_string_validation_long.stamp: link main.o.perf_no_string_validation_long json.o.perf_no_string_validation_long utils.o.perf whitespace_lookup.o.perf_no_string_validation_long hex_lookup.o.perf_no_string_validation_long json_array_node_pool.o.perf_no_string_validation_long json_object_node_pool.o.perf_no_string_validation_long
   name = test-perf-c-json-parser-no-string-validation-long
   cflags = $cflags_perf_no_string_validation_long
   ldflags = $ldflags_perf
@@ -160,7 +172,9 @@ build test_comprehensive_coverage.o: cc test/test_comprehensive_coverage.c
 build utils.o: cc utils/utils.c
 build whitespace_lookup.o: asm_obj src/whitespace_lookup.asm
 build hex_lookup.o: asm_obj src/hex_lookup.asm
-build test.stamp: link test.o test_json_error_string.o test_simple_coverage.o test_targeted_coverage.o test_comprehensive_coverage.o test_parse_string_coverage.o test_parse_hex4.o json.o utils.o whitespace_lookup.o hex_lookup.o
+build json_array_node_pool.o: asm_obj src/json_array_node_pool.asm
+build json_object_node_pool.o: asm_obj src/json_object_node_pool.asm
+build test.stamp: link test.o test_json_error_string.o test_simple_coverage.o test_targeted_coverage.o test_comprehensive_coverage.o test_parse_string_coverage.o test_parse_hex4.o json.o utils.o whitespace_lookup.o hex_lookup.o json_array_node_pool.o json_object_node_pool.o
   name = test-main
 build main: phony test.stamp
 
@@ -209,7 +223,13 @@ build coverage_whitespace_lookup.o.gprof: asm_obj src/whitespace_lookup.asm
 build coverage_hex_lookup.o.gprof: asm_obj src/hex_lookup.asm
   cc = gcc
   cflags = $cflags_gprof_coverage
-build gprof_coverage.stamp: link coverage_test.o.gprof coverage_test_simple_coverage.o.gprof coverage_test_targeted_coverage.o.gprof coverage_test_comprehensive_coverage.o.gprof coverage_test_parse_string_coverage.o.gprof coverage_test_parse_hex4.o.gprof coverage_test_json_error_string.o.gprof coverage_json.o.gprof coverage_utils.o.gprof coverage_whitespace_lookup.o.gprof coverage_hex_lookup.o.gprof
+build coverage_json_array_node_pool.o.gprof: asm_obj src/json_array_node_pool.asm
+  cc = gcc
+  cflags = $cflags_gprof_coverage
+build coverage_json_object_node_pool.o.gprof: asm_obj src/json_object_node_pool.asm
+  cc = gcc
+  cflags = $cflags_gprof_coverage
+build gprof_coverage.stamp: link coverage_test.o.gprof coverage_test_simple_coverage.o.gprof coverage_test_targeted_coverage.o.gprof coverage_test_comprehensive_coverage.o.gprof coverage_test_parse_string_coverage.o.gprof coverage_test_parse_hex4.o.gprof coverage_test_json_error_string.o.gprof coverage_json.o.gprof coverage_utils.o.gprof coverage_whitespace_lookup.o.gprof coverage_hex_lookup.o.gprof coverage_json_array_node_pool.o.gprof coverage_json_object_node_pool.o.gprof
   cc = gcc
   name = test-gprof-coverage
   ldflags = $ldflags_gprof_coverage
@@ -233,7 +253,13 @@ build whitespace_lookup.o.gprof: asm_obj src/whitespace_lookup.asm
 build hex_lookup.o.gprof: asm_obj src/hex_lookup.asm
   cc = gcc
   cflags = $cflags_gprof
-build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof whitespace_lookup.o.gprof hex_lookup.o.gprof
+build json_array_node_pool.o.gprof: asm_obj src/json_array_node_pool.asm
+  cc = gcc
+  cflags = $cflags_gprof
+build json_object_node_pool.o.gprof: asm_obj src/json_array_node_pool.asm
+  cc = gcc
+  cflags = $cflags_gprof
+build gprof.stamp: link test.o.gprof json.o.gprof utils.o.gprof whitespace_lookup.o.gprof hex_lookup.o.gprof json_array_node_pool.o.gprof json_object_node_pool.o.gprof
   cc = gcc
   name = test-gprof
   ldflags = $ldflags_gprof
@@ -263,7 +289,13 @@ build whitespace_lookup.o.perf_gprof: asm_obj src/whitespace_lookup.asm
 build hex_lookup.o.perf_gprof: asm_obj src/hex_lookup.asm
   cc = gcc
   cflags = $cflags_perf_gprof
-build perf_gprof.stamp: link perf.o.gprof json.o.perf_gprof utils.o.perf_gprof whitespace_lookup.o.perf_gprof hex_lookup.o.perf_gprof
+build json_array_node_pool.o.perf_gprof: asm_obj src/json_array_node_pool.asm
+  cc = gcc
+  cflags = $cflags_perf_gprof
+build json_object_node_pool.o.perf_gprof: asm_obj src/json_object_node_pool.asm
+  cc = gcc
+  cflags = $cflags_perf_gprof
+build perf_gprof.stamp: link perf.o.gprof json.o.perf_gprof utils.o.perf_gprof whitespace_lookup.o.perf_gprof hex_lookup.o.perf_gprof json_array_node_pool.o.perf_gprof json_object_node_pool.o.perf_gprof
   cc = gcc
   name = test-perf-gprof
   ldflags = $ldflags_perf_gprof

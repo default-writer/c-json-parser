@@ -13,6 +13,7 @@
 
 int tests_run = 0;
 int tests_passed = 0;
+char *test_name = NULL;
 
 const char *GREEN = "";
 const char *RED = "";
