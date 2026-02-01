@@ -255,7 +255,7 @@ static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t 
 }
 #endif
 
-static INLINE bool INLINE_ATTRIBUTE parse_hex4(const char **s, const char* end, uint16_t *result) {
+static INLINE bool INLINE_ATTRIBUTE parse_hex4(const char **s, const char *end, uint16_t *result) {
   *result = 0;
   int i;
   for (i = 0; i < 4; ++i) {

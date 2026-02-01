@@ -1,6 +1,5 @@
 #include "../src/json.h"
 #include "../test/test.h"
-#include <cstddef>
 
 #define MAX_STRING_SIZE 1000
 
