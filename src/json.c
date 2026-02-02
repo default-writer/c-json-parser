@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 1, 2026 at 8:37:39 PM UTC
+ *   February 2, 2026 at 4:29:00 AM UTC
  *
  */
 /*
@@ -346,11 +346,6 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
           return false;
         if (p == end || hex_lookup[(unsigned char)*p] >= 0)
           return false;
-        /* According to ECMA-404 and RFC 7159, all Unicode code points are allowed
-         * except for control characters U+0000 to U+001F, which must be escaped.
-         * Since this is an escaped sequence, all code points including lone
-         * surrogates are valid. */
-        break;
         break;
       default:
         return false;
