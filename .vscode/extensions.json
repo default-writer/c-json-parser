@@ -33,6 +33,7 @@
         "ryanluker.vscode-coverage-gutters",
         "ms-toolsai.jupyter-keymap",
         "ms-toolsai.jupyter",
-        "ms-toolsai.jupyter-renderers"
+        "ms-toolsai.jupyter-renderers",
+        "tenninebt.vscode-koverage"
       ]
 }
