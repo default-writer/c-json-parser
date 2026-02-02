@@ -30,6 +30,9 @@
         "github.copilot",
         "mermaidchart.vscode-mermaid-chart",
         "markis.code-coverage",
-        "ryanluker.vscode-coverage-gutters"
+        "ryanluker.vscode-coverage-gutters",
+        "ms-toolsai.jupyter-keymap",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.jupyter-renderers"
       ]
 }
