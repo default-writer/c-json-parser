@@ -137,5 +137,7 @@
   "powershell.powerShellDefaultVersion": "Power Shell Core",
   "powershell.powerShellAdditionalExePaths": {
     "Power Shell Core": "c:\\tools\\pwsh\\7\\pwsh.exe"
-  }
+  },
+  "coverage-gutters.showLineCoverage": true,
+  "coverage-gutters.showGutterCoverage": false  
 }

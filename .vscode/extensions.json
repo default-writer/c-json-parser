@@ -28,6 +28,8 @@
         "ms-vscode.test-adapter-converter",
         "cs128.cs128-clang-tidy",
         "github.copilot",
-        "mermaidchart.vscode-mermaid-chart"
+        "mermaidchart.vscode-mermaid-chart",
+        "markis.code-coverage",
+        "ryanluker.vscode-coverage-gutters"
       ]
 }

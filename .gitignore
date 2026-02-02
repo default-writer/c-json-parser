@@ -28,7 +28,7 @@ gmon.out
 *.gprof
 
 # Coverage report output
-coverage_report/
+coverage/
 
 # OS-specific
 .DS_Store
