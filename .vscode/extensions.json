@@ -34,6 +34,7 @@
         "ms-toolsai.jupyter-keymap",
         "ms-toolsai.jupyter",
         "ms-toolsai.jupyter-renderers",
-        "tenninebt.vscode-koverage"
+        "tenninebt.vscode-koverage",
+        "ms-vscode.live-server"
       ]
 }
