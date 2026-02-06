@@ -4,7 +4,6 @@ libs/
 
 # IDE and history files
 .history/
-.vscode/
 .devcontainer/
 
 # Build artifacts

@@ -22,8 +22,8 @@
     "!**/.git",
     "!**/LICENSE"
   ],
-  "editor.fontSize": 12,
-  "editor.fontFamily": "'Ubuntu Mono', 'JetBrains Mono', 'ProggyVector', 'Monoid', 'Fira Code', monospace",
+  "editor.fontSize": 10,
+  "editor.fontFamily": "'JetBrains Mono', 'Ubuntu Mono', 'ProggyVector', 'Monoid', 'Fira Code', monospace",
   "window.zoomPerWindow": false,
   "debug.console.fontSize": 12,
   "terminal.integrated.fontSize": 12,
