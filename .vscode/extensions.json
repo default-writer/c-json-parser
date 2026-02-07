@@ -35,6 +35,7 @@
         "ms-toolsai.jupyter",
         "ms-toolsai.jupyter-renderers",
         "tenninebt.vscode-koverage",
-        "ms-vscode.live-server"
+        "ms-vscode.live-server",
+        "sst-dev.opencode"
       ]
 }
