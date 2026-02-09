@@ -54,10 +54,10 @@ if [[ "$target" == "perf-c-json-parser-no-string-validation" || "$target" == "pe
     if [[ "$target" == *"no-string-validation"* ]]; then
         has_validation=false
         if [[ "$is_long" == true ]]; then
-            profile_dir="./gprof-long"
+            profile_dir="./gprof-no-string-validation-long"
             base_binary_name="test-perf-c-json-parser-no-string-validation"
         else
-            profile_dir="./gprof"
+            profile_dir="./gprof-no-string-validation"
             base_binary_name="test-perf-c-json-parser-no-string-validation"
         fi
     else
