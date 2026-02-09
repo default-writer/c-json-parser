@@ -53,6 +53,9 @@
 #if defined(__SSE2__)
 #include <emmintrin.h>
 #endif
+#if defined(__AVX2__)
+#include <immintrin.h>
+#endif
 
 #ifdef _WIN32
 #include <windows.h>

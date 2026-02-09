@@ -22,7 +22,7 @@ rule link
 rule asm
   command = $cc $cflags -S -o $out $in
 
-cflags_perf = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DSTRING_VALIDATION -DNDEBUG -Wno-initializer-overrides
+cflags_perf = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -funroll-loops -ftree-vectorize -Wno-initializer-overrides -DSTRING_VALIDATION -DNDEBUG
 ldflags_perf = $ldflags -O3 -march=native -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -flto=auto -fvectorize -funroll-loops
 
 # --- test-perf-c-json-parser target ---
@@ -40,8 +40,42 @@ build perf.stamp: link main.o.perf json.o.perf utils.o.perf whitespace_lookup.o.
   ldflags = $ldflags_perf
 build perf-c-json-parser: phony perf.stamp
 
+# --- PGO for test-perf-c-json-parser target ---
+cflags_perf_pgo_generate = $cflags_perf -fprofile-generate=./gprof-validate
+cflags_perf_pgo_use = $cflags_perf -fprofile-use=./gprof-validate
+ldflags_perf_pgo_generate = $ldflags_perf -fprofile-generate=./gprof-validate
+ldflags_perf_pgo_use = $ldflags_perf -fprofile-use=./gprof-validate
+
+build main.o.perf_pgo_generate: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_pgo_generate
+build json.o.perf_pgo_generate: cc src/json.c
+  cflags = $cflags_perf_pgo_generate
+build utils.o.perf_pgo_generate: cc utils/utils.c
+  cflags = $cflags_perf_pgo_generate
+build whitespace_lookup.o.perf_pgo_generate: asm_obj src/whitespace_lookup.asm
+build hex_lookup.o.perf_pgo_generate: asm_obj src/hex_lookup.asm
+build perf_pgo_generate.stamp: link main.o.perf_pgo_generate json.o.perf_pgo_generate utils.o.perf_pgo_generate whitespace_lookup.o.perf_pgo_generate hex_lookup.o.perf_pgo_generate
+  name = test-perf-c-json-parser-pgo-generate
+  cflags = $cflags_perf_pgo_generate
+  ldflags = $ldflags_perf_pgo_generate
+build perf-c-json-parser-pgo-generate: phony perf_pgo_generate.stamp
+
+build main.o.perf_pgo_use: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_pgo_use
+build json.o.perf_pgo_use: cc src/json.c
+  cflags = $cflags_perf_pgo_use
+build utils.o.perf_pgo_use: cc utils/utils.c
+  cflags = $cflags_perf_pgo_use
+build whitespace_lookup.o.perf_pgo_use: asm_obj src/whitespace_lookup.asm
+build hex_lookup.o.perf_pgo_use: asm_obj src/hex_lookup.asm
+build perf_pgo_use.stamp: link main.o.perf_pgo_use json.o.perf_pgo_use utils.o.perf_pgo_use whitespace_lookup.o.perf_pgo_use hex_lookup.o.perf_pgo_use
+  name = test-perf-c-json-parser-pgo-use
+  cflags = $cflags_perf_pgo_use
+  ldflags = $ldflags_perf_pgo_use
+build perf-c-json-parser-pgo-use: phony perf_pgo_use.stamp
+
 # --- test-perf-c-json-parser-no-string-validation target ---
-cflags_perf_no_string_validation = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DNDEBUG
+cflags_perf_no_string_validation = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -funroll-loops -ftree-vectorize -Wno-initializer-overrides -DNDEBUG
 build main.o.perf_no_string_validation: cc perf/test_c_json_parser.c
   cflags = $cflags_perf_no_string_validation
 build json.o.perf_no_string_validation: cc src/json.c
@@ -55,6 +89,110 @@ build perf_no_string_validation.stamp: link main.o.perf_no_string_validation jso
   cflags = $cflags_perf_no_string_validation
   ldflags = $ldflags_perf
 build perf-c-json-parser-no-string-validation: phony perf_no_string_validation.stamp
+
+# --- PGO for test-perf-c-json-parser-no-string-validation target ---
+cflags_perf_no_string_validation_pgo_generate = $cflags_perf_no_string_validation -fprofile-generate=./gprof-no-string-validation
+cflags_perf_no_string_validation_pgo_use = $cflags_perf_no_string_validation -fprofile-use=./gprof-no-string-validation
+ldflags_perf_pgo_generate = $ldflags_perf -fprofile-generate=./gprof-no-string-validation
+ldflags_perf_pgo_use = $ldflags_perf -fprofile-use=./gprof-no-string-validation
+
+# test-perf-c-json-parser-no-string-validation-pgo-generate target ---
+build main.o.perf_no_string_validation_pgo_generate: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_no_string_validation_pgo_generate
+build json.o.perf_no_string_validation_pgo_generate: cc src/json.c
+  cflags = $cflags_perf_no_string_validation_pgo_generate
+build utils.o.perf_no_string_validation_pgo_generate: cc utils/utils.c
+  cflags = $cflags_perf_no_string_validation_pgo_generate
+build whitespace_lookup.o.perf_no_string_validation_pgo_generate: asm_obj src/whitespace_lookup.asm
+build hex_lookup.o.perf_no_string_validation_pgo_generate: asm_obj src/hex_lookup.asm  
+build perf_no_string_validation_pgo_generate.stamp: link main.o.perf_no_string_validation_pgo_generate json.o.perf_no_string_validation_pgo_generate utils.o.perf_no_string_validation_pgo_generate whitespace_lookup.o.perf_no_string_validation_pgo_generate hex_lookup.o.perf_no_string_validation_pgo_generate
+  name = test-perf-c-json-parser-no-string-validation-pgo-generate
+  cflags = $cflags_perf_no_string_validation_pgo_generate
+  ldflags = $ldflags_perf_pgo_generate
+build perf-c-json-parser-no-string-validation-pgo-generate: phony perf_no_string_validation_pgo_generate.stamp
+
+# test-perf-c-json-parser-no-string-validation-pgo-use target ---
+build main.o.perf_no_string_validation_pgo_use: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_no_string_validation_pgo_use
+build json.o.perf_no_string_validation_pgo_use: cc src/json.c
+  cflags = $cflags_perf_no_string_validation_pgo_use
+build utils.o.perf_no_string_validation_pgo_use: cc utils/utils.c
+  cflags = $cflags_perf_no_string_validation_pgo_use
+build whitespace_lookup.o.perf_no_string_validation_pgo_use: asm_obj src/whitespace_lookup.asm
+build hex_lookup.o.perf_no_string_validation_pgo_use: asm_obj src/hex_lookup.asm  
+build perf_no_string_validation_pgo_use.stamp: link main.o.perf_no_string_validation_pgo_use json.o.perf_no_string_validation_pgo_use utils.o.perf_no_string_validation_pgo_use whitespace_lookup.o.perf_no_string_validation_pgo_use hex_lookup.o.perf_no_string_validation_pgo_use
+  name = test-perf-c-json-parser-no-string-validation-pgo-use
+  cflags = $cflags_perf_no_string_validation_pgo_use
+  ldflags = $ldflags_perf_pgo_use
+build perf-c-json-parser-no-string-validation-pgo-use: phony perf_no_string_validation_pgo_use.stamp
+
+# --- PGO for test-perf-c-json-parser-no-string-validation-long target ---
+cflags_perf_no_string_validation_long_pgo_generate = $cflags_perf_no_string_validation_long -fprofile-generate=./gprof-no-string-validation-long
+cflags_perf_no_string_validation_long_pgo_use = $cflags_perf_no_string_validation_long -fprofile-use=./gprof-no-string-validation-long
+ldflags_perf_no_string_validation_long_pgo_generate = $ldflags_perf -fprofile-generate=./gprof-no-string-validation-long
+ldflags_perf_no_string_validation_long_pgo_use = $ldflags_perf -fprofile-use=./gprof-no-string-validation-long
+
+build main.o.perf_no_string_validation_long_pgo_generate: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_no_string_validation_long_pgo_generate
+build json.o.perf_no_string_validation_long_pgo_generate: cc src/json.c
+  cflags = $cflags_perf_no_string_validation_long_pgo_generate
+build utils.o.perf_no_string_validation_long_pgo_generate: cc utils/utils.c
+  cflags = $cflags_perf_no_string_validation_long_pgo_generate
+build whitespace_lookup.o.perf_no_string_validation_long_pgo_generate: asm_obj src/whitespace_lookup.asm
+build hex_lookup.o.perf_no_string_validation_long_pgo_generate: asm_obj src/hex_lookup.asm  
+build perf_no_string_validation_long_pgo_generate.stamp: link main.o.perf_no_string_validation_long_pgo_generate utils.o.perf_no_string_validation_long_pgo_generate json.o.perf_no_string_validation_long_pgo_generate whitespace_lookup.o.perf_no_string_validation_long_pgo_generate hex_lookup.o.perf_no_string_validation_long_pgo_generate
+  name = test-perf-c-json-parser-no-string-validation-long-pgo-generate
+  cflags = $cflags_perf_no_string_validation_long_pgo_generate
+  ldflags = $ldflags_perf_no_string_validation_long_pgo_generate
+build perf-c-json-parser-no-string-validation-long-pgo-generate: phony perf_no_string_validation_long_pgo_generate.stamp
+
+build main.o.perf_no_string_validation_long_pgo_use: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_no_string_validation_long_pgo_use
+build json.o.perf_no_string_validation_long_pgo_use: cc src/json.c
+  cflags = $cflags_perf_no_string_validation_long_pgo_use
+build utils.o.perf_no_string_validation_long_pgo_use: cc utils/utils.c
+  cflags = $cflags_perf_no_string_validation_long_pgo_use
+build whitespace_lookup.o.perf_no_string_validation_long_pgo_use: asm_obj src/whitespace_lookup.asm
+build hex_lookup.o.perf_no_string_validation_long_pgo_use: asm_obj src/hex_lookup.asm  
+build perf_no_string_validation_long_pgo_use.stamp: link main.o.perf_no_string_validation_long_pgo_use json.o.perf_no_string_validation_long_pgo_use utils.o.perf_no_string_validation_long_pgo_use whitespace_lookup.o.perf_no_string_validation_long_pgo_use hex_lookup.o.perf_no_string_validation_long_pgo_use
+  name = test-perf-c-json-parser-no-string-validation-long-pgo-use
+  cflags = $cflags_perf_no_string_validation_long_pgo_use
+  ldflags = $ldflags_perf_no_string_validation_long_pgo_use
+build perf-c-json-parser-no-string-validation-long-pgo-use: phony perf_no_string_validation_long_pgo_use.stamp
+
+# --- PGO for test-perf-c-json-parser-long target ---
+cflags_perf_long_pgo_generate = $cflags_perf_long -fprofile-generate=./gprof-validate-long
+cflags_perf_long_pgo_use = $cflags_perf_long -fprofile-use=./gprof-validate-long
+ldflags_perf_long_pgo_generate = $ldflags_perf -fprofile-generate=./gprof-validate-long
+ldflags_perf_long_pgo_use = $ldflags_perf -fprofile-use=./gprof-validate-long
+
+build main.o.perf_long_pgo_generate: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_long_pgo_generate
+build json.o.perf_long_pgo_generate: cc src/json.c
+  cflags = $cflags_perf_long_pgo_generate
+build utils.o.perf_long_pgo_generate: cc utils/utils.c
+  cflags = $cflags_perf_long_pgo_generate
+build whitespace_lookup.o.perf_long_pgo_generate: asm_obj src/whitespace_lookup.asm
+build hex_lookup.o.perf_long_pgo_generate: asm_obj src/hex_lookup.asm
+build perf_long_pgo_generate.stamp: link main.o.perf_long_pgo_generate json.o.perf_long_pgo_generate utils.o.perf_long_pgo_generate whitespace_lookup.o.perf_long_pgo_generate hex_lookup.o.perf_long_pgo_generate
+  name = test-perf-c-json-parser-long-pgo-generate
+  cflags = $cflags_perf_long_pgo_generate
+  ldflags = $ldflags_perf_long_pgo_generate
+build perf-c-json-parser-long-pgo-generate: phony perf_long_pgo_generate.stamp
+
+build main.o.perf_long_pgo_use: cc perf/test_c_json_parser.c
+  cflags = $cflags_perf_long_pgo_use
+build json.o.perf_long_pgo_use: cc src/json.c
+  cflags = $cflags_perf_long_pgo_use
+build utils.o.perf_long_pgo_use: cc utils/utils.c
+  cflags = $cflags_perf_long_pgo_use
+build whitespace_lookup.o.perf_long_pgo_use: asm_obj src/whitespace_lookup.asm
+build hex_lookup.o.perf_long_pgo_use: asm_obj src/hex_lookup.asm
+build perf_long_pgo_use.stamp: link main.o.perf_long_pgo_use json.o.perf_long_pgo_use utils.o.perf_long_pgo_use whitespace_lookup.o.perf_long_pgo_use hex_lookup.o.perf_long_pgo_use
+  name = test-perf-c-json-parser-long-pgo-use
+  cflags = $cflags_perf_long_pgo_use
+  ldflags = $ldflags_perf_long_pgo_use
+build perf-c-json-parser-long-pgo-use: phony perf_long_pgo_use.stamp
 
 # --- test-perf-c-json-parser-long target ---
 cflags_perf_long = $cflags_perf -DLONG_TEST
@@ -76,7 +214,7 @@ build perf_long.stamp: link main.o.perf_long json.o.perf_long utils.o.perf_long 
 build perf-c-json-parser-long: phony perf_long.stamp
 
 # --- test-perf-c-json-parser-no-string-validation-long target ---
-cflags_perf_no_string_validation_long = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -DLONG_TEST -DNDEBUG
+cflags_perf_no_string_validation_long = -msse2 -Wall -Wextra -std=c17 -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -fomit-frame-pointer -ffunction-sections -fdata-sections -funroll-loops -ftree-vectorize -DLONG_TEST -DNDEBUG
 build main.o.perf_no_string_validation_long: cc perf/test_c_json_parser.c
   cflags = $cflags_perf_no_string_validation_long
 build json.o.perf_no_string_validation_long: cc src/json.c
@@ -174,7 +312,7 @@ build utils/utils.s: asm utils/utils.c
 build .s: phony test/test.s src/json.s utils/utils.s
 
 # --- test-gprof-coverage target (gcc) ---
-cflags_gprof_coverage = -msse2 -Wall -Wextra -std=c17 -g -pg -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -DSTRING_VALIDATION -DNDEBUG -fprofile-arcs -ftest-coverage
+cflags_gprof_coverage = -Wall -Wextra -std=c17 -g -pg -fprofile-arcs -ftest-coverage -DSTRING_VALIDATION
 ldflags_gprof_coverage = -pg --coverage
 build coverage_test.o.gprof: cc test/test.c
   cc = gcc

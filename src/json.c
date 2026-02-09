@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 2, 2026 at 4:29:00 AM UTC
+ *   February 9, 2026 at 2:12:10 AM GMT+3
  *
  */
 /*
@@ -133,12 +133,8 @@ static INLINE bool INLINE_ATTRIBUTE free_array_node(json_array_node *array_node)
   free(array_node);
   return true;
 #else
-  if (next_array_index > 0) {
-    memset(array_node, 0, sizeof(json_array_node));
-    next_array_index--;
-    return true;
-  }
-  return false;
+  memset(array_node, 0, sizeof(json_array_node));
+  return true;
 #endif
 }
 
@@ -161,12 +157,8 @@ static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_no
   free(object_node);
   return true;
 #else
-  if (next_object_index > 0) {
-    memset(object_node, 0, sizeof(json_object_node));
-    next_object_index--;
-    return true;
-  }
-  return false;
+  memset(object_node, 0, sizeof(json_object_node));
+  return true;
 #endif
 }
 
@@ -233,11 +225,58 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
 static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t len) {
   size_t i = 0;
 
+#if defined(__AVX2__)
+  const size_t offset = 32;
+  const __m256i limit = _mm256_set1_epi8(0x20);
+  const __m256i high_bit = _mm256_set1_epi8(0x80);
+  const __m256i limit_shifted = _mm256_xor_si256(limit, high_bit);
+  /* Process 64 bytes per iteration (2 AVX2 registers) */
+  for (; i + 64 <= len; i += 64) {
+    __m256i chunk1 = _mm256_loadu_si256((const __m256i *)(s + i));
+    __m256i chunk2 = _mm256_loadu_si256((const __m256i *)(s + i + 32));
+    __m256i chunk1_shifted = _mm256_xor_si256(chunk1, high_bit);
+    __m256i chunk2_shifted = _mm256_xor_si256(chunk2, high_bit);
+    __m256i result_mask1 = _mm256_cmpgt_epi8(limit_shifted, chunk1_shifted);
+    __m256i result_mask2 = _mm256_cmpgt_epi8(limit_shifted, chunk2_shifted);
+    if (_mm256_movemask_epi8(result_mask1) != 0 || _mm256_movemask_epi8(result_mask2) != 0) {
+      return false;
+    }
+  }
+  /* Process remaining chunks of 32 bytes */
+  for (; i + offset <= len; i += offset) {
+    __m256i chunk = _mm256_loadu_si256((const __m256i *)(s + i));
+    __m256i chunk_shifted = _mm256_xor_si256(chunk, high_bit);
+    __m256i result_mask = _mm256_cmpgt_epi8(limit_shifted, chunk_shifted);
+    if (_mm256_movemask_epi8(result_mask) != 0) {
+      return false;
+    }
+  }
+#elif defined(__SSE2__)
+  const size_t offset = 16;
   const __m128i limit = _mm_set1_epi8(0x20);
   const __m128i high_bit = _mm_set1_epi8(0x80);
   const __m128i limit_shifted = _mm_xor_si128(limit, high_bit);
-  const size_t offset = 16;
-  for (; i + offset - 1 < len; i += offset) {
+  /* Process 64 bytes per iteration (4 SSE2 registers) */
+  for (; i + 64 <= len; i += 64) {
+    __m128i chunk1 = _mm_loadu_si128((const __m128i *)(s + i));
+    __m128i chunk2 = _mm_loadu_si128((const __m128i *)(s + i + 16));
+    __m128i chunk3 = _mm_loadu_si128((const __m128i *)(s + i + 32));
+    __m128i chunk4 = _mm_loadu_si128((const __m128i *)(s + i + 48));
+    __m128i chunk1_shifted = _mm_xor_si128(chunk1, high_bit);
+    __m128i chunk2_shifted = _mm_xor_si128(chunk2, high_bit);
+    __m128i chunk3_shifted = _mm_xor_si128(chunk3, high_bit);
+    __m128i chunk4_shifted = _mm_xor_si128(chunk4, high_bit);
+    __m128i result_mask1 = _mm_cmplt_epi8(chunk1_shifted, limit_shifted);
+    __m128i result_mask2 = _mm_cmplt_epi8(chunk2_shifted, limit_shifted);
+    __m128i result_mask3 = _mm_cmplt_epi8(chunk3_shifted, limit_shifted);
+    __m128i result_mask4 = _mm_cmplt_epi8(chunk4_shifted, limit_shifted);
+    if (_mm_movemask_epi8(result_mask1) != 0 || _mm_movemask_epi8(result_mask2) != 0 ||
+        _mm_movemask_epi8(result_mask3) != 0 || _mm_movemask_epi8(result_mask4) != 0) {
+      return false;
+    }
+  }
+  /* Process remaining chunks of 16 bytes */
+  for (; i + offset <= len; i += offset) {
     __m128i chunk = _mm_loadu_si128((const __m128i *)(s + i));
     __m128i chunk_shifted = _mm_xor_si128(chunk, high_bit);
     __m128i result_mask = _mm_cmplt_epi8(chunk_shifted, limit_shifted);
@@ -245,6 +284,12 @@ static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t 
       return false;
     }
   }
+#else
+  /* scalar fallback */
+  const size_t offset = 1;
+#endif
+
+  /* scalar tail */
   for (; i < len; i++) {
     if ((unsigned char)s[i] < 0x20) {
       return false;
@@ -254,60 +299,122 @@ static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t 
 }
 #endif
 
-static INLINE bool INLINE_ATTRIBUTE parse_hex4(const char **s, const char *end, uint16_t *result) {
-  *result = 0;
-  int i;
-  for (i = 0; i < 4; ++i) {
-    char c = (*s)[i];
-    if (*s == end)
-      return false;
-    signed char hex_val = hex_lookup[(unsigned char)c];
-    if (hex_val < 0)
-      return false;
-    *result <<= 4;
-    *result |= (unsigned char)hex_val;
-  }
-  *s += 4;
-  return true;
-}
 
-#if defined(__SSE2__)
-static INLINE size_t INLINE_ATTRIBUTE fast_strcspn(const char *s, size_t len) {
-  const __m128i quote_vec = _mm_set1_epi8('"');
-  const __m128i escape_vec = _mm_set1_epi8('\\');
-  const size_t offset = 16;
-  size_t i = 0;
-  for (; i + offset - 1 < len; i += offset) {
-    __m128i chunk = _mm_loadu_si128((const __m128i *)(s + i));
-    __m128i quote_match = _mm_cmpeq_epi8(chunk, quote_vec);
-    __m128i escape_match = _mm_cmpeq_epi8(chunk, escape_vec);
-    __m128i any_match = _mm_or_si128(quote_match, escape_match);
-    int mask = _mm_movemask_epi8(any_match);
-    if (mask != 0) {
-      return i + __builtin_ctz(mask);
-    }
-    if (s[i + offset - 1] == '\0')
-      break;
-  }
-  for (; s[i] != '\0'; i++) {
-    if (s[i] == '"' || s[i] == '\\') {
-      return i;
-    }
-  }
-  return i;
-}
-#endif
 
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end, json_value *v) {
   const char *p = *s + 1;
   v->u.string.ptr = p;
   while (true) {
-#if defined(__SSE2__)
     const size_t len = end - p;
-    size_t span = fast_strcspn(p, len);
+    size_t span = 0;
+#if defined(__AVX2__)
+    const size_t offset = 32;
+    const __m256i quote_vec = _mm256_set1_epi8('\"');
+    const __m256i escape_vec = _mm256_set1_epi8('\\');
+    size_t i = 0;
+    /* Unrolled: process 64 bytes per iteration (2 AVX2 registers) */
+    for (; i + 64 <= len; i += 64) {
+      __m256i chunk1 = _mm256_loadu_si256((const __m256i *)(p + i));
+      __m256i chunk2 = _mm256_loadu_si256((const __m256i *)(p + i + 32));
+      __m256i match1 = _mm256_or_si256(_mm256_cmpeq_epi8(chunk1, quote_vec), _mm256_cmpeq_epi8(chunk1, escape_vec));
+      __m256i match2 = _mm256_or_si256(_mm256_cmpeq_epi8(chunk2, quote_vec), _mm256_cmpeq_epi8(chunk2, escape_vec));
+      int mask1 = _mm256_movemask_epi8(match1);
+      int mask2 = _mm256_movemask_epi8(match2);
+      if (mask1 != 0) {
+        span = i + __builtin_ctz(mask1);
+        goto found;
+      }
+      if (mask2 != 0) {
+        span = i + 32 + __builtin_ctz(mask2);
+        goto found;
+      }
+    }
+    /* Process remaining chunks of 32 bytes */
+    for (; i + offset <= len; i += offset) {
+      __m256i chunk = _mm256_loadu_si256((const __m256i *)(p + i));
+      __m256i quote_match = _mm256_cmpeq_epi8(chunk, quote_vec);
+      __m256i escape_match = _mm256_cmpeq_epi8(chunk, escape_vec);
+      __m256i any_match = _mm256_or_si256(quote_match, escape_match);
+      int mask = _mm256_movemask_epi8(any_match);
+      if (mask != 0) {
+        span = i + __builtin_ctz(mask);
+        goto found;
+      }
+    }
+    for (; i < len; i++) {
+      if (p[i] == '\"' || p[i] == '\\') {
+        span = i;
+        goto found;
+      }
+    }
+    span = len;
+#elif defined(__SSE2__)
+    const size_t offset = 16;
+    const __m128i quote_vec = _mm_set1_epi8('\"');
+    const __m128i escape_vec = _mm_set1_epi8('\\');
+    size_t i = 0;
+    /* Unrolled: process 64 bytes per iteration (4 SSE2 registers) */
+    for (; i + 64 <= len; i += 64) {
+      __m128i chunk1 = _mm_loadu_si128((const __m128i *)(p + i));
+      __m128i chunk2 = _mm_loadu_si128((const __m128i *)(p + i + 16));
+      __m128i chunk3 = _mm_loadu_si128((const __m128i *)(p + i + 32));
+      __m128i chunk4 = _mm_loadu_si128((const __m128i *)(p + i + 48));
+      __m128i match1 = _mm_or_si128(_mm_cmpeq_epi8(chunk1, quote_vec), _mm_cmpeq_epi8(chunk1, escape_vec));
+      __m128i match2 = _mm_or_si128(_mm_cmpeq_epi8(chunk2, quote_vec), _mm_cmpeq_epi8(chunk2, escape_vec));
+      __m128i match3 = _mm_or_si128(_mm_cmpeq_epi8(chunk3, quote_vec), _mm_cmpeq_epi8(chunk3, escape_vec));
+      __m128i match4 = _mm_or_si128(_mm_cmpeq_epi8(chunk4, quote_vec), _mm_cmpeq_epi8(chunk4, escape_vec));
+      int mask1 = _mm_movemask_epi8(match1);
+      int mask2 = _mm_movemask_epi8(match2);
+      int mask3 = _mm_movemask_epi8(match3);
+      int mask4 = _mm_movemask_epi8(match4);
+      if (mask1 != 0) {
+        span = i + __builtin_ctz(mask1);
+        goto found;
+      }
+      if (mask2 != 0) {
+        span = i + 16 + __builtin_ctz(mask2);
+        goto found;
+      }
+      if (mask3 != 0) {
+        span = i + 32 + __builtin_ctz(mask3);
+        goto found;
+      }
+      if (mask4 != 0) {
+        span = i + 48 + __builtin_ctz(mask4);
+        goto found;
+      }
+    }
+    /* Process remaining chunks of 16 bytes */
+    for (; i + offset <= len; i += offset) {
+      __m128i chunk = _mm_loadu_si128((const __m128i *)(p + i));
+      __m128i quote_match = _mm_cmpeq_epi8(chunk, quote_vec);
+      __m128i escape_match = _mm_cmpeq_epi8(chunk, escape_vec);
+      __m128i any_match = _mm_or_si128(quote_match, escape_match);
+      int mask = _mm_movemask_epi8(any_match);
+      if (mask != 0) {
+        span = i + __builtin_ctz(mask);
+        goto found;
+      }
+    }
+    for (; i < len; i++) {
+      if (p[i] == '\"' || p[i] == '\\') {
+        span = i;
+        goto found;
+      }
+    }
+    span = len;
 #else
-    size_t span = strcspn(p, "\"\\");
+    /* non-SSE2 fallback: simple byte scan */
+    size_t i = 0;
+    for (; i < len; i++) {
+      if (p[i] == '\"' || p[i] == '\\') {
+        span = i;
+        goto found;
+      }
+    }
+    span = len;
 #endif
+found:
     p += span;
     if (p == end)
       return false;
@@ -320,37 +427,35 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
       *s = p + 1;
       return true;
     }
-    if (*p == '\\') {
-      p++;
-      if (p == end)
+    if (*p != '\\') {
+      return false;
+    }
+    if (++p == end)
+      return false;
+    switch (*p) {
+    case '\"':
+    case '\\':
+    case '/':
+    case 'b':
+    case 'f':
+    case 'n':
+    case 'r':
+    case 't':
+      if (++p == end)
         return false;
-      switch (*p) {
-      case '\"':
-      case '\\':
-      case '/':
-      case 'b':
-      case 'f':
-      case 'n':
-      case 'r':
-      case 't':
-        p++;
-        if (p == end)
-          return false;
-        break;
-      case 'u':
-        p++;
-        if (p == end)
-          return false;
-        uint16_t codepoint;
-        if (!parse_hex4(&p, end, &codepoint))
-          return false;
-        if (p == end || hex_lookup[(unsigned char)*p] >= 0)
-          return false;
-        break;
-      default:
+      break;
+    case 'u':
+      if (++p == end)
         return false;
-      }
-    } else {
+      if (p + 3 >= end)
+        return false;
+      if (hex_lookup[(unsigned char)p[0]] < 0 || hex_lookup[(unsigned char)p[1]] < 0 || hex_lookup[(unsigned char)p[2]] < 0 || hex_lookup[(unsigned char)p[3]] < 0)
+        return false;
+      if (p + 4 < end && hex_lookup[(unsigned char)p[4]] >= 0)
+        return false;
+      p += 4;
+      break;
+    default:
       return false;
     }
   }

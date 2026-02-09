@@ -25,6 +25,10 @@ gmon.out
 *.gcda
 *.gcov
 *.gprof
+gprof-no-string-validation/
+gprof-no-string-validation-long/
+gprof-validate/
+gprof-validate-long/
 
 # Coverage report output
 coverage/

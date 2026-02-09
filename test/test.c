@@ -7077,8 +7077,8 @@ TEST(test_whitespace_lookup) {
       "   -5.67e-8" /* mixed whitespace before scientific */
   };
 
-  const int valid_whitespace_tests_size = sizeof(valid_whitespace_tests) / sizeof(char *);
-  const int invalid_whitespace_tests_size = sizeof(invalid_whitespace_tests) / sizeof(char *);
+  const size_t valid_whitespace_tests_size = sizeof(valid_whitespace_tests) / sizeof(char *);
+  const size_t invalid_whitespace_tests_size = sizeof(invalid_whitespace_tests) / sizeof(char *);
 
   size_t i;
 
@@ -7130,7 +7130,7 @@ TEST(test_whitespace_lookup) {
       "{\"key\":   -5.67e-8}" /* mixed whitespace before scientific */
   };
 
-  const int number_with_whitespace_tests_size = sizeof(number_with_whitespace_tests) / sizeof(char *);
+  const size_t number_with_whitespace_tests_size = sizeof(number_with_whitespace_tests) / sizeof(char *);
 
   for (i = 0; i < number_with_whitespace_tests_size; i++) {
     const char *source = number_with_whitespace_tests[i];
