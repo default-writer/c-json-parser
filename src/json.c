@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 16, 2026 at 4:41:35 PM GMT+3
+ *   February 16, 2026 at 5:00:05 PM GMT+3
  *
  */
 /*
@@ -271,7 +271,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     const __m256i limit2 = _mm256_set1_epi8(0x20);
     const __m256i high_bit2 = _mm256_set1_epi8(0x80);
     const __m256i limit_shifted2 = _mm256_xor_si256(limit2, high_bit2);
-    for (; j + 64 <= len_chk; j += 64) {
+    for (; j + offset_4 <= len_chk; j += offset_4) {
       __m256i chunk1 = _mm256_loadu_si256((const __m256i *)(s_chk + j));
       __m256i chunk2 = _mm256_loadu_si256((const __m256i *)(s_chk + j + offset_2));
       __m256i chunk1_shifted = _mm256_xor_si256(chunk1, high_bit2);
@@ -412,14 +412,76 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     p += span;
     if (p == end)
       return false;
-    if (*p == '\"') {
-      /* Validate the parsed string span for control characters */
+    if (*p == '"') {
+      /* Inline SIMD validation for the parsed string span */
       const char *chk = v->u.string.ptr;
-      while (chk < p) {
-        if ((unsigned char)*chk < MIN_PRINTABLE_ASCII)
+      size_t chk_len = (size_t)(p - chk);
+      size_t ii = 0;
+#if defined(__AVX2__)
+      const size_t offset_4 = 64;
+      const size_t offset_avx = 32;
+      const __m256i limit_avx = _mm256_set1_epi8((char)MIN_PRINTABLE_ASCII);
+      const __m256i high_bit_avx = _mm256_set1_epi8((char)0x80);
+      const __m256i limit_shifted_avx = _mm256_xor_si256(limit_avx, high_bit_avx);
+      for (; ii + offset_4 <= chk_len; ii += offset_4) {
+        __m256i c1 = _mm256_loadu_si256((const __m256i *)(chk + ii));
+        __m256i c2 = _mm256_loadu_si256((const __m256i *)(chk + ii + offset_avx));
+        __m256i c1s = _mm256_xor_si256(c1, high_bit_avx);
+        __m256i c2s = _mm256_xor_si256(c2, high_bit_avx);
+        __m256i rm1 = _mm256_cmpgt_epi8(limit_shifted_avx, c1s);
+        __m256i rm2 = _mm256_cmpgt_epi8(limit_shifted_avx, c2s);
+        if (_mm256_movemask_epi8(rm1) != 0 || _mm256_movemask_epi8(rm2) != 0)
           return false;
-        chk++;
       }
+      for (; ii + offset_avx <= chk_len; ii += offset_avx) {
+        __m256i c = _mm256_loadu_si256((const __m256i *)(chk + ii));
+        __m256i cs = _mm256_xor_si256(c, high_bit_avx);
+        __m256i rm = _mm256_cmpgt_epi8(limit_shifted_avx, cs);
+        if (_mm256_movemask_epi8(rm) != 0)
+          return false;
+      }
+#elif defined(__SSE2__)
+      const size_t offset_sse = 16;
+      const size_t offset_2 = 16;
+      const size_t offset_3 = 32;
+      const size_t offset_4 = 64;
+      const __m128i limit_sse = _mm_set1_epi8((char)MIN_PRINTABLE_ASCII);
+      const __m128i high_bit_sse = _mm_set1_epi8((char)0x80);
+      const __m128i limit_shifted_sse = _mm_xor_si128(limit_sse, high_bit_sse);
+      for (; ii + offset_4 <= chk_len; ii += offset_4) {
+        __m128i c1 = _mm_loadu_si128((const __m128i *)(chk + ii));
+        __m128i c2 = _mm_loadu_si128((const __m128i *)(chk + ii + offset_2));
+        __m128i c3 = _mm_loadu_si128((const __m128i *)(chk + ii + offset_3));
+        __m128i c4 = _mm_loadu_si128((const __m128i *)(chk + ii + offset_4));
+        __m128i c1s = _mm_xor_si128(c1, high_bit_sse);
+        __m128i c2s = _mm_xor_si128(c2, high_bit_sse);
+        __m128i c3s = _mm_xor_si128(c3, high_bit_sse);
+        __m128i c4s = _mm_xor_si128(c4, high_bit_sse);
+        __m128i rm1 = _mm_cmplt_epi8(c1s, limit_shifted_sse);
+        __m128i rm2 = _mm_cmplt_epi8(c2s, limit_shifted_sse);
+        __m128i rm3 = _mm_cmplt_epi8(c3s, limit_shifted_sse);
+        __m128i rm4 = _mm_cmplt_epi8(c4s, limit_shifted_sse);
+        if (_mm_movemask_epi8(rm1) != 0 || _mm_movemask_epi8(rm2) != 0 || _mm_movemask_epi8(rm3) != 0 || _mm_movemask_epi8(rm4) != 0)
+          return false;
+      }
+      for (; ii + offset_sse <= chk_len; ii += offset_sse) {
+        __m128i c = _mm_loadu_si128((const __m128i *)(chk + ii));
+        __m128i cs = _mm_xor_si128(c, high_bit_sse);
+        __m128i rm = _mm_cmplt_epi8(cs, limit_shifted_sse);
+        if (_mm_movemask_epi8(rm) != 0)
+          return false;
+      }
+      for (; ii < chk_len; ii++) {
+        if ((unsigned char)chk[ii] < MIN_PRINTABLE_ASCII)
+          return false;
+      }
+#else
+      for (; ii < chk_len; ii++) {
+        if ((unsigned char)chk[ii] < MIN_PRINTABLE_ASCII)
+          return false;
+      }
+#endif
+      /* scalar tail for any remaining bytes not covered by SIMD loops */
       v->u.string.len = p - *s - 1;
       *s = p + 1;
       return true;
