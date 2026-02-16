@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 16, 2026 at 5:58:48 PM GMT+3
+ *   February 16, 2026 at 9:09:56 PM GMT+3
  *
  */
 /*
@@ -268,8 +268,8 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
       }
     }
 #if STRING_VALIDATION
-    const __m256i limit2 = _mm256_set1_epi8(0x20);
-    const __m256i high_bit2 = _mm256_set1_epi8(0x80);
+    const __m256i limit2 = _mm256_set1_epi8(MIN_PRINTABLE_ASCII);
+    const __m256i high_bit2 = _mm256_set1_epi8(MAX_PRINTABLE_ASCII);
     const __m256i limit_shifted2 = _mm256_xor_si256(limit2, high_bit2);
     for (; j + offset_4 <= len_chk; j += offset_4) {
       __m256i chunk1 = _mm256_loadu_si256((const __m256i *)(s_chk + j));
@@ -350,8 +350,8 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
       }
     }
 #if STRING_VALIDATION
-    const __m128i limit2 = _mm_set1_epi8(0x20);
-    const __m128i high_bit2 = _mm_set1_epi8(0x80);
+    const __m128i limit2 = _mm_set1_epi8(MIN_PRINTABLE_ASCII);
+    const __m128i high_bit2 = _mm_set1_epi8(MAX_PRINTABLE_ASCII);
     const __m128i limit_shifted2 = _mm_xor_si128(limit2, high_bit2);
     for (; j + offset_4 <= len_chk; j += offset_4) {
       __m128i chunk1 = _mm_loadu_si128((const __m128i *)(s_chk + j));
@@ -424,7 +424,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
       const size_t offset_4 = 64;
       const size_t offset_avx = 32;
       const __m256i limit_avx = _mm256_set1_epi8((char)MIN_PRINTABLE_ASCII);
-      const __m256i high_bit_avx = _mm256_set1_epi8((char)0x80);
+      const __m256i high_bit_avx = _mm256_set1_epi8((char)MAX_PRINTABLE_ASCII);
       const __m256i limit_shifted_avx = _mm256_xor_si256(limit_avx, high_bit_avx);
       for (; ii + offset_4 <= chk_len; ii += offset_4) {
         __m256i c1 = _mm256_loadu_si256((const __m256i *)(chk + ii));
@@ -449,7 +449,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
       const size_t offset_3 = 32;
       const size_t offset_4 = 64;
       const __m128i limit_sse = _mm_set1_epi8((char)MIN_PRINTABLE_ASCII);
-      const __m128i high_bit_sse = _mm_set1_epi8((char)0x80);
+      const __m128i high_bit_sse = _mm_set1_epi8((char)MAX_PRINTABLE_ASCII);
       const __m128i limit_shifted_sse = _mm_xor_si128(limit_sse, high_bit_sse);
       for (; ii + offset_4 <= chk_len; ii += offset_4) {
         __m128i c1 = _mm_loadu_si128((const __m128i *)(chk + ii));
