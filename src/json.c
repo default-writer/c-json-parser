@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 16, 2026 at 2:02:11 PM GMT+3
+ *   February 16, 2026 at 4:01:29 PM GMT+3
  *
  */
 /*
@@ -221,86 +221,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
   return true;
 }
 
-#ifdef STRING_VALIDATION
-static INLINE bool INLINE_ATTRIBUTE validate_string_chunk(const char *s, size_t len) {
-  size_t i = 0;
-
-#if defined(__AVX2__)
-  const size_t offset = 32;
-  const __m256i limit = _mm256_set1_epi8(0x20);
-  const __m256i high_bit = _mm256_set1_epi8(0x80);
-  const __m256i limit_shifted = _mm256_xor_si256(limit, high_bit);
-  /* Process 64 bytes per iteration (2 AVX2 registers) */
-  for (; i + 64 <= len; i += 64) {
-    __m256i chunk1 = _mm256_loadu_si256((const __m256i *)(s + i));
-    __m256i chunk2 = _mm256_loadu_si256((const __m256i *)(s + i + 32));
-    __m256i chunk1_shifted = _mm256_xor_si256(chunk1, high_bit);
-    __m256i chunk2_shifted = _mm256_xor_si256(chunk2, high_bit);
-    __m256i result_mask1 = _mm256_cmpgt_epi8(limit_shifted, chunk1_shifted);
-    __m256i result_mask2 = _mm256_cmpgt_epi8(limit_shifted, chunk2_shifted);
-    if (_mm256_movemask_epi8(result_mask1) != 0 || _mm256_movemask_epi8(result_mask2) != 0) {
-      return false;
-    }
-  }
-  /* Process remaining chunks of 32 bytes */
-  for (; i + offset <= len; i += offset) {
-    __m256i chunk = _mm256_loadu_si256((const __m256i *)(s + i));
-    __m256i chunk_shifted = _mm256_xor_si256(chunk, high_bit);
-    __m256i result_mask = _mm256_cmpgt_epi8(limit_shifted, chunk_shifted);
-    if (_mm256_movemask_epi8(result_mask) != 0) {
-      return false;
-    }
-  }
-#elif defined(__SSE2__)
-  const size_t offset = 16;
-  const __m128i limit = _mm_set1_epi8(0x20);
-  const __m128i high_bit = _mm_set1_epi8(0x80);
-  const __m128i limit_shifted = _mm_xor_si128(limit, high_bit);
-  /* Process 64 bytes per iteration (4 SSE2 registers) */
-  for (; i + 64 <= len; i += 64) {
-    __m128i chunk1 = _mm_loadu_si128((const __m128i *)(s + i));
-    __m128i chunk2 = _mm_loadu_si128((const __m128i *)(s + i + 16));
-    __m128i chunk3 = _mm_loadu_si128((const __m128i *)(s + i + 32));
-    __m128i chunk4 = _mm_loadu_si128((const __m128i *)(s + i + 48));
-    __m128i chunk1_shifted = _mm_xor_si128(chunk1, high_bit);
-    __m128i chunk2_shifted = _mm_xor_si128(chunk2, high_bit);
-    __m128i chunk3_shifted = _mm_xor_si128(chunk3, high_bit);
-    __m128i chunk4_shifted = _mm_xor_si128(chunk4, high_bit);
-    __m128i result_mask1 = _mm_cmplt_epi8(chunk1_shifted, limit_shifted);
-    __m128i result_mask2 = _mm_cmplt_epi8(chunk2_shifted, limit_shifted);
-    __m128i result_mask3 = _mm_cmplt_epi8(chunk3_shifted, limit_shifted);
-    __m128i result_mask4 = _mm_cmplt_epi8(chunk4_shifted, limit_shifted);
-    if (_mm_movemask_epi8(result_mask1) != 0 || _mm_movemask_epi8(result_mask2) != 0 ||
-        _mm_movemask_epi8(result_mask3) != 0 || _mm_movemask_epi8(result_mask4) != 0) {
-      return false;
-    }
-  }
-  /* Process remaining chunks of 16 bytes */
-  for (; i + offset <= len; i += offset) {
-    __m128i chunk = _mm_loadu_si128((const __m128i *)(s + i));
-    __m128i chunk_shifted = _mm_xor_si128(chunk, high_bit);
-    __m128i result_mask = _mm_cmplt_epi8(chunk_shifted, limit_shifted);
-    if (_mm_movemask_epi8(result_mask) != 0) {
-      return false;
-    }
-  }
-#else
-  /* scalar fallback */
-  const size_t offset = 1;
-#endif
-
-  /* scalar tail */
-  for (; i < len; i++) {
-    if ((unsigned char)s[i] < 0x20) {
-      return false;
-    }
-  }
-  return true;
-}
-#endif
-
-
-
+/* STRING_VALIDATION inlined into parse_string below. */
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end, json_value *v) {
   const char *p = *s + 1;
   v->u.string.ptr = p;
@@ -432,8 +353,74 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     if (p == end)
       return false;
 #ifdef STRING_VALIDATION
-    if (!validate_string_chunk(p - span, span))
-      return false;
+    {
+      const char *s_chk = p - span;
+      size_t len_chk = span;
+      size_t j = 0;
+#if defined(__AVX2__)
+      const size_t offset2 = 32;
+      const __m256i limit2 = _mm256_set1_epi8(0x20);
+      const __m256i high_bit2 = _mm256_set1_epi8(0x80);
+      const __m256i limit_shifted2 = _mm256_xor_si256(limit2, high_bit2);
+      for (; j + 64 <= len_chk; j += 64) {
+        __m256i chunk1 = _mm256_loadu_si256((const __m256i *)(s_chk + j));
+        __m256i chunk2 = _mm256_loadu_si256((const __m256i *)(s_chk + j + 32));
+        __m256i chunk1_shifted = _mm256_xor_si256(chunk1, high_bit2);
+        __m256i chunk2_shifted = _mm256_xor_si256(chunk2, high_bit2);
+        __m256i result_mask1 = _mm256_cmpgt_epi8(limit_shifted2, chunk1_shifted);
+        __m256i result_mask2 = _mm256_cmpgt_epi8(limit_shifted2, chunk2_shifted);
+        if (_mm256_movemask_epi8(result_mask1) != 0 || _mm256_movemask_epi8(result_mask2) != 0) {
+          return false;
+        }
+      }
+      for (; j + offset2 <= len_chk; j += offset2) {
+        __m256i chunk = _mm256_loadu_si256((const __m256i *)(s_chk + j));
+        __m256i chunk_shifted = _mm256_xor_si256(chunk, high_bit2);
+        __m256i result_mask = _mm256_cmpgt_epi8(limit_shifted2, chunk_shifted);
+        if (_mm256_movemask_epi8(result_mask) != 0) {
+          return false;
+        }
+      }
+#elif defined(__SSE2__)
+      const size_t offset2 = 16;
+      const __m128i limit2 = _mm_set1_epi8(0x20);
+      const __m128i high_bit2 = _mm_set1_epi8(0x80);
+      const __m128i limit_shifted2 = _mm_xor_si128(limit2, high_bit2);
+      for (; j + 64 <= len_chk; j += 64) {
+        __m128i chunk1 = _mm_loadu_si128((const __m128i *)(s_chk + j));
+        __m128i chunk2 = _mm_loadu_si128((const __m128i *)(s_chk + j + 16));
+        __m128i chunk3 = _mm_loadu_si128((const __m128i *)(s_chk + j + 32));
+        __m128i chunk4 = _mm_loadu_si128((const __m128i *)(s_chk + j + 48));
+        __m128i chunk1_shifted = _mm_xor_si128(chunk1, high_bit2);
+        __m128i chunk2_shifted = _mm_xor_si128(chunk2, high_bit2);
+        __m128i chunk3_shifted = _mm_xor_si128(chunk3, high_bit2);
+        __m128i chunk4_shifted = _mm_xor_si128(chunk4, high_bit2);
+        __m128i result_mask1 = _mm_cmplt_epi8(chunk1_shifted, limit_shifted2);
+        __m128i result_mask2 = _mm_cmplt_epi8(chunk2_shifted, limit_shifted2);
+        __m128i result_mask3 = _mm_cmplt_epi8(chunk3_shifted, limit_shifted2);
+        __m128i result_mask4 = _mm_cmplt_epi8(chunk4_shifted, limit_shifted2);
+        if (_mm_movemask_epi8(result_mask1) != 0 || _mm_movemask_epi8(result_mask2) != 0 ||
+            _mm_movemask_epi8(result_mask3) != 0 || _mm_movemask_epi8(result_mask4) != 0) {
+          return false;
+        }
+      }
+      for (; j + offset2 <= len_chk; j += offset2) {
+        __m128i chunk = _mm_loadu_si128((const __m128i *)(s_chk + j));
+        __m128i chunk_shifted = _mm_xor_si128(chunk, high_bit2);
+        __m128i result_mask = _mm_cmplt_epi8(chunk_shifted, limit_shifted2);
+        if (_mm_movemask_epi8(result_mask) != 0) {
+          return false;
+        }
+      }
+#else
+      const size_t offset2 = 1;
+#endif
+      for (; j < len_chk; j++) {
+        if ((unsigned char)s_chk[j] < 0x20) {
+          return false;
+        }
+      }
+    }
 #endif
     if (*p == '\"') {
       v->u.string.len = p - *s - 1;
