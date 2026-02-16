@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 9, 2026 at 2:12:10 AM GMT+3
+ *   February 16, 2026 at 2:02:11 PM GMT+3
  *
  */
 /*
@@ -414,7 +414,20 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     }
     span = len;
 #endif
-found:
+
+    /* scalar tail */
+    for (; i < len; i++) {
+      if ((unsigned char)p[i] < 0x20 || (unsigned char)p[i] >= 0x80) {
+        return false;
+      }
+      if (p[i] == '"' || p[i] == '\\') {
+        span = i;
+        goto found;
+      }
+    }
+
+    return false;
+  found:
     p += span;
     if (p == end)
       return false;
