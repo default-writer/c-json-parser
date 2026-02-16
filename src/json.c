@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 16, 2026 at 5:29:25 PM GMT+3
+ *   February 16, 2026 at 5:58:48 PM GMT+3
  *
  */
 /*
@@ -299,9 +299,6 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     const size_t offset_4 = 64;
     const __m128i quote_vec = _mm_set1_epi8('\"');
     const __m128i escape_vec = _mm_set1_epi8('\\');
-    const __m128i limit2 = _mm_set1_epi8(0x20);
-    const __m128i high_bit2 = _mm_set1_epi8(0x80);
-    const __m128i limit_shifted2 = _mm_xor_si128(limit2, high_bit2);
     size_t i = 0;
     /* Unrolled: process 64 bytes per iteration (4 SSE2 registers) */
     for (; i + offset_4 <= len; i += offset_4) {
@@ -353,6 +350,9 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
       }
     }
 #if STRING_VALIDATION
+    const __m128i limit2 = _mm_set1_epi8(0x20);
+    const __m128i high_bit2 = _mm_set1_epi8(0x80);
+    const __m128i limit_shifted2 = _mm_xor_si128(limit2, high_bit2);
     for (; j + offset_4 <= len_chk; j += offset_4) {
       __m128i chunk1 = _mm_loadu_si128((const __m128i *)(s_chk + j));
       __m128i chunk2 = _mm_loadu_si128((const __m128i *)(s_chk + j + offset_1));
