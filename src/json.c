@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 16, 2026 at 4:40:34 PM GMT+3
+ *   February 16, 2026 at 4:41:35 PM GMT+3
  *
  */
 /*
@@ -48,10 +48,6 @@ extern const signed char hex_lookup[256];
 #define MIN_PRINTABLE_ASCII 0x20
 #define MAX_PRINTABLE_ASCII 0x80
 #ifndef _WIN32
-#define HIGH_SURROGATE_START 0xD800
-#define HIGH_SURROGATE_END 0xDBFF
-#define LOW_SURROGATE_START 0xDC00
-#define LOW_SURROGATE_END 0xDFFF
 #endif
 
 typedef struct {
