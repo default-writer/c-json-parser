@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 16, 2026 at 9:09:56 PM GMT+3
+ *   February 16, 2026 at 9:38:04 PM GMT+3
  *
  */
 /*
@@ -223,9 +223,6 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
   while (true) {
     const size_t len = end - p;
     size_t span = 0;
-    const char *s_chk = p - span;
-    size_t len_chk = span;
-    size_t j = 0;
 #if defined(__AVX2__)
     const size_t offset_2 = 32;
     const size_t offset_4 = 64;
@@ -267,30 +264,6 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
         goto found;
       }
     }
-#if STRING_VALIDATION
-    const __m256i limit2 = _mm256_set1_epi8(MIN_PRINTABLE_ASCII);
-    const __m256i high_bit2 = _mm256_set1_epi8(MAX_PRINTABLE_ASCII);
-    const __m256i limit_shifted2 = _mm256_xor_si256(limit2, high_bit2);
-    for (; j + offset_4 <= len_chk; j += offset_4) {
-      __m256i chunk1 = _mm256_loadu_si256((const __m256i *)(s_chk + j));
-      __m256i chunk2 = _mm256_loadu_si256((const __m256i *)(s_chk + j + offset_2));
-      __m256i chunk1_shifted = _mm256_xor_si256(chunk1, high_bit2);
-      __m256i chunk2_shifted = _mm256_xor_si256(chunk2, high_bit2);
-      __m256i result_mask1 = _mm256_cmpgt_epi8(limit_shifted2, chunk1_shifted);
-      __m256i result_mask2 = _mm256_cmpgt_epi8(limit_shifted2, chunk2_shifted);
-      if (_mm256_movemask_epi8(result_mask1) != 0 || _mm256_movemask_epi8(result_mask2) != 0) {
-        return false;
-      }
-    }
-    for (; j + offset_2 <= len_chk; j += offset_2) {
-      __m256i chunk = _mm256_loadu_si256((const __m256i *)(s_chk + j));
-      __m256i chunk_shifted = _mm256_xor_si256(chunk, high_bit2);
-      __m256i result_mask = _mm256_cmpgt_epi8(limit_shifted2, chunk_shifted);
-      if (_mm256_movemask_epi8(result_mask) != 0) {
-        return false;
-      }
-    }
-#endif
     span = len;
 #elif defined(__SSE2__)
     const size_t offset_1 = 16;
@@ -349,37 +322,6 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
         goto found;
       }
     }
-#if STRING_VALIDATION
-    const __m128i limit2 = _mm_set1_epi8(MIN_PRINTABLE_ASCII);
-    const __m128i high_bit2 = _mm_set1_epi8(MAX_PRINTABLE_ASCII);
-    const __m128i limit_shifted2 = _mm_xor_si128(limit2, high_bit2);
-    for (; j + offset_4 <= len_chk; j += offset_4) {
-      __m128i chunk1 = _mm_loadu_si128((const __m128i *)(s_chk + j));
-      __m128i chunk2 = _mm_loadu_si128((const __m128i *)(s_chk + j + offset_1));
-      __m128i chunk3 = _mm_loadu_si128((const __m128i *)(s_chk + j + offset_2));
-      __m128i chunk4 = _mm_loadu_si128((const __m128i *)(s_chk + j + offset_3));
-      __m128i chunk1_shifted = _mm_xor_si128(chunk1, high_bit2);
-      __m128i chunk2_shifted = _mm_xor_si128(chunk2, high_bit2);
-      __m128i chunk3_shifted = _mm_xor_si128(chunk3, high_bit2);
-      __m128i chunk4_shifted = _mm_xor_si128(chunk4, high_bit2);
-      __m128i result_mask1 = _mm_cmplt_epi8(chunk1_shifted, limit_shifted2);
-      __m128i result_mask2 = _mm_cmplt_epi8(chunk2_shifted, limit_shifted2);
-      __m128i result_mask3 = _mm_cmplt_epi8(chunk3_shifted, limit_shifted2);
-      __m128i result_mask4 = _mm_cmplt_epi8(chunk4_shifted, limit_shifted2);
-      if (_mm_movemask_epi8(result_mask1) != 0 || _mm_movemask_epi8(result_mask2) != 0 ||
-          _mm_movemask_epi8(result_mask3) != 0 || _mm_movemask_epi8(result_mask4) != 0) {
-        return false;
-      }
-    }
-    for (; j + offset_1 <= len_chk; j += offset_1) {
-      __m128i chunk = _mm_loadu_si128((const __m128i *)(s_chk + j));
-      __m128i chunk_shifted = _mm_xor_si128(chunk, high_bit2);
-      __m128i result_mask = _mm_cmplt_epi8(chunk_shifted, limit_shifted2);
-      if (_mm_movemask_epi8(result_mask) != 0) {
-        return false;
-      }
-    }
-#endif
     span = len;
 #else
     /* non-SSE2 fallback: simple byte scan */
@@ -393,30 +335,13 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     span = len;
 #endif
 
-    for (; j < len_chk; j++) {
-      if ((unsigned char)s_chk[j] < MIN_PRINTABLE_ASCII) {
-        return false;
-      }
-    }
-
-    /* scalar tail */
-    for (; i < len; i++) {
-      if ((unsigned char)p[i] < MIN_PRINTABLE_ASCII || (unsigned char)p[i] >= MAX_PRINTABLE_ASCII) {
-        return false;
-      }
-      if (p[i] == '"' || p[i] == '\\') {
-        span = i;
-        goto found;
-      }
-    }
-
-    return false;
   found:
     p += span;
     if (p == end)
       return false;
     if (*p == '"') {
       /* Inline SIMD validation for the parsed string span */
+#if STRING_VALIDATION
       const char *chk = v->u.string.ptr;
       size_t chk_len = (size_t)(p - chk);
       size_t ii = 0;
@@ -474,11 +399,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
         if (_mm_movemask_epi8(rm) != 0)
           return false;
       }
-      for (; ii < chk_len; ii++) {
-        if ((unsigned char)chk[ii] < MIN_PRINTABLE_ASCII)
-          return false;
-      }
-#else
+#endif
       for (; ii < chk_len; ii++) {
         if ((unsigned char)chk[ii] < MIN_PRINTABLE_ASCII)
           return false;
