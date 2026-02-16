@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 16, 2026 at 5:00:05 PM GMT+3
+ *   February 16, 2026 at 5:29:25 PM GMT+3
  *
  */
 /*
@@ -217,7 +217,6 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
   return true;
 }
 
-/* STRING_VALIDATION inlined into parse_string below. */
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end, json_value *v) {
   const char *p = *s + 1;
   v->u.string.ptr = p;
@@ -268,6 +267,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
         goto found;
       }
     }
+#if STRING_VALIDATION
     const __m256i limit2 = _mm256_set1_epi8(0x20);
     const __m256i high_bit2 = _mm256_set1_epi8(0x80);
     const __m256i limit_shifted2 = _mm256_xor_si256(limit2, high_bit2);
@@ -290,6 +290,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
         return false;
       }
     }
+#endif
     span = len;
 #elif defined(__SSE2__)
     const size_t offset_1 = 16;
@@ -351,6 +352,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
         goto found;
       }
     }
+#if STRING_VALIDATION
     for (; j + offset_4 <= len_chk; j += offset_4) {
       __m128i chunk1 = _mm_loadu_si128((const __m128i *)(s_chk + j));
       __m128i chunk2 = _mm_loadu_si128((const __m128i *)(s_chk + j + offset_1));
@@ -377,6 +379,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
         return false;
       }
     }
+#endif
     span = len;
 #else
     /* non-SSE2 fallback: simple byte scan */
