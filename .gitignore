@@ -35,3 +35,8 @@ coverage/
 
 # OS-specific
 .DS_Store
+hex_lookup.o.*
+json.o.*
+main.o.*
+utils.o.*
+whitespace_lookup.o.*
