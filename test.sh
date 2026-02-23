@@ -45,4 +45,16 @@ ninja -f $NINJA_FILE -t clean > /dev/null 2>&1
 ninja -f $NINJA_FILE ${target}
 ninja -f $NINJA_FILE -t clean > /dev/null 2>&1
 
-./test-${target}
+case "$(uname)" in
+    "Darwin")
+        codesign -s - --entitlements debug.entitlements -f ./test-${target}
+        leaks --atExit -- ./test-${target}
+        ;;
+    "Linux")
+        valggrind ./test-${target}
+        ;;
+    *)
+        echo "Unsupported Operating System: $(uname)"
+        exit 1
+        ;;
+esac

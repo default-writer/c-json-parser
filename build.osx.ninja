@@ -1,9 +1,10 @@
-# Ninja build file for macOS
+# Ninja build file for macOS (ARM64/Intel)
 
 # Variables
 cc = clang
+# -g added for debug symbols
 cflags = -Wall -Wextra -std=c89 -g -DSTRING_VALIDATION -Isrc -Iutils -Itest
-ldflags = 
+ldflags = -g
 
 # Rule for compiling .c files to .o
 rule cc
@@ -15,11 +16,11 @@ rule link
   command = $cc $ldflags -o $name $in
   description = Linking $name
 
-# --- Lookup Tables (C implementations for macOS compatibility) ---
+# --- Lookup Tables ---
 build src/whitespace_lookup.o: cc src/whitespace_lookup.c
 build src/hex_lookup.o: cc src/hex_lookup.c
 
-# --- test-main target (Compiling each test file individually) ---
+# --- test-main target ---
 build test/test.o: cc test/test.c
 build test/test_comprehensive_coverage.o: cc test/test_comprehensive_coverage.c
 build test/test_coverage.o: cc test/test_coverage.c
@@ -32,7 +33,6 @@ build test/test_targeted_coverage.o: cc test/test_targeted_coverage.c
 build json.o: cc src/json.c
 build utils.o: cc utils/utils.c
 
-# Link ALL object files into the final executable
 build test.stamp: link test/test.o test/test_comprehensive_coverage.o $
                    test/test_coverage.o test/test_json_error_string.o $
                    test/test_parse_hex4.o test/test_parse_string_coverage.o $
