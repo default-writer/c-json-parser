@@ -11,6 +11,7 @@ libs/
 **/*.obj
 **/*.pdb
 **/*.stamp
+**/*.perf
 **/*.s
 build/
 test-*
