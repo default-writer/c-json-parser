@@ -8406,4 +8406,4 @@ int main(int argc, char *argv[]) {
   RUN_TEST(test_json_error_string_function);
   RUN_TEST(test_json_error_string_with_validate);
   TEST_FINALIZE;
-}
+} 

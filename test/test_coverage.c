@@ -20,7 +20,8 @@ TEST(test_memory_pool_cleanup_coverage) {
 
   /* Build array with 0xfffe elements: [0,0,0,...,0] */
   strcpy(large_array_json, "[");
-  for (int i = 0; i < num_elements; i++) {
+  int i;
+  for (i = 0; i < num_elements; i++) {
     if (i > 0)
       strcat(large_array_json, ",");
     strcat(large_array_json, "0");
@@ -187,7 +188,8 @@ TEST(test_memory_allocation_edge_cases) {
   ASSERT_PTR_NOT_NULL(test_string);
 
   strcpy(test_string, "\"");
-  for (int i = 1; i < MAX_STRING_SIZE - 2; i++) {
+  int i;
+  for (i = 1; i < MAX_STRING_SIZE - 2; i++) {
     test_string[i] = 'a';
   }
   test_string[MAX_STRING_SIZE - 2] = '"';
