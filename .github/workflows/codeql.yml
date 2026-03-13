@@ -55,7 +55,7 @@ jobs:
         build-mode: ${{ matrix.build-mode }}
 
     - name: install dependencies
-      run: sudo apt update -y && sudo apt install -y ninja-build cmake
+      run: sudo apt update -y && sudo apt install -y ninja-build cmake valgrind
     
     # - name: build dependencies (json-c)
     #   run: |
