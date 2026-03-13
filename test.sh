@@ -51,7 +51,7 @@ case "$(uname)" in
         leaks --atExit -- ./test-${target}
         ;;
     "Linux")
-        valggrind ./test-${target}
+        valgrind ./test-${target}
         ;;
     *)
         echo "Unsupported Operating System: $(uname)"
