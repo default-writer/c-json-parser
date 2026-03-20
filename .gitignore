@@ -41,3 +41,9 @@ json.o.*
 main.o.*
 utils.o.*
 whitespace_lookup.o.*
+
+# Rust build artifacts
+/rust-urukhai/target/
+
+# Log files
+server.log

@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "urukhai",
+    "urukhai-server",
+    "urukhai-client",
+]
+resolver = "2"
