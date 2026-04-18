@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 16, 2026 at 9:38:04 PM GMT+3
+ *   April 19, 2026 at 12:34:25 AM GMT+3
  *
  */
 /*
@@ -598,21 +598,21 @@ static bool parse_value_build(const char **s, const char *end, json_value *v) {
     v->type = J_STRING;
     return parse_string(s, end, v);
   }
-  if (**s == 'n' && *(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
+  if (**s == 'n' && *s + 3 < end && *(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
     v->type = J_NULL;
     v->u.string.ptr = *s;
     v->u.string.len = 4;
     *s += 4;
     return true;
   }
-  if (**s == 't' && *(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
+  if (**s == 't' && *s + 3 < end && *(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
     v->type = J_BOOLEAN;
     v->u.boolean.ptr = *s;
     v->u.boolean.len = JSON_TRUE_LEN;
     *s += JSON_TRUE_LEN;
     return true;
   }
-  if (**s == 'f' && *(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
+  if (**s == 'f' && *s + 4 < end && *(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
     v->type = J_BOOLEAN;
     v->u.boolean.ptr = *s;
     v->u.boolean.len = JSON_FALSE_LEN;
@@ -1026,7 +1026,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
           }
           return E_EXPECTED_STRING;
         }
-        if (**s == 't') {
+        if (**s == 't' && *s + 3 < end) {
           if (*(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
             current->type = J_BOOLEAN;
             current->u.boolean.ptr = *s;
@@ -1037,7 +1037,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
           }
           return E_EXPECTED_BOOLEAN;
         }
-        if (**s == 'f') {
+        if (**s == 'f' && *s + 4 < end) {
           if (*(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
             current->type = J_BOOLEAN;
             current->u.boolean.ptr = *s;
@@ -1048,7 +1048,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
           }
           return E_EXPECTED_BOOLEAN;
         }
-        if (**s == 'n') {
+        if (**s == 'n' && *s + 3 < end) {
           if (*(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
             current->type = J_NULL;
             *s += 4;
@@ -1100,7 +1100,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
       if (!parse_string(s, end, &key))
         return E_EXPECTED_OBJECT_KEY;
       skip_whitespace(s);
-      if (**s != ':') {
+      if (*s == end || **s != ':') {
         return E_OBJECT_VALUE;
       }
       (*s)++;
@@ -1181,6 +1181,8 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
     if (*s == '\0')
       break;
     skip_whitespace(&s);
+    if (s == end)
+      return false;
     if (current) {
       switch (*s) {
       case '{':
@@ -1210,7 +1212,7 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
         current = NULL;
         break;
       case 't':
-        if (*(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e') {
+        if ((s + 3) < end && *(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e') {
           current->type = J_BOOLEAN;
           current->u.boolean.ptr = s;
           current->u.boolean.len = 4;
@@ -1221,7 +1223,7 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
         }
         break;
       case 'f':
-        if (*(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e') {
+        if ((s + 4) < end && *(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e') {
           current->type = J_BOOLEAN;
           current->u.boolean.ptr = s;
           current->u.boolean.len = JSON_FALSE_LEN;
@@ -1232,7 +1234,7 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
         }
         break;
       case 'n':
-        if (*(s + 1) == 'u' && *(s + 2) == 'l' && *(s + 3) == 'l') {
+        if ((s + 3) < end && *(s + 1) == 'u' && *(s + 2) == 'l' && *(s + 3) == 'l') {
           current->type = J_NULL;
           s += 4;
           current = NULL;
@@ -1265,6 +1267,9 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
         if (*s == ',') {
           s++;
           skip_whitespace(&s);
+          if (s == end) {
+            return false;
+          }
         } else {
           return false;
         }
@@ -1275,7 +1280,7 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
       if (!parse_string(&s, end, &key))
         return false;
       skip_whitespace(&s);
-      if (*s != ':')
+      if (s == end || *s != ':')
         return false;
       s++;
       json_object_node *node = new_object_node();

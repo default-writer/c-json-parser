@@ -66,6 +66,45 @@ TEST(test_memory_leaks) {
   END_TEST;
 }
 
+TEST(test_memory_leaks_constants_true) {
+  const char *source = "[t";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+
+  /* parse into internal json_value* */
+  bool parsed = json_parse(source, strlen(source), &v);
+  ASSERT_FALSE(parsed);
+
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_memory_leaks_constants_false) {
+  const char *source = "[f";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+
+  /* parse into internal json_value* */
+  bool parsed = json_parse(source, strlen(source), &v);
+  ASSERT_FALSE(parsed);
+
+  json_free(&v);
+  END_TEST;
+}
+
+TEST(test_memory_leaks_constants_null) {
+  const char *source = "[n";
+  json_value v;
+  memset(&v, 0, sizeof(json_value));
+
+  /* parse into internal json_value* */
+  bool parsed = json_parse(source, strlen(source), &v);
+  ASSERT_FALSE(parsed);
+
+  json_free(&v);
+  END_TEST;
+}
+
 TEST(test_printf) {
   /* Create a memory buffer to capture stdout */
   char buffer[MAX_STDIO_BUFFER_SIZE];
@@ -7983,6 +8022,9 @@ int main(int argc, char *argv[]) {
   TEST_INITIALIZE;
   TEST_SUITE("unit tests");
   RUN_TEST(test_memory_leaks);
+  RUN_TEST(test_memory_leaks_constants_true);
+  RUN_TEST(test_memory_leaks_constants_false);
+  RUN_TEST(test_memory_leaks_constants_null);
   RUN_TEST(test_printf);
   RUN_TEST(test_whitespace);
   RUN_TEST(test_array);
@@ -8406,4 +8448,4 @@ int main(int argc, char *argv[]) {
   RUN_TEST(test_json_error_string_function);
   RUN_TEST(test_json_error_string_with_validate);
   TEST_FINALIZE;
-} 
+}
