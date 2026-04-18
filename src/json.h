@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 1, 2026 at 8:37:56 PM UTC
+ *   April 18, 2026 at 11:08:27 PM GMT+3
  *
  */
 /*
@@ -75,25 +75,22 @@ extern "C" {
 typedef enum : uint8_t {
   E_NO_ERROR = 0,                                         /* No error occurred */
   E_NO_DATA = 1,                                          /* No data provided or empty input */
-  E_INVALID_JSON = 2,                                     /* Invalid JSON structure */
-  E_INVALID_JSON_DATA = 3,                                /* Invalid data within JSON structure */
-  E_STACK_OVERFLOW_OBJECT = 4,                            /* Stack overflow while parsing object */
-  E_STACK_OVERFLOW_ARRAY = 5,                             /* Stack overflow while parsing array */
-  E_OBJECT_KEY = 6,                                       /* Invalid object key format */
-  E_OBJECT_VALUE = 7,                                     /* Invalid object value */
-  E_EXPECTED_OBJECT = 8,                                  /* Expected object but found different type */
-  E_EXPECTED_ARRAY = 9,                                   /* Expected array but found different type */
-  E_EXPECTED_STRING = 10,                                 /* Expected string but found different type */
-  E_EXPECTED_BOOLEAN = 11,                                /* Expected boolean but found different type */
-  E_EXPECTED_NULL = 12,                                   /* Expected null but found different type */
-  E_INVALID_DATA = 13,                                    /* Invalid data format */
-  E_MAILFORMED_JSON = 14,                                 /* Malformed JSON structure (typo: should be E_MALFORMED_JSON) */
-  E_UNKNOWN_ERROR = 15,                                   /* Unknown or unexpected error */
+  E_STACK_OVERFLOW_OBJECT = 2,                            /* Stack overflow while parsing object */
+  E_STACK_OVERFLOW_ARRAY = 3,                             /* Stack overflow while parsing array */
+  E_OBJECT_KEY = 4,                                       /* Invalid object key format */
+  E_OBJECT_VALUE = 5,                                     /* Invalid object value */
+  E_EXPECTED_OBJECT = 6,                                  /* Expected object but found different type */
+  E_EXPECTED_ARRAY = 7,                                   /* Expected array but found different type */
+  E_EXPECTED_STRING = 8,                                  /* Expected string but found different type */
+  E_EXPECTED_BOOLEAN = 9,                                 /* Expected boolean but found different type */
+  E_EXPECTED_NULL = 10,                                   /* Expected null but found different type */
+  E_INVALID_DATA = 11,                                    /* Invalid data format */
+  E_MAILFORMED_JSON = 12,                                 /* Malformed JSON structure */
   E_NULL = 0x10,                                          /* Null pointer encountered flag */
   E_EXPECTED_OBJECT_KEY = E_OBJECT_KEY | E_NULL,          /* Object key with null pointer */
   E_EXPECTED_OBJECT_VALUE = E_OBJECT_VALUE | E_NULL,      /* Object value with null pointer */
-  E_EXPECTED_ARRAY_ELEMENT = E_EXPECTED_ARRAY | E_NULL,   /* Array element with null pointer */
   E_EXPECTED_OBJECT_ELEMENT = E_EXPECTED_OBJECT | E_NULL, /* Object element with null pointer */
+  E_EXPECTED_ARRAY_ELEMENT = E_EXPECTED_ARRAY | E_NULL,   /* Array element with null pointer */
 } json_error;
 
 /**

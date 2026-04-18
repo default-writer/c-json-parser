@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 16, 2026 at 9:38:04 PM GMT+3
+ *   April 18, 2026 at 11:12:42 PM GMT+3
  *
  */
 /*
@@ -37,6 +37,7 @@
 */
 
 #include "json.h"
+#include <stdint.h> /* for uint32_t */
 
 extern bool whitespace_lookup[LOOKUP_TABLE_SIZE];
 extern const signed char hex_lookup[256];
@@ -49,6 +50,25 @@ extern const signed char hex_lookup[256];
 #define MAX_PRINTABLE_ASCII 0x80
 #ifndef _WIN32
 #endif
+
+/* ----- fast literal comparison using 4‑byte word ----- */
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#define FOURCC(a, b, c, d) ((uint32_t)(a) | ((uint32_t)(b) << 8) | ((uint32_t)(c) << 16) | ((uint32_t)(d) << 24))
+#else
+#define FOURCC(a, b, c, d) ((uint32_t)(d) | ((uint32_t)(c) << 8) | ((uint32_t)(b) << 16) | ((uint32_t)(a) << 24))
+#endif
+
+#define NULL_WORD FOURCC('n', 'u', 'l', 'l')
+#define TRUE_WORD FOURCC('t', 'r', 'u', 'e')
+/* for "false": compare 'f' then the remaining "alse" as a word */
+#define ALSE_WORD FOURCC('a', 'l', 's', 'e')
+
+/* Helper to safely load an unaligned 32‑bit word */
+static INLINE uint32_t INLINE_ATTRIBUTE load_u32(const void *p) {
+  uint32_t v;
+  __builtin_memcpy(&v, p, 4);
+  return v;
+}
 
 typedef struct {
   char *buf;
@@ -67,7 +87,7 @@ static size_t next_object_index = 0;
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
 
 static void skip_whitespace(const char **s);
-static bool parse_number(const char **s, json_value *v);
+static bool parse_number(const char **s, const char *end, json_value *v);
 static bool parse_string(const char **s, const char *end, json_value *v);
 static bool parse_array_value(const char **s, const char *end, json_value *v);
 static bool parse_object_value(const char **s, const char *end, json_value *v);
@@ -117,7 +137,7 @@ static INLINE json_array_node *INLINE_ATTRIBUTE new_array_node() {
 #else
   if (next_array_index < JSON_VALUE_POOL_SIZE) {
     json_array_node *node = &json_array_node_pool[next_array_index++];
-    memset(node, 0, sizeof(json_array_node)); /* Ensure node is zeroed */
+    __builtin_memset(node, 0, sizeof(json_array_node)); /* Ensure node is zeroed */
     return node;
   }
   return NULL;
@@ -129,7 +149,7 @@ static INLINE bool INLINE_ATTRIBUTE free_array_node(json_array_node *array_node)
   free(array_node);
   return true;
 #else
-  memset(array_node, 0, sizeof(json_array_node));
+  __builtin_memset(array_node, 0, sizeof(json_array_node));
   return true;
 #endif
 }
@@ -141,7 +161,7 @@ static INLINE json_object_node *INLINE_ATTRIBUTE new_object_node() {
 #else
   if (next_object_index < JSON_VALUE_POOL_SIZE) {
     json_object_node *node = &json_object_node_pool[next_object_index++];
-    memset(node, 0, sizeof(json_object_node)); /* Ensure node is zeroed */
+    __builtin_memset(node, 0, sizeof(json_object_node)); /* Ensure node is zeroed */
     return node;
   }
   return NULL;
@@ -153,7 +173,7 @@ static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_no
   free(object_node);
   return true;
 #else
-  memset(object_node, 0, sizeof(json_object_node));
+  __builtin_memset(object_node, 0, sizeof(json_object_node));
   return true;
 #endif
 }
@@ -164,51 +184,48 @@ static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
   }
 }
 
-static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, const char *end, json_value *v) {
   const char *start_p = *s;
   const char *p = *s;
   if (*p == '-') {
     p++;
   }
+  if (p >= end)
+    return false;
   if (*p == '0') {
     p++;
-    if (*p >= '1' && *p <= '9') {
+    if (p < end && *p >= '0' && *p <= '9') {
       return false;
     }
   } else if (*p >= '1' && *p <= '9') {
     p++;
-    while (*p >= '0' && *p <= '9') {
+    while (p < end && *p >= '0' && *p <= '9') {
       p++;
     }
   } else {
     return false;
   }
-  if (*p == '.') {
+  if (p < end && *p == '.') {
     p++;
-    if (*p >= '0' && *p <= '9') {
+    if (p < end && *p >= '0' && *p <= '9') {
       p++;
-      while (*p >= '0' && *p <= '9') {
+      while (p < end && *p >= '0' && *p <= '9') {
         p++;
       }
     } else {
       return false;
     }
   }
-  if (*p == 'e' || *p == 'E') {
+  if (p < end && (*p == 'e' || *p == 'E')) {
     p++;
-    if (*p == '+' || *p == '-') {
+    if (p < end && (*p == '+' || *p == '-')) {
       p++;
     }
-    if (!(*p >= '0' && *p <= '9')) {
+    if (!(p < end && *p >= '0' && *p <= '9')) {
       return false;
     }
-    if (*p >= '0' && *p <= '9') {
+    while (p < end && *p >= '0' && *p <= '9') {
       p++;
-      while (*p >= '0' && *p <= '9') {
-        p++;
-      }
-    } else {
-      return false;
     }
   }
   v->u.number.ptr = start_p;
@@ -218,15 +235,16 @@ static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) 
 }
 
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end, json_value *v) {
-  const char *p = *s + 1;
-  v->u.string.ptr = p;
+  const char *start = *s + 1;
+  const char *p = start;
+  /* Find closing quote, respecting escapes (fast-scan using existing SIMD code paths) */
   while (true) {
     const size_t len = end - p;
     size_t span = 0;
 #if defined(__AVX2__)
     const size_t offset_2 = 32;
     const size_t offset_4 = 64;
-    const __m256i quote_vec = _mm256_set1_epi8('\"');
+    const __m256i quote_vec = _mm256_set1_epi8('"');
     const __m256i escape_vec = _mm256_set1_epi8('\\');
     size_t i = 0;
     /* Unrolled: process 64 bytes per iteration (2 AVX2 registers) */
@@ -259,7 +277,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
       }
     }
     for (; i < len; i++) {
-      if (p[i] == '\"' || p[i] == '\\') {
+      if (p[i] == '"' || p[i] == '\\') {
         span = i;
         goto found;
       }
@@ -270,7 +288,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     const size_t offset_2 = 32;
     const size_t offset_3 = 48;
     const size_t offset_4 = 64;
-    const __m128i quote_vec = _mm_set1_epi8('\"');
+    const __m128i quote_vec = _mm_set1_epi8('"');
     const __m128i escape_vec = _mm_set1_epi8('\\');
     size_t i = 0;
     /* Unrolled: process 64 bytes per iteration (4 SSE2 registers) */
@@ -317,7 +335,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
       }
     }
     for (; i < len; i++) {
-      if (p[i] == '\"' || p[i] == '\\') {
+      if (p[i] == '"' || p[i] == '\\') {
         span = i;
         goto found;
       }
@@ -327,7 +345,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     /* non-SSE2 fallback: simple byte scan */
     size_t i = 0;
     for (; i < len; i++) {
-      if (p[i] == '\"' || p[i] == '\\') {
+      if (p[i] == '"' || p[i] == '\\') {
         span = i;
         goto found;
       }
@@ -342,7 +360,8 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     if (*p == '"') {
       /* Inline SIMD validation for the parsed string span */
 #if STRING_VALIDATION
-      const char *chk = v->u.string.ptr;
+      const char *chk = start;
+      /*const char *chk = v->u.string.ptr;*/
       size_t chk_len = (size_t)(p - chk);
       size_t ii = 0;
 #if defined(__AVX2__)
@@ -406,6 +425,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
       }
 #endif
       /* scalar tail for any remaining bytes not covered by SIMD loops */
+      v->u.string.ptr = start;
       v->u.string.len = p - *s - 1;
       *s = p + 1;
       return true;
@@ -416,7 +436,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     if (++p == end)
       return false;
     switch (*p) {
-    case '\"':
+    case '"':
     case '\\':
     case '/':
     case 'b':
@@ -428,6 +448,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
         return false;
       break;
     case 'u':
+      /* validate there are 4 hex digits following */
       if (++p == end)
         return false;
       if (p + 3 >= end)
@@ -475,13 +496,13 @@ static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, const char
     skip_whitespace(s);
     if (*s == end)
       return false;
-    if (**s == ',') {
-      (*s)++;
-      continue;
-    }
     if (**s == ']') {
       (*s)++;
       return true;
+    }
+    if (**s == ',') {
+      (*s)++;
+      continue;
     }
     return false;
   }
@@ -492,7 +513,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, const cha
     skip_whitespace(s);
     if (*s == end)
       return false;
-    if (**s != '\"') {
+    if (**s != '"') {
       return false;
     }
     json_value key;
@@ -551,13 +572,13 @@ static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, const cha
     skip_whitespace(s);
     if (*s == end)
       return false;
-    if (**s == ',') {
-      (*s)++;
-      continue;
-    }
     if (**s == '}') {
       (*s)++;
       return true;
+    }
+    if (**s == ',') {
+      (*s)++;
+      continue;
     }
     return false;
   }
@@ -594,32 +615,38 @@ static bool parse_value_build(const char **s, const char *end, json_value *v) {
     }
     return parse_array_value(s, end, v);
   }
-  if (**s == '\"') {
+  if (**s == '"') {
     v->type = J_STRING;
     return parse_string(s, end, v);
   }
-  if (**s == 'n' && *(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
+
+  /* ----- fast literal checks (replaces strncmp) ----- */
+  /* null */
+  if ((size_t)(end - *s) >= JSON_NULL_LEN && load_u32(*s) == NULL_WORD) {
     v->type = J_NULL;
     v->u.string.ptr = *s;
-    v->u.string.len = 4;
-    *s += 4;
+    v->u.string.len = JSON_NULL_LEN;
+    *s += JSON_NULL_LEN;
     return true;
   }
-  if (**s == 't' && *(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
+  /* true */
+  if ((size_t)(end - *s) >= JSON_TRUE_LEN && load_u32(*s) == TRUE_WORD) {
     v->type = J_BOOLEAN;
     v->u.boolean.ptr = *s;
     v->u.boolean.len = JSON_TRUE_LEN;
     *s += JSON_TRUE_LEN;
     return true;
   }
-  if (**s == 'f' && *(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
+  /* false: first char 'f', then the word "alse" */
+  if ((size_t)(end - *s) >= JSON_FALSE_LEN && (*s)[0] == 'f' && load_u32(*s + 1) == ALSE_WORD) {
     v->type = J_BOOLEAN;
     v->u.boolean.ptr = *s;
     v->u.boolean.len = JSON_FALSE_LEN;
     *s += JSON_FALSE_LEN;
     return true;
   }
-  if (parse_number(s, v)) {
+
+  if (parse_number(s, end, v)) {
     v->type = J_NUMBER;
     return true;
   }
@@ -732,11 +759,11 @@ static INLINE int INLINE_ATTRIBUTE buffer_write_indent(buffer *b, int indent) {
 }
 
 static INLINE int INLINE_ATTRIBUTE buffer_write_string(buffer *b, const char *s, size_t len) {
-  if (buffer_putc(b, '\"') < 0)
+  if (buffer_putc(b, '"') < 0)
     return -1;
   if (buffer_write(b, s, len) < 0)
     return -1;
-  if (buffer_putc(b, '\"') < 0)
+  if (buffer_putc(b, '"') < 0)
     return -1;
   return 0;
 }
@@ -877,7 +904,7 @@ static INLINE int INLINE_ATTRIBUTE buffer_write(buffer *b, const char *data, int
     b->buf = new_buf;
     b->cap = new_cap;
   }
-  memcpy(b->buf + b->pos, data, len);
+  __builtin_memcpy(b->buf + b->pos, data, len);
   b->pos += len;
   return 0;
 }
@@ -980,12 +1007,12 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
   if (**s == '\0')
     return E_NO_DATA;
   if (**s != '{' && **s != '[') {
-    return E_INVALID_JSON;
+    return E_MAILFORMED_JSON;
   }
   const char *end = *s + len;
   json_value *stack[JSON_STACK_SIZE];
   json_value v;
-  memset(&v, 0, sizeof(json_value));
+  __builtin_memset(&v, 0, sizeof(json_value));
   int top = -1;
   json_value *current = &v;
   while (true) {
@@ -1018,7 +1045,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
           current = NULL;
           break;
         }
-        if (**s == '\"') {
+        if (**s == '"') {
           current->type = J_STRING;
           if (parse_string(s, end, current)) {
             current = NULL;
@@ -1026,19 +1053,31 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
           }
           return E_EXPECTED_STRING;
         }
+        /* null */
+        if (**s == 'n') {
+          if ((size_t)(end - *s) >= JSON_NULL_LEN && load_u32(*s) == NULL_WORD) {
+            current->type = J_NULL;
+            *s += JSON_NULL_LEN;
+            current = NULL;
+            break;
+          }
+          return E_EXPECTED_NULL;
+        }
+        /* true */
         if (**s == 't') {
-          if (*(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
+          if ((size_t)(end - *s) >= JSON_TRUE_LEN && load_u32(*s) == TRUE_WORD) {
             current->type = J_BOOLEAN;
             current->u.boolean.ptr = *s;
-            current->u.boolean.len = 4;
-            *s += 4;
+            current->u.boolean.len = JSON_TRUE_LEN;
+            *s += JSON_TRUE_LEN;
             current = NULL;
             break;
           }
           return E_EXPECTED_BOOLEAN;
         }
+        /* false */
         if (**s == 'f') {
-          if (*(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
+          if ((size_t)(end - *s) >= JSON_FALSE_LEN && (*s)[0] == 'f' && load_u32(*s + 1) == ALSE_WORD) {
             current->type = J_BOOLEAN;
             current->u.boolean.ptr = *s;
             current->u.boolean.len = JSON_FALSE_LEN;
@@ -1048,16 +1087,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
           }
           return E_EXPECTED_BOOLEAN;
         }
-        if (**s == 'n') {
-          if (*(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
-            current->type = J_NULL;
-            *s += 4;
-            current = NULL;
-            break;
-          }
-          return E_EXPECTED_NULL;
-        }
-        if (!parse_number(s, current)) {
+        if (!parse_number(s, end, current)) {
           return E_MAILFORMED_JSON;
         }
         current->type = J_NUMBER;
@@ -1093,15 +1123,18 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
           return E_EXPECTED_OBJECT;
         }
       }
-      if (**s != '\"') {
+      if (**s != '"') {
         return E_OBJECT_KEY;
       }
       json_value key;
       if (!parse_string(s, end, &key))
         return E_EXPECTED_OBJECT_KEY;
       skip_whitespace(s);
+      if (*s == end) {
+        return E_MAILFORMED_JSON;
+      }
       if (**s != ':') {
-        return E_OBJECT_VALUE;
+        return E_MAILFORMED_JSON;
       }
       (*s)++;
       skip_whitespace(s);
@@ -1155,7 +1188,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
       continue;
     }
     if (current) {
-      return E_UNKNOWN_ERROR;
+      return E_MAILFORMED_JSON;
     }
   }
   if (top == -1) {
@@ -1164,7 +1197,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
     else
       return E_INVALID_DATA;
   }
-  return E_INVALID_JSON_DATA;
+  return E_MAILFORMED_JSON;
 }
 
 INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, json_value *root) {
@@ -1203,25 +1236,34 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
         stack[top] = current;
         current = NULL;
         break;
-      case '\"':
+      case '"':
         current->type = J_STRING;
         if (!parse_string(&s, end, current))
           return false;
         current = NULL;
         break;
+      case 'n':
+        if ((size_t)(end - s) >= JSON_NULL_LEN && load_u32(s) == NULL_WORD) {
+          current->type = J_NULL;
+          s += JSON_NULL_LEN;
+          current = NULL;
+        } else {
+          return false;
+        }
+        break;
       case 't':
-        if (*(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e') {
+        if ((size_t)(end - s) >= JSON_TRUE_LEN && load_u32(s) == TRUE_WORD) {
           current->type = J_BOOLEAN;
           current->u.boolean.ptr = s;
-          current->u.boolean.len = 4;
-          s += 4;
+          current->u.boolean.len = JSON_TRUE_LEN;
+          s += JSON_TRUE_LEN;
           current = NULL;
         } else {
           return false;
         }
         break;
       case 'f':
-        if (*(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e') {
+        if ((size_t)(end - s) >= JSON_FALSE_LEN && s[0] == 'f' && load_u32(s + 1) == ALSE_WORD) {
           current->type = J_BOOLEAN;
           current->u.boolean.ptr = s;
           current->u.boolean.len = JSON_FALSE_LEN;
@@ -1231,17 +1273,8 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
           return false;
         }
         break;
-      case 'n':
-        if (*(s + 1) == 'u' && *(s + 2) == 'l' && *(s + 3) == 'l') {
-          current->type = J_NULL;
-          s += 4;
-          current = NULL;
-        } else {
-          return false;
-        }
-        break;
       default:
-        if (parse_number(&s, current)) {
+        if (parse_number(&s, end, current)) {
           current->type = J_NUMBER;
           current = NULL;
         } else {
@@ -1265,11 +1298,13 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
         if (*s == ',') {
           s++;
           skip_whitespace(&s);
+          if (s == end)
+            return false;
         } else {
           return false;
         }
       }
-      if (*s != '\"')
+      if (*s != '"')
         return false;
       json_value key;
       if (!parse_string(&s, end, &key))
@@ -1299,6 +1334,9 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
       if (current->u.array.items != NULL) {
         if (*s == ',') {
           s++;
+          skip_whitespace(&s);
+          if (s == end)
+            return false;
         } else {
           return false;
         }
@@ -1364,8 +1402,8 @@ INLINE void INLINE_ATTRIBUTE json_reset(void) {
 }
 
 INLINE void INLINE_ATTRIBUTE json_cleanup(void) {
-  memset(json_array_node_pool, 0, JSON_VALUE_POOL_SIZE * sizeof(json_array_node));
-  memset(json_object_node_pool, 0, JSON_VALUE_POOL_SIZE * sizeof(json_object_node));
+  __builtin_memset(json_array_node_pool, 0, JSON_VALUE_POOL_SIZE * sizeof(json_array_node));
+  __builtin_memset(json_object_node_pool, 0, JSON_VALUE_POOL_SIZE * sizeof(json_object_node));
 }
 
 void json_free(json_value *v) {
@@ -1413,10 +1451,6 @@ INLINE const char *INLINE_ATTRIBUTE json_error_string(json_error error) {
     return "No error occurred";
   case E_NO_DATA:
     return "No data provided or empty input";
-  case E_INVALID_JSON:
-    return "Invalid JSON structure";
-  case E_INVALID_JSON_DATA:
-    return "Invalid data within JSON structure";
   case E_STACK_OVERFLOW_OBJECT:
     return "Stack overflow while parsing object";
   case E_STACK_OVERFLOW_ARRAY:
@@ -1439,8 +1473,6 @@ INLINE const char *INLINE_ATTRIBUTE json_error_string(json_error error) {
     return "Invalid data format";
   case E_MAILFORMED_JSON:
     return "Malformed JSON structure";
-  case E_UNKNOWN_ERROR:
-    return "Unknown or unexpected error";
   case E_NULL:
     return "Null pointer encountered";
   case E_EXPECTED_OBJECT_KEY:

@@ -22,7 +22,7 @@
     "!**/.git",
     "!**/LICENSE"
   ],
-  "editor.fontSize": 10,
+  "editor.fontSize": 14,
   "editor.fontFamily": "'JetBrains Mono', 'Ubuntu Mono', 'ProggyVector', 'Monoid', 'Fira Code', monospace",
   "window.zoomPerWindow": false,
   "debug.console.fontSize": 12,
@@ -139,5 +139,11 @@
     "Power Shell Core": "c:\\tools\\pwsh\\7\\pwsh.exe"
   },
   "coverage-gutters.showLineCoverage": true,
-  "coverage-gutters.showGutterCoverage": false  
+  "coverage-gutters.showGutterCoverage": false,
+  "files.autoSave": "afterDelay",
+  "editor.formatOnSave": true,
+  "files.autoSaveDelay": 60000,
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
+  }
 }

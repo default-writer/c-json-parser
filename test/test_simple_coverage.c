@@ -11,7 +11,7 @@ TEST(test_large_array_0xfffe_elements) {
   /* Create and parse multiple arrays to consume memory pool nodes */
   for (i = 0; i < num_elements_size; i++) {
     json_value val;
-    memset(&val, 0, sizeof(json_value));
+    __builtin_memset(&val, 0, sizeof(json_value));
 
     /* Create arrays with varying sizes to consume pool */
     char json_str[pool_size];

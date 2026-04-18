@@ -13,12 +13,12 @@ TEST(test_free_array_node_coverage) {
 
   /* Test lines 138-140: free_array_node function */
   json_value test_val;
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
 
   /* Create and destroy many arrays to trigger free_array_node */
   for (i = 0; i < ELEMENT_ARRAY_SIZE_2000; i++) {
     json_value arr;
-    memset(&arr, 0, sizeof(json_value));
+    __builtin_memset(&arr, 0, sizeof(json_value));
 
     /* Create a simple array */
     char json_str[ELEMENT_BUFFER_SIZE_20];
@@ -40,12 +40,12 @@ TEST(test_free_object_node_coverage) {
 
   /* Test lines 164-166: free_object_node function */
   json_value test_val;
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
 
   /* Create and destroy many objects to trigger free_object_node */
   for (i = 0; i < ELEMENT_ARRAY_SIZE_2000; i++) {
     json_value obj;
-    memset(&obj, 0, sizeof(json_value));
+    __builtin_memset(&obj, 0, sizeof(json_value));
 
     /* Create a simple object */
     char json_str[ELEMENT_BUFFER_SIZE_30];
@@ -65,7 +65,7 @@ TEST(test_free_object_node_coverage) {
 TEST(test_skip_whitespace_coverage) {
   /* Test line 174: skip_whitespace function */
   json_value test_val;
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
 
   /* Test with leading whitespace */
   const char *source1 = "[ 1,2,3 ]";
@@ -83,7 +83,7 @@ TEST(test_number_parsing_edge_cases) {
   json_value test_val;
 
   /* Test line 182: negative number parsing */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source2 = "[ -123.456 ]";
   const size_t len2 = strlen(source2);
   bool neg_result = json_parse(source2, len2, &test_val);
@@ -92,7 +92,7 @@ TEST(test_number_parsing_edge_cases) {
   json_free(&test_val);
 
   /* Test line 202: decimal parsing progression */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source3 = "[ 123.456789 ]";
   const size_t len3 = strlen(source3);
   bool dec_result = json_parse(source3, len3, &test_val);
@@ -101,7 +101,7 @@ TEST(test_number_parsing_edge_cases) {
   json_free(&test_val);
 
   /* Test line 211: exponent with + sign */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source4 = "[ 1e+10 ]";
   const size_t len4 = strlen(source4);
   bool exp_result = json_parse(source4, len4, &test_val);
@@ -117,7 +117,7 @@ TEST(test_string_parsing_complex_cases) {
   json_value test_val;
 
   /* Test line 299: quote in string */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source5 = "[\"test\\\"quote\"]";
   const size_t len5 = strlen(source5);
   bool quote_result = json_parse(source5, len5, &test_val);
@@ -127,7 +127,7 @@ TEST(test_string_parsing_complex_cases) {
   }
 
   /* Test line 311: unicode escape */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source6 = "[\"test\\u0041\"]";
   const size_t len6 = strlen(source6);
   bool unicode_result = json_parse(source6, len6, &test_val);
@@ -137,7 +137,7 @@ TEST(test_string_parsing_complex_cases) {
   }
 
   /* Test line 320: lone low surrogate (valid according to ECMA-404) */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source7 = "[\"test\\uDC00\"]";
   const size_t len7 = strlen(source7);
   bool rfc8259_valid_surrogate = json_parse(source7, len7, &test_val);
@@ -146,7 +146,7 @@ TEST(test_string_parsing_complex_cases) {
   json_free(&test_val);
 
   /* Test line 325: valid surrogate pair */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source8 = "[\"test\\uD83D\\uDE00\"]";
   const size_t len8 = strlen(source8);
   bool valid_surrogate = json_parse(source8, len8, &test_val);
@@ -160,7 +160,7 @@ TEST(test_string_parsing_complex_cases) {
 TEST(test_string_escape_printing_coverage) {
   /* Test lines 535-549, 557: string escape printing */
   json_value test_val;
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
 
   /* Test backslash and quote escapes (lines 535-538) */
   const char *source9 = "[\"\\\\\\\"\"]";
@@ -177,7 +177,7 @@ TEST(test_string_escape_printing_coverage) {
   }
 
   /* Test control character escapes (lines 538-543) */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source10 = "[\"test\\b\\f\\r\"]";
   const size_t len10 = strlen(source10);
   bool control_result = json_parse(source10, len10, &test_val);
@@ -197,7 +197,7 @@ TEST(test_string_escape_printing_coverage) {
 TEST(test_print_value_compact_coverage) {
   /* Test line 613: print_array_compact function */
   json_value test_val;
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
 
   /* Test compact array printing */
   const char *source11 = "[1,2,3]";
@@ -219,10 +219,10 @@ TEST(test_print_value_compact_coverage) {
 TEST(test_print_value_all_types_coverage) {
   /* Test lines 600-614: print_value_compact for all types */
   json_value test_val;
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
 
   /* Test J_NULL (lines 600-602) */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source12 = "[null]";
   const size_t len12 = strlen(source12);
   bool null_result = json_parse(source12, len12, &test_val);
@@ -237,7 +237,7 @@ TEST(test_print_value_all_types_coverage) {
   }
 
   /* Test J_BOOLEAN (lines 603-605) */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source13 = "[true]";
   const size_t len13 = strlen(source13);
   bool bool_result = json_parse(source13, len13, &test_val);
@@ -252,7 +252,7 @@ TEST(test_print_value_all_types_coverage) {
   }
 
   /* Test J_NUMBER (lines 606-608) */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source14 = "[123.456]";
   const size_t len14 = strlen(source14);
   bool num_result = json_parse(source14, len14, &test_val);
@@ -267,7 +267,7 @@ TEST(test_print_value_all_types_coverage) {
   }
 
   /* Test J_ARRAY (lines 612-614) */
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   const char *source15 = "[1,2,3]";
   const size_t len15 = strlen(source15);
   bool arr_result = json_parse(source15, len15, &test_val);
@@ -292,13 +292,13 @@ TEST(test_json_stringify_buffer_error_coverage) {
 
   /* Create a JSON value that will force buffer expansion beyond initial size */
   json_value test_val;
-  memset(&test_val, 0, sizeof(json_value));
+  __builtin_memset(&test_val, 0, sizeof(json_value));
   test_val.type = J_STRING;
 
   /* Use a string that will exceed the initial MAX_BUFFER_SIZE (256) */
   /* to force the realloc call at line 846 in json_stringify */
   char large_string[ELEMENT_BUFFER_SIZE_300];
-  memset(large_string, 'A', ELEMENT_BUFFER_SIZE_300 - 1);
+  __builtin_memset(large_string, 'A', ELEMENT_BUFFER_SIZE_300 - 1);
   large_string[ELEMENT_BUFFER_SIZE_300 - 1] = '\0';
   test_val.u.string.ptr = large_string;
   test_val.u.string.len = ELEMENT_BUFFER_SIZE_300 - 1;

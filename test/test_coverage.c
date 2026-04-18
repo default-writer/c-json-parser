@@ -9,7 +9,7 @@ TEST(test_memory_pool_cleanup_coverage) {
    */
   size_t len;
   json_value array_val;
-  memset(&array_val, 0, sizeof(json_value));
+  __builtin_memset(&array_val, 0, sizeof(json_value));
 
   /* Create JSON array with exactly 0xfffe (65534) elements */
   const int num_elements = 0xFFFE;
@@ -44,7 +44,7 @@ TEST(test_memory_pool_cleanup_coverage) {
 TEST(test_string_parsing_edge_cases) {
   /* Test to cover uncovered string parsing lines */
   json_value val;
-  memset(&val, 0, sizeof(json_value));
+  __builtin_memset(&val, 0, sizeof(json_value));
 
   /* Test negative number parsing (line 182) */
   const char *source1 = "-123";
@@ -55,7 +55,7 @@ TEST(test_string_parsing_edge_cases) {
   json_free(&val);
 
   /* Test decimal parsing with multiple digits (line 202) */
-  memset(&val, 0, sizeof(json_value));
+  __builtin_memset(&val, 0, sizeof(json_value));
   const char *source2 = "12.345";
   size_t len2 = strlen(source2);
   bool result2 = json_parse(source2, len2, &val);
@@ -64,7 +64,7 @@ TEST(test_string_parsing_edge_cases) {
   json_free(&val);
 
   /* Test exponent with + sign (line 211) */
-  memset(&val, 0, sizeof(json_value));
+  __builtin_memset(&val, 0, sizeof(json_value));
   const char *source3 = "1e+10";
   size_t len3 = strlen(source3);
   bool result3 = json_parse(source3, len3, &val);
@@ -73,7 +73,7 @@ TEST(test_string_parsing_edge_cases) {
   json_free(&val);
 
   /* Test various escape sequences in strings */
-  memset(&val, 0, sizeof(json_value));
+  __builtin_memset(&val, 0, sizeof(json_value));
   const char *source4 = "\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"";
   size_t len4 = strlen(source4);
   bool result4 = json_parse(source4, len4, &val);
@@ -87,7 +87,7 @@ TEST(test_string_parsing_edge_cases) {
 TEST(test_unicode_surrogate_pairs) {
   /* Test to cover Unicode surrogate pair handling */
   json_value val;
-  memset(&val, 0, sizeof(json_value));
+  __builtin_memset(&val, 0, sizeof(json_value));
 
   /* Test Unicode escape sequence */
   const char *source1 = "\"\\u0041\"";
@@ -98,7 +98,7 @@ TEST(test_unicode_surrogate_pairs) {
   json_free(&val);
 
   /* Test high surrogate followed by low surrogate */
-  memset(&val, 0, sizeof(json_value));
+  __builtin_memset(&val, 0, sizeof(json_value));
   const char *source2 = "\"\\uD83D\\uDE00\"";
   size_t len2 = strlen(source2);
   bool result2 = json_parse(source2, len2, &val); /* 😀 */
@@ -113,7 +113,7 @@ TEST(test_string_escape_printing) {
   /* Test to cover string escape sequence printing (lines 535-549, 557) */
   json_value val;
   size_t len;
-  memset(&val, 0, sizeof(json_value));
+  __builtin_memset(&val, 0, sizeof(json_value));
 
   /* Parse and then stringify strings with various escape characters */
   const char *test_strings[] = {
@@ -127,7 +127,7 @@ TEST(test_string_escape_printing) {
   int i;
 
   for (i = 0; test_strings[i]; i++) {
-    memset(&val, 0, sizeof(json_value));
+    __builtin_memset(&val, 0, sizeof(json_value));
     len = strlen(test_strings[i]);
     bool result = json_parse(test_strings[i], len, &val);
     ASSERT_TRUE(result);
@@ -147,7 +147,7 @@ TEST(test_string_escape_printing) {
 TEST(test_compact_printing_edge_cases) {
   /* Test to cover uncovered compact printing paths */
   json_value val;
-  memset(&val, 0, sizeof(json_value));
+  __builtin_memset(&val, 0, sizeof(json_value));
 
   /* Test array compact printing with multiple elements */
   const char *source1 = "[1]";
@@ -163,7 +163,7 @@ TEST(test_compact_printing_edge_cases) {
   json_free(&val);
 
   /* Test object compact printing */
-  memset(&val, 0, sizeof(json_value));
+  __builtin_memset(&val, 0, sizeof(json_value));
   const char *source2 = "{\"a\":1}";
   size_t len2 = strlen(source2);
   bool result2 = json_parse(source2, len2, &val);
@@ -181,7 +181,7 @@ TEST(test_compact_printing_edge_cases) {
 TEST(test_memory_allocation_edge_cases) {
   /* Test to cover memory allocation failure paths */
   json_value val;
-  memset(&val, 0, sizeof(json_value));
+  __builtin_memset(&val, 0, sizeof(json_value));
 
   /* Test with smaller string to avoid issues */
   char *test_string = (char *)malloc(MAX_STRING_SIZE);
