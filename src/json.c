@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   April 19, 2026 at 12:34:25 AM GMT+3
+ *   April 19, 2026 at 12:44:30 AM GMT+3
  *
  */
 /*
@@ -67,7 +67,7 @@ static size_t next_object_index = 0;
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
 
 static void skip_whitespace(const char **s);
-static bool parse_number(const char **s, json_value *v);
+static bool parse_number(const char **s, const char *end, json_value *v);
 static bool parse_string(const char **s, const char *end, json_value *v);
 static bool parse_array_value(const char **s, const char *end, json_value *v);
 static bool parse_object_value(const char **s, const char *end, json_value *v);
@@ -164,53 +164,54 @@ static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
   }
 }
 
-static INLINE bool INLINE_ATTRIBUTE parse_number(const char **s, json_value *v) {
+static bool parse_number(const char **s, const char *end, json_value *v) {
   const char *start_p = *s;
   const char *p = *s;
+
+  if (p >= end)
+    return false; /* guard before any access */
+
   if (*p == '-') {
-    p++;
-  }
-  if (*p == '0') {
-    p++;
-    if (*p >= '1' && *p <= '9') {
+    if (++p >= end)
       return false;
-    }
+  }
+
+  if (*p == '0') {
+    if (++p < end && *p >= '0' && *p <= '9')
+      return false;
   } else if (*p >= '1' && *p <= '9') {
-    p++;
-    while (*p >= '0' && *p <= '9') {
-      p++;
+    if (++p < end) {
+      while (p < end && *p >= '0' && *p <= '9')
+        p++;
     }
   } else {
     return false;
   }
-  if (*p == '.') {
-    p++;
-    if (*p >= '0' && *p <= '9') {
-      p++;
-      while (*p >= '0' && *p <= '9') {
-        p++;
-      }
-    } else {
+
+  /* fractional part */
+  if (p < end && *p == '.') {
+    if (++p >= end)
       return false;
+    if (*p < '0' || *p > '9')
+      return false;
+    while (++p < end && *p >= '0' && *p <= '9') { /* skip digits */
     }
   }
-  if (*p == 'e' || *p == 'E') {
-    p++;
+
+  /* exponent part */
+  if (p < end && (*p == 'e' || *p == 'E')) {
+    if (++p >= end)
+      return false;
     if (*p == '+' || *p == '-') {
-      p++;
+      if (++p >= end)
+        return false;
     }
-    if (!(*p >= '0' && *p <= '9')) {
+    if (*p < '0' || *p > '9')
       return false;
-    }
-    if (*p >= '0' && *p <= '9') {
-      p++;
-      while (*p >= '0' && *p <= '9') {
-        p++;
-      }
-    } else {
-      return false;
+    while (++p < end && *p >= '0' && *p <= '9') { /* skip digits */
     }
   }
+
   v->u.number.ptr = start_p;
   v->u.number.len = p - start_p;
   *s = p;
@@ -619,7 +620,7 @@ static bool parse_value_build(const char **s, const char *end, json_value *v) {
     *s += JSON_FALSE_LEN;
     return true;
   }
-  if (parse_number(s, v)) {
+  if (parse_number(s, end, v)) {
     v->type = J_NUMBER;
     return true;
   }
@@ -1057,7 +1058,7 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
           }
           return E_EXPECTED_NULL;
         }
-        if (!parse_number(s, current)) {
+        if (!parse_number(s, end, current)) {
           return E_MAILFORMED_JSON;
         }
         current->type = J_NUMBER;
@@ -1243,7 +1244,7 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
         }
         break;
       default:
-        if (parse_number(&s, current)) {
+        if (parse_number(&s, end, current)) {
           current->type = J_NUMBER;
           current = NULL;
         } else {
