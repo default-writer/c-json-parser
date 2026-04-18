@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   April 18, 2026 at 11:12:42 PM GMT+3
+ *   April 18, 2026 at 11:36:21 PM GMT+3
  *
  */
 /*
@@ -1214,6 +1214,8 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
     if (*s == '\0')
       break;
     skip_whitespace(&s);
+    if (s == end)
+      return false;
     if (current) {
       switch (*s) {
       case '{':
@@ -1310,6 +1312,8 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
       if (!parse_string(&s, end, &key))
         return false;
       skip_whitespace(&s);
+      if (s == end)
+        return false;
       if (*s != ':')
         return false;
       s++;
