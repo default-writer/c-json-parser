@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   April 19, 2026 at 12:44:30 AM GMT+3
+ *   April 19, 2026 at 6:50:02 AM GMT+3
  *
  */
 /*
@@ -66,7 +66,7 @@ static size_t next_object_index = 0;
 
 static json_value *json_object_get(const json_value *obj, const char *key, size_t len);
 
-static void skip_whitespace(const char **s);
+static bool skip_whitespace(const char **s, const char *end);
 static bool parse_number(const char **s, const char *end, json_value *v);
 static bool parse_string(const char **s, const char *end, json_value *v);
 static bool parse_array_value(const char **s, const char *end, json_value *v);
@@ -158,10 +158,15 @@ static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_no
 #endif
 }
 
-static INLINE void INLINE_ATTRIBUTE skip_whitespace(const char **s) {
-  while (whitespace_lookup[(unsigned char)**s]) {
+static INLINE bool INLINE_ATTRIBUTE skip_whitespace(const char **s, const char *end) {
+  if (*s == end)
+    return false;
+  uint32_t offset = *s - end;
+  while (whitespace_lookup[(unsigned char)**s] && offset > 0) {
     (*s)++;
+    offset--;
   }
+  return offset > 0;
 }
 
 static bool parse_number(const char **s, const char *end, json_value *v) {
@@ -447,8 +452,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
 
 static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, const char *end, json_value *v) {
   while (true) {
-    skip_whitespace(s);
-    if (*s == end)
+    if (!skip_whitespace(s, end))
       return false;
     json_array_node *array_node = new_array_node();
     if (array_node == NULL) {
@@ -473,8 +477,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, const char
       v->u.array.items = NULL;
       return false;
     }
-    skip_whitespace(s);
-    if (*s == end)
+    if (!skip_whitespace(s, end))
       return false;
     if (**s == ',') {
       (*s)++;
@@ -490,8 +493,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, const char
 
 static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, const char *end, json_value *v) {
   while (true) {
-    skip_whitespace(s);
-    if (*s == end)
+    if (!skip_whitespace(s, end))
       return false;
     if (**s != '\"') {
       return false;
@@ -501,15 +503,13 @@ static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, const cha
     if (!parse_string(s, end, &key)) {
       return false;
     }
-    skip_whitespace(s);
-    if (*s == end)
+    if (!skip_whitespace(s, end))
       return false;
     if (**s != ':') {
       return false;
     }
     (*s)++;
-    skip_whitespace(s);
-    if (*s == end)
+    if (!skip_whitespace(s, end))
       return false;
     json_object_node *object_node = NULL;
     json_object_node *object_items = v->u.object.items;
@@ -549,8 +549,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, const cha
       v->u.object.items = NULL;
       return false;
     }
-    skip_whitespace(s);
-    if (*s == end)
+    if (!skip_whitespace(s, end))
       return false;
     if (**s == ',') {
       (*s)++;
@@ -570,8 +569,7 @@ static bool parse_value_build(const char **s, const char *end, json_value *v) {
     v->u.object.items = NULL;
     v->u.object.last = NULL;
     (*s)++;
-    skip_whitespace(s);
-    if (*s == end)
+    if (!skip_whitespace(s, end))
       return false;
     if (**s == '}') {
       (*s)++;
@@ -586,8 +584,7 @@ static bool parse_value_build(const char **s, const char *end, json_value *v) {
     (*s)++;
     if (*s == end)
       return false;
-    skip_whitespace(s);
-    if (*s == end)
+    if (!skip_whitespace(s, end))
       return false;
     if (**s == ']') {
       (*s)++;
@@ -992,9 +989,8 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
   while (true) {
     if (*s == end)
       break;
-    skip_whitespace(s);
-    if (*s == end)
-      break;
+    if (!skip_whitespace(s, end))
+      return E_INVALID_JSON;
     if (current) {
       do {
         if (**s == '{') {
@@ -1084,14 +1080,15 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
         continue;
       }
       if (current->u.object.items != NULL) {
-        if (**s == ',') {
-          (*s)++;
-          skip_whitespace(s);
-          if (*s == end || **s == '}') {
-            return E_EXPECTED_OBJECT_ELEMENT;
-          }
-        } else {
+        if (**s != ',') {
           return E_EXPECTED_OBJECT;
+        }
+        (*s)++;
+        if (!skip_whitespace(s, end)) {
+          return E_INVALID_JSON;
+        }
+        if (**s == '}') {
+          return E_EXPECTED_OBJECT_ELEMENT;
         }
       }
       if (**s != '\"') {
@@ -1100,14 +1097,15 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
       json_value key;
       if (!parse_string(s, end, &key))
         return E_EXPECTED_OBJECT_KEY;
-      skip_whitespace(s);
-      if (*s == end || **s != ':') {
+      if (!skip_whitespace(s, end)) {
+        return E_INVALID_JSON;
+      }
+      if (**s != ':') {
         return E_OBJECT_VALUE;
       }
       (*s)++;
-      skip_whitespace(s);
-      if (*s == end) {
-        return E_EXPECTED_OBJECT_VALUE;
+      if (!skip_whitespace(s, end)) {
+        return E_INVALID_JSON;
       }
       json_object_node *node = new_object_node();
       if (!node)
@@ -1133,14 +1131,15 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
         continue;
       }
       if (current->u.array.items != NULL) {
-        if (**s == ',') {
-          (*s)++;
-          skip_whitespace(s);
-          if (*s == end || **s == ']') {
-            return E_EXPECTED_ARRAY_ELEMENT;
-          }
-        } else {
+        if (**s != ',') {
           return E_EXPECTED_ARRAY;
+        }
+        (*s)++;
+        if (!skip_whitespace(s, end)) {
+          return E_INVALID_JSON;
+        }
+        if (**s == ']') {
+          return E_EXPECTED_ARRAY_ELEMENT;
         }
       }
       json_array_node *node = new_array_node();
@@ -1181,8 +1180,7 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
   while (true) {
     if (*s == '\0')
       break;
-    skip_whitespace(&s);
-    if (s == end)
+    if (!skip_whitespace(&s, end))
       return false;
     if (current) {
       switch (*s) {
@@ -1267,8 +1265,7 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
       if (current->u.object.items != NULL) {
         if (*s == ',') {
           s++;
-          skip_whitespace(&s);
-          if (s == end) {
+          if (!skip_whitespace(&s, end)) {
             return false;
           }
         } else {
@@ -1280,8 +1277,10 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
       json_value key;
       if (!parse_string(&s, end, &key))
         return false;
-      skip_whitespace(&s);
-      if (s == end || *s != ':')
+      if (!skip_whitespace(&s, end)) {
+        return false;
+      }
+      if (*s != ':')
         return false;
       s++;
       json_object_node *node = new_object_node();

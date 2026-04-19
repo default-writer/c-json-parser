@@ -6541,7 +6541,7 @@ TEST(test_validate_expected_object_value_null) {
   const char *source = "{\"a\":";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_EXPECTED_OBJECT_VALUE, json_error);
+  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6557,7 +6557,7 @@ TEST(test_validate_expected_array_element_null) {
   const char *source = "[1,";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_EXPECTED_ARRAY_ELEMENT, json_error);
+  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6573,7 +6573,7 @@ TEST(test_validate_expected_object_element_null) {
   const char *source = "{\"a\":1,";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_EXPECTED_OBJECT_ELEMENT, json_error);
+  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
