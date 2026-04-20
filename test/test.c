@@ -43,7 +43,7 @@ TEST(test_memory_leaks) {
   memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */
-  bool parsed = json_parse(source, strlen(source), &v);
+  bool parsed = json_parse(source, source + strlen(source), &v);
   ASSERT_TRUE(parsed);
   ASSERT_PTR_NOT_NULL(&v);
 
@@ -72,7 +72,7 @@ TEST(test_memory_leaks_constants_true) {
   memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */
-  bool parsed = json_parse(source, strlen(source), &v);
+  bool parsed = json_parse(source, source + strlen(source), &v);
   ASSERT_FALSE(parsed);
 
   json_free(&v);
@@ -85,7 +85,7 @@ TEST(test_memory_leaks_constants_false) {
   memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */
-  bool parsed = json_parse(source, strlen(source), &v);
+  bool parsed = json_parse(source, source + strlen(source), &v);
   ASSERT_FALSE(parsed);
 
   json_free(&v);
@@ -98,7 +98,7 @@ TEST(test_memory_leaks_constants_null) {
   memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */
-  bool parsed = json_parse(source, strlen(source), &v);
+  bool parsed = json_parse(source, source + strlen(source), &v);
   ASSERT_FALSE(parsed);
 
   json_free(&v);
@@ -121,7 +121,7 @@ TEST(test_printf) {
   memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */
-  json_parse(source, strlen(source), &v);
+  json_parse(source, source + strlen(source), &v);
   ASSERT_PTR_NOT_NULL(&v);
 
   /* render json_value back to string */
@@ -159,7 +159,7 @@ TEST(test_whitespace) {
   memset(&v, 0, sizeof(json_value));
 
   /* parse into internal json_value* */
-  json_parse(source, strlen(source), &v);
+  json_parse(source, source + strlen(source), &v);
   ASSERT_PTR_NOT_NULL(&v);
 
   /* render json_value back to string */
@@ -189,8 +189,8 @@ TEST(test_array) {
   json_value v_iterative;
   memset(&v_iterative, 0, sizeof(json_value));
 
-  ASSERT_TRUE(json_parse(source, strlen(source), &v_recursive));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v_iterative));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v_recursive));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v_iterative));
 
   json_recursive = json_stringify(&v_recursive);
   ASSERT_PTR_NOT_NULL(json_recursive);
@@ -223,8 +223,8 @@ TEST(test_object) {
   json_value v_iterative;
   memset(&v_iterative, 0, sizeof(json_value));
 
-  ASSERT_TRUE(json_parse(source, strlen(source), &v_recursive));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v_iterative));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v_recursive));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v_iterative));
 
   json_recursive = json_stringify(&v_recursive);
   ASSERT_PTR_NOT_NULL(json_recursive);
@@ -248,7 +248,7 @@ TEST(test_invalid_number_leading_zero) {
   const char *source = "[01]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -257,7 +257,7 @@ TEST(test_valid_number_zero_point_zero) {
   const char *source = "[0.0]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -270,7 +270,7 @@ TEST(test_invalid_iterative_unclosed_array) {
   const char *source = "[1, 2,";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -279,7 +279,7 @@ TEST(test_invalid_iterative_unclosed_object) {
   const char *source = "{\"key\": 1";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -288,7 +288,7 @@ TEST(test_invalid_iterative_unquoted_string_key) {
   const char *source = "{key: \"value\"}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -297,7 +297,7 @@ TEST(test_invalid_iterative_missing_colon) {
   const char *source = "{\"key\" \"value\"}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -306,7 +306,7 @@ TEST(test_invalid_iterative_extra_comma_array) {
   const char *source = "[1, 2,, 3]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -315,7 +315,7 @@ TEST(test_invalid_iterative_extra_comma_object) {
   const char *source = "{\"key1\": 1,, \"key2\": 2}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -324,7 +324,7 @@ TEST(test_invalid_iterative_invalid_escape_sequence) {
   const char *source = "[\"hello\\xworld\"]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -333,7 +333,7 @@ TEST(test_invalid_iterative_truncated_string) {
   const char *source = "[\"hello";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -342,7 +342,7 @@ TEST(test_invalid_iterative_truncated_number) {
   const char *source = "[123.";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -351,7 +351,7 @@ TEST(test_invalid_iterative_incorrect_boolean) {
   const char *source = "[tru]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -360,7 +360,7 @@ TEST(test_invalid_iterative_incorrect_null) {
   const char *source = "[nul]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -369,7 +369,7 @@ TEST(test_invalid_iterative_empty_input) {
   const char *source = "";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -378,7 +378,7 @@ TEST(test_invalid_iterative_whitespace_only_input) {
   const char *source = "   \\t\\n  ";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -387,7 +387,7 @@ TEST(test_invalid_iterative_single_value_no_array_or_object) {
   const char *source = "123";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -396,7 +396,7 @@ TEST(test_invalid_iterative_nested_unclosed_array) {
   const char *source = "{\"key\": [1, {\"subkey\": [true,]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -405,7 +405,7 @@ TEST(test_invalid_iterative_array_of_unclosed_objects) {
   const char *source = "[{\"a\":1}, {\"b\":2]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -416,7 +416,7 @@ TEST(test_valid_number_zero_point_zero_iterative) {
   const char *source = "[0.0]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -429,7 +429,7 @@ TEST(test_invalid_iterative_truncated_exponent) {
   const char *source = "[1e]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -438,7 +438,7 @@ TEST(test_invalid_iterative_truncated_exponent_sign) {
   const char *source = "[1e+]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -447,7 +447,7 @@ TEST(test_invalid_iterative_exponent_missing_digits) {
   const char *source = "[1e+ ]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -456,7 +456,7 @@ TEST(test_valid_number_iterative_positive_integer) {
   const char *source = "[123]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -469,7 +469,7 @@ TEST(test_valid_number_iterative_negative_integer) {
   const char *source = "[-123]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -482,7 +482,7 @@ TEST(test_valid_number_iterative_exponent_positive) {
   const char *source = "[1e+2]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -495,7 +495,7 @@ TEST(test_valid_number_iterative_exponent_negative) {
   const char *source = "[1e-2]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -508,7 +508,7 @@ TEST(test_valid_number_iterative_positive_float) {
   const char *source = "[123.45]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -521,7 +521,7 @@ TEST(test_valid_number_iterative_negative_float) {
   const char *source = "[-123.45]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -534,7 +534,7 @@ TEST(test_valid_number_iterative_scientific_notation) {
   const char *source = "[1.2e-10]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   /* utils_test_json_equal handles numerical equality */
@@ -551,7 +551,7 @@ TEST(test_valid_number_scientific_notation_coverage) {
   const char *source1 = "[-1e5]";
   json_value v1;
   memset(&v1, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source1, strlen(source1), &v1));
+  ASSERT_TRUE(json_parse_iterative(source1, source1 + strlen(source1), &v1));
   char *json1 = json_stringify(&v1);
   ASSERT_PTR_NOT_NULL(json1);
   ASSERT_TRUE(utils_test_json_equal(json1, source1));
@@ -562,7 +562,7 @@ TEST(test_valid_number_scientific_notation_coverage) {
   const char *source2 = "[1.23456789]";
   json_value v2;
   memset(&v2, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source2, strlen(source2), &v2));
+  ASSERT_TRUE(json_parse_iterative(source2, source2 + strlen(source2), &v2));
   char *json2 = json_stringify(&v2);
   ASSERT_PTR_NOT_NULL(json2);
   ASSERT_TRUE(utils_test_json_equal(json2, source2));
@@ -573,7 +573,7 @@ TEST(test_valid_number_scientific_notation_coverage) {
   const char *source3 = "[1e+10]";
   json_value v3;
   memset(&v3, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source3, strlen(source3), &v3));
+  ASSERT_TRUE(json_parse_iterative(source3, source3 + strlen(source3), &v3));
   char *json3 = json_stringify(&v3);
   ASSERT_PTR_NOT_NULL(json3);
   ASSERT_TRUE(utils_test_json_equal(json3, source3));
@@ -584,7 +584,7 @@ TEST(test_valid_number_scientific_notation_coverage) {
   const char *source4 = "[1e-10]";
   json_value v4;
   memset(&v4, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source4, strlen(source4), &v4));
+  ASSERT_TRUE(json_parse_iterative(source4, source4 + strlen(source4), &v4));
   char *json4 = json_stringify(&v4);
   ASSERT_PTR_NOT_NULL(json4);
   ASSERT_TRUE(utils_test_json_equal(json4, source4));
@@ -598,7 +598,7 @@ TEST(test_valid_string_iterative_empty) {
   const char *source = "[\"\"]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -611,7 +611,7 @@ TEST(test_valid_string_iterative_with_spaces) {
   const char *source = "[\"hello world\"]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -625,7 +625,7 @@ TEST(test_valid_string_iterative_with_escaped_chars) {
   json_value v;
   memset(&v, 0, sizeof(json_value));
 
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   ASSERT_EQ(v.type, J_ARRAY);
 
   char *json = json_stringify(&v);
@@ -633,7 +633,7 @@ TEST(test_valid_string_iterative_with_escaped_chars) {
 
   json_value parsed_back;
   memset(&parsed_back, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(json, strlen(json), &parsed_back));
+  ASSERT_TRUE(json_parse(json, json + strlen(json), &parsed_back));
   ASSERT_TRUE(json_equal(&v, &parsed_back));
 
   ASSERT_TRUE(strcmp(json, source) == 0);
@@ -649,7 +649,7 @@ TEST(test_valid_boolean_iterative_true) {
   const char *source = "[true]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -662,7 +662,7 @@ TEST(test_valid_boolean_iterative_false) {
   const char *source = "[false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -675,7 +675,7 @@ TEST(test_valid_null_iterative) {
   const char *source = "[null]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -688,7 +688,7 @@ TEST(test_valid_array_iterative_empty) {
   const char *source = "[]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -701,7 +701,7 @@ TEST(test_valid_array_iterative_mixed_types) {
   const char *source = "[1, \"two\", true, null, {}, []]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -714,7 +714,7 @@ TEST(test_valid_object_iterative_empty) {
   const char *source = "{}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -727,7 +727,7 @@ TEST(test_valid_object_iterative_simple) {
   const char *source = "{\"key\": \"value\"}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -740,7 +740,7 @@ TEST(test_valid_object_iterative_nested) {
   const char *source = "{\"key1\": 1, \"key2\": {\"nestedKey\": true}}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -753,7 +753,7 @@ TEST(test_valid_nested_array_and_object_iterative) {
   const char *source = "[{\"a\": [1, 2]}, {\"b\": {\"c\": 3}}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -775,8 +775,8 @@ TEST(test_json_parse) {
   json_value v_iterative;
   memset(&v_iterative, 0, sizeof(json_value));
 
-  ASSERT_TRUE(json_parse(source, strlen(source), &v_recursive));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v_iterative));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v_recursive));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v_iterative));
 
   json_recursive = json_stringify(&v_recursive);
   ASSERT_PTR_NOT_NULL(json_recursive);
@@ -800,7 +800,7 @@ TEST(test_case_0) {
   const char *source = "[]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -813,7 +813,7 @@ TEST(test_case_1) {
   const char *source = "[null]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -826,7 +826,7 @@ TEST(test_case_2) {
   const char *source = "[null, null]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -839,7 +839,7 @@ TEST(test_case_3) {
   const char *source = "[true]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -852,7 +852,7 @@ TEST(test_case_4) {
   const char *source = "[true, true]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -865,7 +865,7 @@ TEST(test_case_5) {
   const char *source = "[false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -878,7 +878,7 @@ TEST(test_case_6) {
   const char *source = "[false, false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -891,7 +891,7 @@ TEST(test_case_7) {
   const char *source = "[true, false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -904,7 +904,7 @@ TEST(test_case_8) {
   const char *source = "[0]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -917,7 +917,7 @@ TEST(test_case_9) {
   const char *source = "[0, 0]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -930,7 +930,7 @@ TEST(test_case_10) {
   const char *source = "[1]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -943,7 +943,7 @@ TEST(test_case_11) {
   const char *source = "[1, 1]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -956,7 +956,7 @@ TEST(test_case_12) {
   const char *source = "[0, 1]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -969,7 +969,7 @@ TEST(test_case_13) {
   const char *source = "[0, 1, null]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -982,7 +982,7 @@ TEST(test_case_14) {
   const char *source = "[0.0, 0.1, 2.1, 1e12, 1234567890]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -995,7 +995,7 @@ TEST(test_case_15) {
   const char *source = "[{}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1008,7 +1008,7 @@ TEST(test_case_16) {
   const char *source = "[{\"key\": null}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1021,7 +1021,7 @@ TEST(test_case_17) {
   const char *source = "[{\"key\": []}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1034,7 +1034,7 @@ TEST(test_case_18) {
   const char *source = "[{\"key\": [null]}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1047,7 +1047,7 @@ TEST(test_case_19) {
   const char *source = "[{\"key\": [null, null]}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1060,7 +1060,7 @@ TEST(test_case_20) {
   const char *source = "[{\"key1\": null, \"key2\":[]}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1073,7 +1073,7 @@ TEST(test_case_21) {
   const char *source = "[{\"key1\": null, \"key2\":[null]}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1086,7 +1086,7 @@ TEST(test_case_22) {
   const char *source = "[{\"key1\": null, \"key2\":[null,null]}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1099,7 +1099,7 @@ TEST(test_case_23) {
   const char *source = "{}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1112,7 +1112,7 @@ TEST(test_case_24) {
   const char *source = "{\"key\": null}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1125,7 +1125,7 @@ TEST(test_case_25) {
   const char *source = "{\"key1\": null, \"key2\": null}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1138,7 +1138,7 @@ TEST(test_case_26) {
   const char *source = "{\"key\": []}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1151,7 +1151,7 @@ TEST(test_case_27) {
   const char *source = "{\"key\": [null]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1164,7 +1164,7 @@ TEST(test_case_28) {
   const char *source = "{\"key\": [null, null]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1177,7 +1177,7 @@ TEST(test_case_29) {
   const char *source = "{\"key\": true}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1190,7 +1190,7 @@ TEST(test_case_30) {
   const char *source = "{\"key\": false}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1203,7 +1203,7 @@ TEST(test_case_31) {
   const char *source = "{\"key\": 0}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1216,7 +1216,7 @@ TEST(test_case_32) {
   const char *source = "{\"key\": 1}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1229,7 +1229,7 @@ TEST(test_case_33) {
   const char *source = "{\"key\": 0.5}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1242,7 +1242,7 @@ TEST(test_case_34) {
   const char *source = "{\"key\": \"value\"}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1255,7 +1255,7 @@ TEST(test_case_35) {
   const char *source = "{\"key\": {}}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1268,7 +1268,7 @@ TEST(test_case_36) {
   const char *source = "{\"key1\": {}, \"key2\": {}}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1281,7 +1281,7 @@ TEST(test_case_37) {
   const char *source = "{\"key\": [{\"subkey\": []}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1294,7 +1294,7 @@ TEST(test_case_38) {
   const char *source = "{\"key\": [{\"subkey\": [null]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1307,7 +1307,7 @@ TEST(test_case_39) {
   const char *source = "{\"key\": [{\"subkey\": [null, null]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1320,7 +1320,7 @@ TEST(test_case_40) {
   const char *source = "{\"key\": [{\"subkey\": null\"}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -1329,7 +1329,7 @@ TEST(test_case_41) {
   const char *source = "{\"key\": [{\"subkey\": [true]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1342,7 +1342,7 @@ TEST(test_case_42) {
   const char *source = "{\"key\": [{\"subkey\": [true, true]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -1351,7 +1351,7 @@ TEST(test_case_43) {
   const char *source = "{\"key\": [{\"subkey\": [false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -1360,7 +1360,7 @@ TEST(test_case_44) {
   const char *source = "{\"key\": [{\"subkey\": [false, false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -1369,7 +1369,7 @@ TEST(test_case_45) {
   const char *source = "{\"key\": [{\"subkey\": [true, false]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1382,7 +1382,7 @@ TEST(test_case_46) {
   const char *source = "{\"key\": [{\"subkey\": [0]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1395,7 +1395,7 @@ TEST(test_case_47) {
   const char *source = "{\"key\": [{\"subkey\": [0, 0]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1408,7 +1408,7 @@ TEST(test_case_48) {
   const char *source = "{\"key\": [{\"subkey\": [1]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1421,7 +1421,7 @@ TEST(test_case_49) {
   const char *source = "{\"key\": [{\"subkey\": [1, 1]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1434,7 +1434,7 @@ TEST(test_case_50) {
   const char *source = "{\"key\": [{\"subkey\": [0, 1]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1447,7 +1447,7 @@ TEST(test_case_51) {
   const char *source = "{\"key\": [{\"subkey\": [0, 1, null]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1460,7 +1460,7 @@ TEST(test_case_52) {
   const char *source = "{\"key\": [{\"subkey\": [0.0, 0.1, 2.1, 1e12, 1234567890]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1473,7 +1473,7 @@ TEST(test_case_53) {
   const char *source = "{\"key\": [{\"subkey\": [{}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1486,7 +1486,7 @@ TEST(test_case_54) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key\": null}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1499,7 +1499,7 @@ TEST(test_case_55) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key\": []}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1512,7 +1512,7 @@ TEST(test_case_56) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key\": [null]}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1525,7 +1525,7 @@ TEST(test_case_57) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key\": [null, null]}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1538,7 +1538,7 @@ TEST(test_case_58) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[]}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1551,7 +1551,7 @@ TEST(test_case_59) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null]}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1564,7 +1564,7 @@ TEST(test_case_60) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null,null]}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1577,7 +1577,7 @@ TEST(test_case_61) {
   const char *source = "{\"key\": [{\"subkey\": {}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1590,7 +1590,7 @@ TEST(test_case_62) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": null}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1603,7 +1603,7 @@ TEST(test_case_63) {
   const char *source = "{\"key\": [{\"subkey\": {\"key1\": null, \"key2\": null}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1616,7 +1616,7 @@ TEST(test_case_64) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": []}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1629,7 +1629,7 @@ TEST(test_case_65) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": [null]}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1642,7 +1642,7 @@ TEST(test_case_66) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": [null, null]}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1655,7 +1655,7 @@ TEST(test_case_67) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": true}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1668,7 +1668,7 @@ TEST(test_case_68) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": false}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1681,7 +1681,7 @@ TEST(test_case_69) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": 0}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1694,7 +1694,7 @@ TEST(test_case_70) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": 1}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1707,7 +1707,7 @@ TEST(test_case_71) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": 0.5}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1720,7 +1720,7 @@ TEST(test_case_72) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": \"value\"}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1733,7 +1733,7 @@ TEST(test_case_73) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": {}}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1746,7 +1746,7 @@ TEST(test_case_74) {
   const char *source = "{\"key\": [{\"subkey\": {\"key1\": {}, \"key2\": {}}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -1769,7 +1769,7 @@ TEST(test_case_invalid_char_0) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -1791,7 +1791,7 @@ TEST(test_case_invalid_char_1) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -1813,7 +1813,7 @@ TEST(test_case_invalid_char_2) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -1835,7 +1835,7 @@ TEST(test_case_invalid_char_3) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -1857,7 +1857,7 @@ TEST(test_case_invalid_char_4) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -1879,7 +1879,7 @@ TEST(test_case_invalid_char_5) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -1901,7 +1901,7 @@ TEST(test_case_invalid_char_6) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -1923,7 +1923,7 @@ TEST(test_case_invalid_char_7) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -1944,7 +1944,7 @@ TEST(test_case_invalid_char_8) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -1966,7 +1966,7 @@ TEST(test_case_invalid_char_9) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -1987,7 +1987,7 @@ TEST(test_case_invalid_char_10) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2008,7 +2008,7 @@ TEST(test_case_invalid_char_11) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2029,7 +2029,7 @@ TEST(test_case_invalid_char_12) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2050,7 +2050,7 @@ TEST(test_case_invalid_char_13) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2073,7 +2073,7 @@ TEST(test_case_invalid_char_14) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2094,7 +2094,7 @@ TEST(test_case_invalid_char_15) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2117,7 +2117,7 @@ TEST(test_case_invalid_char_16) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2140,7 +2140,7 @@ TEST(test_case_invalid_char_17) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2163,7 +2163,7 @@ TEST(test_case_invalid_char_18) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2186,7 +2186,7 @@ TEST(test_case_invalid_char_19) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2209,7 +2209,7 @@ TEST(test_case_invalid_char_20) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2232,7 +2232,7 @@ TEST(test_case_invalid_char_21) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2255,7 +2255,7 @@ TEST(test_case_invalid_char_22) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2274,7 +2274,7 @@ TEST(test_case_invalid_char_23) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2295,7 +2295,7 @@ TEST(test_case_invalid_char_24) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2316,7 +2316,7 @@ TEST(test_case_invalid_char_25) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2337,7 +2337,7 @@ TEST(test_case_invalid_char_26) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2358,7 +2358,7 @@ TEST(test_case_invalid_char_27) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2379,7 +2379,7 @@ TEST(test_case_invalid_char_28) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2400,7 +2400,7 @@ TEST(test_case_invalid_char_29) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2421,7 +2421,7 @@ TEST(test_case_invalid_char_30) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2442,7 +2442,7 @@ TEST(test_case_invalid_char_31) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2463,7 +2463,7 @@ TEST(test_case_invalid_char_32) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2484,7 +2484,7 @@ TEST(test_case_invalid_char_33) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2505,7 +2505,7 @@ TEST(test_case_invalid_char_34) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2526,7 +2526,7 @@ TEST(test_case_invalid_char_35) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2547,7 +2547,7 @@ TEST(test_case_invalid_char_36) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2568,7 +2568,7 @@ TEST(test_case_invalid_char_37) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2589,7 +2589,7 @@ TEST(test_case_invalid_char_38) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2610,7 +2610,7 @@ TEST(test_case_invalid_char_39) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2631,7 +2631,7 @@ TEST(test_case_invalid_char_40) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2652,7 +2652,7 @@ TEST(test_case_invalid_char_41) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2673,7 +2673,7 @@ TEST(test_case_invalid_char_42) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2694,7 +2694,7 @@ TEST(test_case_invalid_char_43) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2715,7 +2715,7 @@ TEST(test_case_invalid_char_44) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2736,7 +2736,7 @@ TEST(test_case_invalid_char_45) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2757,7 +2757,7 @@ TEST(test_case_invalid_char_46) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2778,7 +2778,7 @@ TEST(test_case_invalid_char_47) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2799,7 +2799,7 @@ TEST(test_case_invalid_char_48) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2820,7 +2820,7 @@ TEST(test_case_invalid_char_49) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2841,7 +2841,7 @@ TEST(test_case_invalid_char_50) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2862,7 +2862,7 @@ TEST(test_case_invalid_char_51) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2883,7 +2883,7 @@ TEST(test_case_invalid_char_52) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2904,7 +2904,7 @@ TEST(test_case_invalid_char_53) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2925,7 +2925,7 @@ TEST(test_case_invalid_char_54) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2946,7 +2946,7 @@ TEST(test_case_invalid_char_55) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2967,7 +2967,7 @@ TEST(test_case_invalid_char_56) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -2988,7 +2988,7 @@ TEST(test_case_invalid_char_57) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3009,7 +3009,7 @@ TEST(test_case_invalid_char_58) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3030,7 +3030,7 @@ TEST(test_case_invalid_char_59) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3051,7 +3051,7 @@ TEST(test_case_invalid_char_60) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3072,7 +3072,7 @@ TEST(test_case_invalid_char_61) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3093,7 +3093,7 @@ TEST(test_case_invalid_char_62) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3114,7 +3114,7 @@ TEST(test_case_invalid_char_63) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3135,7 +3135,7 @@ TEST(test_case_invalid_char_64) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3156,7 +3156,7 @@ TEST(test_case_invalid_char_65) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3177,7 +3177,7 @@ TEST(test_case_invalid_char_66) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3198,7 +3198,7 @@ TEST(test_case_invalid_char_67) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3219,7 +3219,7 @@ TEST(test_case_invalid_char_68) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3240,7 +3240,7 @@ TEST(test_case_invalid_char_69) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3261,7 +3261,7 @@ TEST(test_case_invalid_char_70) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -3358,7 +3358,7 @@ TEST(test_case_truncated_input) {
       memcpy(source, original_source, len + 1);
       source[i] = '\0';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
       json_free(&v);
     }
     free(source);
@@ -3370,7 +3370,7 @@ TEST(test_case_iterative_0) {
   const char *source = "[]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3383,7 +3383,7 @@ TEST(test_case_iterative_1) {
   const char *source = "[null]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3396,7 +3396,7 @@ TEST(test_case_iterative_2) {
   const char *source = "[null, null]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3409,7 +3409,7 @@ TEST(test_case_iterative_3) {
   const char *source = "[true]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3422,7 +3422,7 @@ TEST(test_case_iterative_4) {
   const char *source = "[true, true]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3435,7 +3435,7 @@ TEST(test_case_iterative_5) {
   const char *source = "[false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3448,7 +3448,7 @@ TEST(test_case_iterative_6) {
   const char *source = "[false, false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3461,7 +3461,7 @@ TEST(test_case_iterative_7) {
   const char *source = "[true, false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3474,7 +3474,7 @@ TEST(test_case_iterative_8) {
   const char *source = "[0]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3487,7 +3487,7 @@ TEST(test_case_iterative_9) {
   const char *source = "[0, 0]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3500,7 +3500,7 @@ TEST(test_case_iterative_10) {
   const char *source = "[1]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3513,7 +3513,7 @@ TEST(test_case_iterative_11) {
   const char *source = "[1, 1]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3526,7 +3526,7 @@ TEST(test_case_iterative_12) {
   const char *source = "[0, 1]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3539,7 +3539,7 @@ TEST(test_case_iterative_13) {
   const char *source = "[0, 1, null]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3552,7 +3552,7 @@ TEST(test_case_iterative_14) {
   const char *source = "[0.0, 0.1, 2.1, 1e12, 1234567890]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3565,7 +3565,7 @@ TEST(test_case_iterative_15) {
   const char *source = "[{}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3578,7 +3578,7 @@ TEST(test_case_iterative_16) {
   const char *source = "[{\"key\": null}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3591,7 +3591,7 @@ TEST(test_case_iterative_17) {
   const char *source = "[{\"key\": []}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3604,7 +3604,7 @@ TEST(test_case_iterative_18) {
   const char *source = "[{\"key\": [null]}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3617,7 +3617,7 @@ TEST(test_case_iterative_19) {
   const char *source = "[{\"key\": [null, null]}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3630,7 +3630,7 @@ TEST(test_case_iterative_20) {
   const char *source = "[{\"key1\": null, \"key2\":[]}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3643,7 +3643,7 @@ TEST(test_case_iterative_21) {
   const char *source = "[{\"key1\": null, \"key2\":[null]}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3656,7 +3656,7 @@ TEST(test_case_iterative_22) {
   const char *source = "[{\"key1\": null, \"key2\":[null,null]}]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3669,7 +3669,7 @@ TEST(test_case_iterative_23) {
   const char *source = "{}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3682,7 +3682,7 @@ TEST(test_case_iterative_24) {
   const char *source = "{\"key\": null}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3695,7 +3695,7 @@ TEST(test_case_iterative_25) {
   const char *source = "{\"key1\": null, \"key2\": null}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3708,7 +3708,7 @@ TEST(test_case_iterative_26) {
   const char *source = "{\"key\": []}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3721,7 +3721,7 @@ TEST(test_case_iterative_27) {
   const char *source = "{\"key\": [null]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3734,7 +3734,7 @@ TEST(test_case_iterative_28) {
   const char *source = "{\"key\": [null, null]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3747,7 +3747,7 @@ TEST(test_case_iterative_29) {
   const char *source = "{\"key\": true}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3760,7 +3760,7 @@ TEST(test_case_iterative_30) {
   const char *source = "{\"key\": false}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3773,7 +3773,7 @@ TEST(test_case_iterative_31) {
   const char *source = "{\"key\": 0}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3786,7 +3786,7 @@ TEST(test_case_iterative_32) {
   const char *source = "{\"key\": 1}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3799,7 +3799,7 @@ TEST(test_case_iterative_33) {
   const char *source = "{\"key\": 0.5}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3812,7 +3812,7 @@ TEST(test_case_iterative_34) {
   const char *source = "{\"key\": \"value\"}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3825,7 +3825,7 @@ TEST(test_case_iterative_35) {
   const char *source = "{\"key\": {}}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3838,7 +3838,7 @@ TEST(test_case_iterative_36) {
   const char *source = "{\"key1\": {}, \"key2\": {}}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3851,7 +3851,7 @@ TEST(test_case_iterative_37) {
   const char *source = "{\"key\": [{\"subkey\": []}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3864,7 +3864,7 @@ TEST(test_case_iterative_38) {
   const char *source = "{\"key\": [{\"subkey\": [null]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3877,7 +3877,7 @@ TEST(test_case_iterative_39) {
   const char *source = "{\"key\": [{\"subkey\": [null, null]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3890,7 +3890,7 @@ TEST(test_case_iterative_40) {
   const char *source = "{\"key\": [{\"subkey\": null\"}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -3899,7 +3899,7 @@ TEST(test_case_iterative_41) {
   const char *source = "{\"key\": [{\"subkey\": [true]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3912,7 +3912,7 @@ TEST(test_case_iterative_42) {
   const char *source = "{\"key\": [{\"subkey\": [true, true]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -3921,7 +3921,7 @@ TEST(test_case_iterative_43) {
   const char *source = "{\"key\": [{\"subkey\": [false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -3930,7 +3930,7 @@ TEST(test_case_iterative_44) {
   const char *source = "{\"key\": [{\"subkey\": [false, false]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -3939,7 +3939,7 @@ TEST(test_case_iterative_45) {
   const char *source = "{\"key\": [{\"subkey\": [true, false]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3952,7 +3952,7 @@ TEST(test_case_iterative_46) {
   const char *source = "{\"key\": [{\"subkey\": [0]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3965,7 +3965,7 @@ TEST(test_case_iterative_47) {
   const char *source = "{\"key\": [{\"subkey\": [0, 0]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3978,7 +3978,7 @@ TEST(test_case_iterative_48) {
   const char *source = "{\"key\": [{\"subkey\": [1]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -3991,7 +3991,7 @@ TEST(test_case_iterative_49) {
   const char *source = "{\"key\": [{\"subkey\": [1, 1]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4004,7 +4004,7 @@ TEST(test_case_iterative_50) {
   const char *source = "{\"key\": [{\"subkey\": [0, 1]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4017,7 +4017,7 @@ TEST(test_case_iterative_51) {
   const char *source = "{\"key\": [{\"subkey\": [0, 1, null]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4030,7 +4030,7 @@ TEST(test_case_iterative_52) {
   const char *source = "{\"key\": [{\"subkey\": [0.0, 0.1, 2.1, 1e12, 1234567890]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4043,7 +4043,7 @@ TEST(test_case_iterative_53) {
   const char *source = "{\"key\": [{\"subkey\": [{}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4056,7 +4056,7 @@ TEST(test_case_iterative_54) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key\": null}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4069,7 +4069,7 @@ TEST(test_case_iterative_55) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key\": []}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4082,7 +4082,7 @@ TEST(test_case_iterative_56) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key\": [null]}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4095,7 +4095,7 @@ TEST(test_case_iterative_57) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key\": [null, null]}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4108,7 +4108,7 @@ TEST(test_case_iterative_58) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[]}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4121,7 +4121,7 @@ TEST(test_case_iterative_59) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null]}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4134,7 +4134,7 @@ TEST(test_case_iterative_60) {
   const char *source = "{\"key\": [{\"subkey\": [{\"key1\": null, \"key2\":[null,null]}]}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4147,7 +4147,7 @@ TEST(test_case_iterative_61) {
   const char *source = "{\"key\": [{\"subkey\": {}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4160,7 +4160,7 @@ TEST(test_case_iterative_62) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": null}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4173,7 +4173,7 @@ TEST(test_case_iterative_63) {
   const char *source = "{\"key\": [{\"subkey\": {\"key1\": null, \"key2\": null}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4186,7 +4186,7 @@ TEST(test_case_iterative_64) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": []}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4199,7 +4199,7 @@ TEST(test_case_iterative_65) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": [null]}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4212,7 +4212,7 @@ TEST(test_case_iterative_66) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": [null, null]}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4225,7 +4225,7 @@ TEST(test_case_iterative_67) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": true}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4238,7 +4238,7 @@ TEST(test_case_iterative_68) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": false}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4251,7 +4251,7 @@ TEST(test_case_iterative_69) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": 0}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4264,7 +4264,7 @@ TEST(test_case_iterative_70) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": 1}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4277,7 +4277,7 @@ TEST(test_case_iterative_71) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": 0.5}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4290,7 +4290,7 @@ TEST(test_case_iterative_72) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": \"value\"}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4303,7 +4303,7 @@ TEST(test_case_iterative_73) {
   const char *source = "{\"key\": [{\"subkey\": {\"key\": {}}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4316,7 +4316,7 @@ TEST(test_case_iterative_74) {
   const char *source = "{\"key\": [{\"subkey\": {\"key1\": {}, \"key2\": {}}}]}";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
   ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -4336,7 +4336,7 @@ TEST(test_case_iterative_invalid_char_0) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4355,7 +4355,7 @@ TEST(test_case_iterative_invalid_char_1) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4374,7 +4374,7 @@ TEST(test_case_iterative_invalid_char_2) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4393,7 +4393,7 @@ TEST(test_case_iterative_invalid_char_3) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4412,7 +4412,7 @@ TEST(test_case_iterative_invalid_char_4) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4431,7 +4431,7 @@ TEST(test_case_iterative_invalid_char_5) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4450,7 +4450,7 @@ TEST(test_case_iterative_invalid_char_6) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4469,7 +4469,7 @@ TEST(test_case_iterative_invalid_char_7) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4488,7 +4488,7 @@ TEST(test_case_iterative_invalid_char_8) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4507,7 +4507,7 @@ TEST(test_case_iterative_invalid_char_9) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4526,7 +4526,7 @@ TEST(test_case_iterative_invalid_char_10) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4545,7 +4545,7 @@ TEST(test_case_iterative_invalid_char_11) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4564,7 +4564,7 @@ TEST(test_case_iterative_invalid_char_12) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4583,7 +4583,7 @@ TEST(test_case_iterative_invalid_char_13) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4604,7 +4604,7 @@ TEST(test_case_iterative_invalid_char_14) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4623,7 +4623,7 @@ TEST(test_case_iterative_invalid_char_15) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4644,7 +4644,7 @@ TEST(test_case_iterative_invalid_char_16) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4665,7 +4665,7 @@ TEST(test_case_iterative_invalid_char_17) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4686,7 +4686,7 @@ TEST(test_case_iterative_invalid_char_18) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4707,7 +4707,7 @@ TEST(test_case_iterative_invalid_char_19) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4728,7 +4728,7 @@ TEST(test_case_iterative_invalid_char_20) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4749,7 +4749,7 @@ TEST(test_case_iterative_invalid_char_21) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4770,7 +4770,7 @@ TEST(test_case_iterative_invalid_char_22) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4789,7 +4789,7 @@ TEST(test_case_iterative_invalid_char_23) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4810,7 +4810,7 @@ TEST(test_case_iterative_invalid_char_24) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4831,7 +4831,7 @@ TEST(test_case_iterative_invalid_char_25) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4852,7 +4852,7 @@ TEST(test_case_iterative_invalid_char_26) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4873,7 +4873,7 @@ TEST(test_case_iterative_invalid_char_27) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4894,7 +4894,7 @@ TEST(test_case_iterative_invalid_char_28) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4915,7 +4915,7 @@ TEST(test_case_iterative_invalid_char_29) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4936,7 +4936,7 @@ TEST(test_case_iterative_invalid_char_30) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4957,7 +4957,7 @@ TEST(test_case_iterative_invalid_char_31) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4978,7 +4978,7 @@ TEST(test_case_iterative_invalid_char_32) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -4999,7 +4999,7 @@ TEST(test_case_iterative_invalid_char_33) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5020,7 +5020,7 @@ TEST(test_case_iterative_invalid_char_34) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5041,7 +5041,7 @@ TEST(test_case_iterative_invalid_char_35) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5062,7 +5062,7 @@ TEST(test_case_iterative_invalid_char_36) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5083,7 +5083,7 @@ TEST(test_case_iterative_invalid_char_37) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5104,7 +5104,7 @@ TEST(test_case_iterative_invalid_char_38) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5125,7 +5125,7 @@ TEST(test_case_iterative_invalid_char_39) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5146,7 +5146,7 @@ TEST(test_case_iterative_invalid_char_40) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5167,7 +5167,7 @@ TEST(test_case_iterative_invalid_char_41) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5188,7 +5188,7 @@ TEST(test_case_iterative_invalid_char_42) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5209,7 +5209,7 @@ TEST(test_case_iterative_invalid_char_43) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5230,7 +5230,7 @@ TEST(test_case_iterative_invalid_char_44) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5251,7 +5251,7 @@ TEST(test_case_iterative_invalid_char_45) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5272,7 +5272,7 @@ TEST(test_case_iterative_invalid_char_46) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5293,7 +5293,7 @@ TEST(test_case_iterative_invalid_char_47) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5314,7 +5314,7 @@ TEST(test_case_iterative_invalid_char_48) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5335,7 +5335,7 @@ TEST(test_case_iterative_invalid_char_49) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5356,7 +5356,7 @@ TEST(test_case_iterative_invalid_char_50) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5377,7 +5377,7 @@ TEST(test_case_iterative_invalid_char_51) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5398,7 +5398,7 @@ TEST(test_case_iterative_invalid_char_52) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5419,7 +5419,7 @@ TEST(test_case_iterative_invalid_char_53) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5440,7 +5440,7 @@ TEST(test_case_iterative_invalid_char_54) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5461,7 +5461,7 @@ TEST(test_case_iterative_invalid_char_55) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5482,7 +5482,7 @@ TEST(test_case_iterative_invalid_char_56) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5503,7 +5503,7 @@ TEST(test_case_iterative_invalid_char_57) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5524,7 +5524,7 @@ TEST(test_case_iterative_invalid_char_58) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5545,7 +5545,7 @@ TEST(test_case_iterative_invalid_char_59) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5566,7 +5566,7 @@ TEST(test_case_iterative_invalid_char_60) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5587,7 +5587,7 @@ TEST(test_case_iterative_invalid_char_61) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5608,7 +5608,7 @@ TEST(test_case_iterative_invalid_char_62) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5629,7 +5629,7 @@ TEST(test_case_iterative_invalid_char_63) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5650,7 +5650,7 @@ TEST(test_case_iterative_invalid_char_64) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5671,7 +5671,7 @@ TEST(test_case_iterative_invalid_char_65) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5692,7 +5692,7 @@ TEST(test_case_iterative_invalid_char_66) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5713,7 +5713,7 @@ TEST(test_case_iterative_invalid_char_67) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5734,7 +5734,7 @@ TEST(test_case_iterative_invalid_char_68) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5755,7 +5755,7 @@ TEST(test_case_iterative_invalid_char_69) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5776,7 +5776,7 @@ TEST(test_case_iterative_invalid_char_70) {
       memcpy(source, original_source, len + 1);
       source[i] = ' ';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
   }
@@ -5873,7 +5873,7 @@ TEST(test_case_iterative_truncated_input) {
       memcpy(source, original_source, len + 1);
       source[i] = '\0';
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+      ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       json_free(&v);
     }
     free(source);
@@ -5885,7 +5885,7 @@ TEST(test_case_iterative__2) {
   const char *source = "[null null]";
   json_value v;
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+  ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
   json_free(&v);
   END_TEST;
 }
@@ -6017,7 +6017,7 @@ TEST(test_validate_no_error) {
 #endif
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_NO_ERROR, json_error);
+  ASSERT_EQUAL(json_validate(position, source + len), E_OK, json_error);
   END_TEST;
 }
 
@@ -6115,12 +6115,12 @@ TEST(test_randomization) {
 
       source_len = strlen(source);
       memset(&v, 0, sizeof(json_value));
-      ASSERT_FALSE(json_parse(source, source_len, &v));
+      ASSERT_FALSE(json_parse(source, source + source_len, &v));
       json_free(&v);
 
       memset(&v, 0, sizeof(json_value));
       const char *position = source;
-      ASSERT_NOT_EQUAL(json_validate(&position, source_len), E_NO_ERROR, json_error);
+      ASSERT_NOT_EQUAL(json_validate(position, position + source_len), E_OK, json_error);
       json_free(&v);
     }
     free(source);
@@ -6132,7 +6132,7 @@ TEST(test_json_cleanup) {
   json_value v;
 
   memset(&v, 0, sizeof(json_value));
-  ASSERT_TRUE(json_parse(source, strlen(source), &v));
+  ASSERT_TRUE(json_parse(source, source + strlen(source), &v));
 
   char *json = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(json);
@@ -6237,7 +6237,7 @@ TEST(test_replacement) {
 
     json_value original_v;
     memset(&original_v, 0, sizeof(json_value));
-    ASSERT_TRUE(json_parse(original_source, strlen(original_source), &original_v));
+    ASSERT_TRUE(json_parse(original_source, original_source + strlen(original_source), &original_v));
 
     for (i = 0; i < len; i++) {
       original_char = original_source[i];
@@ -6252,10 +6252,10 @@ TEST(test_replacement) {
 
         json_value v;
         memset(&v, 0, sizeof(json_value));
-        ASSERT_FALSE(json_parse(source, strlen(source), &v));
+        ASSERT_FALSE(json_parse(source, source + strlen(source), &v));
 
         memset(&v, 0, sizeof(json_value));
-        ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+        ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
       }
     }
     json_free(&original_v);
@@ -6277,9 +6277,9 @@ TEST(test_generation) {
     sprintf(wrapped_str, "[%s]", json_str);
     json_value parsed_v;
     memset(&parsed_v, 0, sizeof(json_value));
-    ASSERT_TRUE(json_parse(wrapped_str, strlen(wrapped_str), &parsed_v));
+    ASSERT_TRUE(json_parse(wrapped_str, wrapped_str + strlen(wrapped_str), &parsed_v));
     memset(&parsed_v, 0, sizeof(json_value));
-    ASSERT_TRUE(json_parse_iterative(wrapped_str, strlen(wrapped_str), &parsed_v));
+    ASSERT_TRUE(json_parse_iterative(wrapped_str, wrapped_str + strlen(wrapped_str), &parsed_v));
     json_free(&parsed_v);
     free(wrapped_str);
     free(json_str);
@@ -6288,11 +6288,11 @@ TEST(test_generation) {
   END_TEST;
 }
 
-TEST(test_validate_no_data) {
+TEST(test_validate_invalid_json) {
   const char *source = "";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_NO_DATA, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6300,7 +6300,7 @@ TEST(test_validate_invalid_json_string) {
   const char *source = "abc";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6308,7 +6308,7 @@ TEST(test_validate_invalid_json_number) {
   const char *source = "0";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6316,7 +6316,7 @@ TEST(test_validate_invalid_json_boolean) {
   const char *source = "true";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6324,23 +6324,23 @@ TEST(test_validate_invalid_json_value) {
   const char *source = "0";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
-TEST(test_validate_invalid_data) {
+TEST(test_validate_invalid_json_data) {
   const char *source = "{}==";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_DATA, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
-TEST(test_validate_invalid_json_data_error) {
+TEST(test_validate_invalid_json_error) {
   const char *source = "[";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON_DATA, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6348,7 +6348,15 @@ TEST(test_validate_object_key) {
   const char *source = "{a:1}";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_OBJECT_KEY, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_OBJECT_KEY, json_error);
+  END_TEST;
+}
+
+TEST(test_validate_object_value) {
+  const char *source = "{\"a\"}";
+  const char *position = source;
+  size_t len = strlen(source);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_OBJECT_VALUE, json_error);
   END_TEST;
 }
 
@@ -6356,7 +6364,7 @@ TEST(test_validate_mailformed_object) {
   const char *source = "{\"a\"::1}";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_MAILFORMED_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6364,7 +6372,7 @@ TEST(test_validate_expected_object_key) {
   const char *source = "{\"a\":1,,}";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_OBJECT_KEY, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_OBJECT_KEY, json_error);
   END_TEST;
 }
 
@@ -6372,7 +6380,39 @@ TEST(test_validate_array_mailformed_json) {
   const char *source = "[1,,2]";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_MAILFORMED_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
+  END_TEST;
+}
+
+TEST(test_validate_expected_number_1) {
+  const char *source = "[02]";
+  const char *position = source;
+  size_t len = strlen(source);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_NUMBER, json_error);
+  END_TEST;
+}
+
+TEST(test_validate_expected_number_2) {
+  const char *source = "[-02]";
+  const char *position = source;
+  size_t len = strlen(source);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_NUMBER, json_error);
+  END_TEST;
+}
+
+TEST(test_validate_expected_number_3) {
+  const char *source = "[-1e]";
+  const char *position = source;
+  size_t len = strlen(source);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_NUMBER, json_error);
+  END_TEST;
+}
+
+TEST(test_validate_expected_number) {
+  const char *source = "[-1e0]";
+  const char *position = source;
+  size_t len = strlen(source);
+  ASSERT_EQUAL(json_validate(position, position + len), E_OK, json_error);
   END_TEST;
 }
 
@@ -6380,19 +6420,16 @@ TEST(test_validate_expected_string) {
   const char *source = "[\"\\u123\"]";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_EXPECTED_STRING, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_STRING, json_error);
   END_TEST;
 }
 
 TEST(test_unicode_hex4_parsing_coverage) {
-  /* Test to cover lines 268 (lowercase hex), 269 (lowercase hex with offset), 271 (uppercase hex) */
-
-  /* Test lowercase hex characters to hit lines 268-269 */
   const char *source1 = "[\"\\uabcd\"]";
   json_value v1;
   memset(&v1, 0, sizeof(json_value));
   size_t len1 = strlen(source1);
-  ASSERT_TRUE(json_parse_iterative(source1, len1, &v1));
+  ASSERT_TRUE(json_parse_iterative(source1, source1 + len1, &v1));
   char *json1 = json_stringify(&v1);
   ASSERT_PTR_NOT_NULL(json1);
   ASSERT_TRUE(utils_test_json_equal(json1, source1));
@@ -6404,7 +6441,7 @@ TEST(test_unicode_hex4_parsing_coverage) {
   json_value v2;
   memset(&v2, 0, sizeof(json_value));
   size_t len2 = strlen(source2);
-  ASSERT_TRUE(json_parse_iterative(source2, len2, &v2));
+  ASSERT_TRUE(json_parse_iterative(source2, source2 + len2, &v2));
   char *json2 = json_stringify(&v2);
   ASSERT_PTR_NOT_NULL(json2);
   ASSERT_TRUE(utils_test_json_equal(json2, source2));
@@ -6416,7 +6453,7 @@ TEST(test_unicode_hex4_parsing_coverage) {
   json_value v3;
   memset(&v3, 0, sizeof(json_value));
   size_t len3 = strlen(source3);
-  ASSERT_TRUE(json_parse_iterative(source3, len3, &v3));
+  ASSERT_TRUE(json_parse_iterative(source3, source3 + len3, &v3));
   char *json3 = json_stringify(&v3);
   ASSERT_PTR_NOT_NULL(json3);
   ASSERT_TRUE(utils_test_json_equal(json3, source3));
@@ -6428,7 +6465,7 @@ TEST(test_unicode_hex4_parsing_coverage) {
   json_value v4;
   memset(&v4, 0, sizeof(json_value));
   size_t len4 = strlen(source4);
-  ASSERT_TRUE(json_parse_iterative(source4, len4, &v4));
+  ASSERT_TRUE(json_parse_iterative(source4, source4 + len4, &v4));
   char *json4 = json_stringify(&v4);
   ASSERT_PTR_NOT_NULL(json4);
   ASSERT_TRUE(utils_test_json_equal(json4, source4));
@@ -6448,7 +6485,7 @@ TEST(test_json_node_pool_allocation_coverage) {
   /* Create many array elements to exercise pool allocation */
   const char *array_source = "[1,2,3,4,5,6,7,8,9,10]";
   size_t len1 = strlen(array_source);
-  ASSERT_TRUE(json_parse_iterative(array_source, len1, &array_v));
+  ASSERT_TRUE(json_parse_iterative(array_source, array_source + len1, &array_v));
   char *array_json = json_stringify(&array_v);
   ASSERT_PTR_NOT_NULL(array_json);
   ASSERT_TRUE(utils_test_json_equal(array_json, array_source));
@@ -6462,7 +6499,7 @@ TEST(test_json_node_pool_allocation_coverage) {
   /* Create object with many key-value pairs to exercise pool allocation */
   const char *object_source = "{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5,\"f\":6}";
   size_t len2 = strlen(object_source);
-  ASSERT_TRUE(json_parse_iterative(object_source, len2, &object_v));
+  ASSERT_TRUE(json_parse_iterative(object_source, object_source + len2, &object_v));
   char *object_json = json_stringify(&object_v);
   ASSERT_PTR_NOT_NULL(object_json);
   ASSERT_TRUE(utils_test_json_equal(object_json, object_source));
@@ -6475,7 +6512,7 @@ TEST(test_json_node_pool_allocation_coverage) {
 
   const char *nested_source = "{\"arr\":[1,2,3],\"obj\":{\"x\":7,\"y\":8,\"z\":9}}";
   size_t len3 = strlen(nested_source);
-  ASSERT_TRUE(json_parse_iterative(nested_source, len3, &nested_v));
+  ASSERT_TRUE(json_parse_iterative(nested_source, nested_source + len3, &nested_v));
   char *nested_json = json_stringify(&nested_v);
   ASSERT_PTR_NOT_NULL(nested_json);
   ASSERT_TRUE(utils_test_json_equal(nested_json, nested_source));
@@ -6489,7 +6526,7 @@ TEST(test_validate_expected_array_value) {
   const char *source = "[1a]";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_EXPECTED_ARRAY, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_ARRAY, json_error);
   END_TEST;
 }
 
@@ -6497,7 +6534,7 @@ TEST(test_validate_expected_boolean) {
   const char *source = "[tru]";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_EXPECTED_BOOLEAN, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_CONSTANT, json_error);
   END_TEST;
 }
 
@@ -6505,7 +6542,7 @@ TEST(test_validate_expected_null) {
   const char *source = "[nul]";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_EXPECTED_NULL, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_CONSTANT, json_error);
   END_TEST;
 }
 
@@ -6513,7 +6550,7 @@ TEST(test_validate_expected_object_key_null) {
   const char *source = "{\"";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_EXPECTED_OBJECT_KEY, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_OBJECT_KEY, json_error);
   END_TEST;
 }
 
@@ -6521,7 +6558,7 @@ TEST(test_validate_expected_object_value) {
   const char *source = "{\"a\":}";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_MAILFORMED_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6533,7 +6570,7 @@ TEST(test_validate_expected_json) {
 #endif
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_MAILFORMED_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6541,7 +6578,7 @@ TEST(test_validate_expected_object_value_null) {
   const char *source = "{\"a\":";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6549,7 +6586,7 @@ TEST(test_validate_expected_array_element) {
   const char *source = "[1,]";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_EXPECTED_ARRAY_ELEMENT, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_ARRAY_ELEMENT, json_error);
   END_TEST;
 }
 
@@ -6557,7 +6594,7 @@ TEST(test_validate_expected_array_element_null) {
   const char *source = "[1,";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6565,7 +6602,7 @@ TEST(test_validate_expected_object_element) {
   const char *source = "{\"a\":1,}";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_EXPECTED_OBJECT_ELEMENT, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_EXPECTED_OBJECT_ELEMENT, json_error);
   END_TEST;
 }
 
@@ -6573,7 +6610,7 @@ TEST(test_validate_expected_object_element_null) {
   const char *source = "{\"a\":1,";
   const char *position = source;
   size_t len = strlen(source);
-  ASSERT_EQUAL(json_validate(&position, len), E_INVALID_JSON, json_error);
+  ASSERT_EQUAL(json_validate(position, position + len), E_INVALID_JSON, json_error);
   END_TEST;
 }
 
@@ -6871,25 +6908,26 @@ TEST(test_json_parse_function) {
 
   /* Test parsing simple array */
   const char *array_json = "[]";
-  ASSERT_TRUE(json_parse(array_json, strlen(array_json), &v));
+  ASSERT_TRUE(json_parse(array_json, array_json + strlen(array_json), &v));
   ASSERT_EQ(v.type, J_ARRAY);
   json_free(&v);
 
   /* Test parsing simple object */
   memset(&v, 0, sizeof(json_value));
   const char *object_json = "{}";
-  ASSERT_TRUE(json_parse(object_json, strlen(object_json), &v));
+  ASSERT_TRUE(json_parse(object_json, object_json + strlen(object_json), &v));
   ASSERT_EQ(v.type, J_OBJECT);
   json_free(&v);
 
   /* Test parsing null */
   memset(&v, 0, sizeof(json_value));
   const char *null_json = "null";
-  ASSERT_FALSE(json_parse(null_json, strlen(null_json), &v)); /* Should fail as it's not an array/object */
+  ASSERT_FALSE(json_parse(null_json, null_json + strlen(null_json), &v)); /* Should fail as it's not an array/object */
 
+  const char *empty = "";
   /* Test empty string */
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse("", strlen(""), &v));
+  ASSERT_FALSE(json_parse(empty, empty + strlen(empty), &v));
 
   END_TEST;
 }
@@ -6902,8 +6940,8 @@ TEST(test_json_parse_function_json_object_equals) {
   const char *object_json1 = "{\"key\": 1}";
   const char *object_json2 = "{\"key\": 2}";
 
-  ASSERT_TRUE(json_parse(object_json1, strlen(object_json1), &v1));
-  ASSERT_TRUE(json_parse(object_json2, strlen(object_json2), &v2));
+  ASSERT_TRUE(json_parse(object_json1, object_json1 + strlen(object_json1), &v1));
+  ASSERT_TRUE(json_parse(object_json2, object_json2 + strlen(object_json2), &v2));
 
   ASSERT_EQ(v1.type, J_OBJECT);
   ASSERT_EQ(v2.type, J_OBJECT);
@@ -6924,8 +6962,8 @@ TEST(test_json_parse_function_json_object_equals_null) {
   const char *object_json1 = "{\"key\": 1}";
   const char *object_json2 = "{\"key\": 2}";
 
-  ASSERT_TRUE(json_parse(object_json1, strlen(object_json1), &v1));
-  ASSERT_TRUE(json_parse(object_json2, strlen(object_json2), &v2));
+  ASSERT_TRUE(json_parse(object_json1, object_json1 + strlen(object_json1), &v1));
+  ASSERT_TRUE(json_parse(object_json2, object_json2 + strlen(object_json2), &v2));
 
   ASSERT_EQ(v1.type, J_OBJECT);
   ASSERT_EQ(v2.type, J_OBJECT);
@@ -6946,25 +6984,25 @@ TEST(test_json_validate_function) {
   /* Test valid JSON */
   const char *ptr = valid_json;
   len = strlen(ptr);
-  json_error err = json_validate(&ptr, len);
-  ASSERT_EQ(err, E_NO_ERROR);
+  json_error err = json_validate(ptr, ptr + len);
+  ASSERT_EQ(err, E_OK);
 
   /* Test invalid JSON */
   ptr = invalid_json;
   len = strlen(ptr);
-  err = json_validate(&ptr, len);
-  ASSERT_NOT_EQ(err, E_NO_ERROR);
+  err = json_validate(ptr, ptr + len);
+  ASSERT_NOT_EQ(err, E_OK);
 
   /* Test empty string */
   ptr = "";
   len = strlen(ptr);
-  err = json_validate(&ptr, len);
-  ASSERT_EQ(err, E_NO_DATA);
+  err = json_validate(ptr, ptr + len);
+  ASSERT_EQ(err, E_INVALID_JSON);
 
   /* Test non-object/array root */
   ptr = "null";
   len = strlen(ptr);
-  err = json_validate(&ptr, len);
+  err = json_validate(ptr, ptr + len);
   ASSERT_EQ(err, E_INVALID_JSON);
 
   END_TEST;
@@ -7125,7 +7163,7 @@ TEST(test_whitespace_lookup) {
     const char *source = invalid_whitespace_tests[i];
     json_value v;
     memset(&v, 0, sizeof(json_value));
-    ASSERT_FALSE(json_parse_iterative(source, strlen(source), &v));
+    ASSERT_FALSE(json_parse_iterative(source, source + strlen(source), &v));
 
     char *json = json_stringify(&v);
     ASSERT_PTR_NULL(json);
@@ -7136,7 +7174,7 @@ TEST(test_whitespace_lookup) {
     json_value v;
     memset(&v, 0, sizeof(json_value));
 
-    ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+    ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
 
     char *json = json_stringify(&v);
     ASSERT_PTR_NOT_NULL(json);
@@ -7175,7 +7213,7 @@ TEST(test_whitespace_lookup) {
     const char *source = number_with_whitespace_tests[i];
     json_value v;
     memset(&v, 0, sizeof(json_value));
-    ASSERT_TRUE(json_parse_iterative(source, strlen(source), &v));
+    ASSERT_TRUE(json_parse_iterative(source, source + strlen(source), &v));
     char *json = json_stringify(&v);
     ASSERT_PTR_NOT_NULL(json);
     ASSERT_TRUE(utils_test_json_equal(json, source));
@@ -7208,7 +7246,7 @@ TEST(test_print_value_object_with_multiple_keys) {
   for (i = 0; i < type_tests_size; i++) {
     json_value v;
     memset(&v, 0, sizeof(json_value));
-    ASSERT_TRUE(json_parse(type_tests[i], strlen(type_tests[i]), &v));
+    ASSERT_TRUE(json_parse(type_tests[i], type_tests[i] + strlen(type_tests[i]), &v));
 
     /* Test json_stringify to exercise buffer_write (line 799) */
     char *result = json_stringify(&v);
@@ -7246,7 +7284,7 @@ TEST(test_large_array_pool_allocation) {
   }
   strcat(large_json, "]");
 
-  ASSERT_TRUE(json_parse_iterative(large_json, strlen(large_json), &v));
+  ASSERT_TRUE(json_parse_iterative(large_json, large_json + strlen(large_json), &v));
   char *result = json_stringify(&v);
   ASSERT_PTR_NOT_NULL(result);
 
@@ -7254,9 +7292,10 @@ TEST(test_large_array_pool_allocation) {
   json_value first_elem, check_elem;
   memset(&first_elem, 0, sizeof(json_value));
   memset(&check_elem, 0, sizeof(json_value));
+  const char *json = "[1]";
 
-  ASSERT_TRUE(json_parse_iterative("[1]", strlen("[1]"), &first_elem));
-  ASSERT_TRUE(json_parse_iterative("[1]", strlen("[1]"), &check_elem));
+  ASSERT_TRUE(json_parse_iterative(json, json + strlen(json), &first_elem));
+  ASSERT_TRUE(json_parse_iterative(json, json + strlen(json), &check_elem));
   ASSERT_TRUE(json_equal(&first_elem, &check_elem));
 
   json_free(&v);
@@ -7278,8 +7317,8 @@ TEST(test_buffer_write_values_array_coverage) {
   /* Parse different arrays */
   const char *array1_source = "[1,2,3]";
   const char *array2_source = "[1,2,4]";
-  ASSERT_TRUE(json_parse_iterative(array1_source, strlen(array1_source), &array1));
-  ASSERT_TRUE(json_parse_iterative(array2_source, strlen(array2_source), &array2));
+  ASSERT_TRUE(json_parse_iterative(array1_source, array1_source + strlen(array1_source), &array1));
+  ASSERT_TRUE(json_parse_iterative(array2_source, array2_source + strlen(array2_source), &array2));
 
   /* Test using json_stringify to exercise buffer_write_values */
   char *result1 = json_stringify(&array1);
@@ -7318,7 +7357,7 @@ TEST(test_print_value_object_with_multiple_keys_enhanced) {
 
   /* Parse object with multiple items using json_parse to create proper structure */
   const char *source_json = "{\"a\":1,\"b\":2,\"c\":3}";
-  ASSERT_TRUE(json_parse(source_json, strlen(source_json), &v));
+  ASSERT_TRUE(json_parse(source_json, source_json + strlen(source_json), &v));
 
   /* Test printing to exercise buffer_write_value and buffer_write functions */
   json_print(&v, mem_stream);
@@ -7402,34 +7441,34 @@ TEST(test_comprehensive_coverage_equality_functions) {
 }
 
 TEST(test_comprehensive_coverage_parsing_functions) {
-  /* Tests for parsing functions including parse_array_value, parse_object_value, parse_value_build */
+  /* Tests for parsing functions including parse_array, parse_object, parse_json */
   json_value v;
   memset(&v, 0, sizeof(json_value));
 
-  /* Test json_parse which exercises parse_value_build */
+  /* Test json_parse which exercises parse_json */
   const char *array_json = "[1, 2, 3]";
-  ASSERT_TRUE(json_parse(array_json, strlen(array_json), &v));
+  ASSERT_TRUE(json_parse(array_json, array_json + strlen(array_json), &v));
   ASSERT_EQ(v.type, J_ARRAY);
   json_free(&v);
 
   /* Test object parsing */
   memset(&v, 0, sizeof(json_value));
   const char *object_json = "{\"key\": \"value\", \"num\": 42}";
-  ASSERT_TRUE(json_parse(object_json, strlen(object_json), &v));
+  ASSERT_TRUE(json_parse(object_json, object_json + strlen(object_json), &v));
   ASSERT_EQ(v.type, J_OBJECT);
   json_free(&v);
 
   /* Test nested structures */
   memset(&v, 0, sizeof(json_value));
   const char *nested_json = "{\"array\": [1, 2, {\"nested\": true}], \"empty\": {}}";
-  ASSERT_TRUE(json_parse(nested_json, strlen(nested_json), &v));
+  ASSERT_TRUE(json_parse(nested_json, nested_json + strlen(nested_json), &v));
   ASSERT_EQ(v.type, J_OBJECT);
   json_free(&v);
 
   /* Test invalid JSON */
   memset(&v, 0, sizeof(json_value));
   const char *invalid_json = "[1, 2,]";
-  ASSERT_FALSE(json_parse(invalid_json, strlen(invalid_json), &v));
+  ASSERT_FALSE(json_parse(invalid_json, invalid_json + strlen(invalid_json), &v));
   json_free(&v);
 
   END_TEST;
@@ -7477,8 +7516,8 @@ TEST(test_comprehensive_coverage_object_get) {
   memset(&v1, 0, sizeof(json_value));
   memset(&v2, 0, sizeof(json_value));
 
-  ASSERT_TRUE(json_parse_iterative(ptr, strlen(ptr), &v1) == true);
-  ASSERT_TRUE(json_parse(ptr, strlen(ptr), &v2) == true);
+  ASSERT_TRUE(json_parse_iterative(ptr, ptr + strlen(ptr), &v1) == true);
+  ASSERT_TRUE(json_parse(ptr, ptr + strlen(ptr), &v2) == true);
   ASSERT_TRUE(json_equal(&v1, &v2) == true);
 
   END_TEST;
@@ -7565,7 +7604,7 @@ TEST(test_complex_nested_json_coverage) {
   /* Test json_parse on complex nested structure that exercises all parsing functions */
   const char *complex_json = "{\"user\":{\"name\":\"John\",\"age\":30,\"emails\":[\"john@example.com\",\"work@example.com\"],\"address\":{\"street\":\"123 Main St\",\"city\":\"Anytown\",\"coordinates\":{\"lat\":45.5,\"lng\":-122.7}},\"active\":true,\"score\":null},\"items\":[{\"id\":1,\"value\":\"test\"},{\"id\":2,\"nested\":{\"deep\":{\"value\":42}}}],\"emptyObject\":{},\"emptyArray\":[]}";
 
-  ASSERT_TRUE(json_parse(complex_json, strlen(complex_json), &v));
+  ASSERT_TRUE(json_parse(complex_json, complex_json + strlen(complex_json), &v));
   ASSERT_EQ(v.type, J_OBJECT);
 
   /* Test json_stringify on this complex structure to exercise all buffer functions */
@@ -7865,19 +7904,19 @@ TEST(test_new_coverage_and_whitespace) {
   json_value v;
   memset(&v, 0, sizeof(json_value));
 
-  ASSERT_FALSE(json_parse(leading_ws, strlen(leading_ws), &v));
+  ASSERT_FALSE(json_parse(leading_ws, leading_ws + strlen(leading_ws), &v));
   json_free(&v);
 
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse(trailing_ws, strlen(trailing_ws), &v));
+  ASSERT_FALSE(json_parse(trailing_ws, trailing_ws + strlen(trailing_ws), &v));
   json_free(&v);
 
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse(leading_ws_obj, strlen(leading_ws_obj), &v));
+  ASSERT_FALSE(json_parse(leading_ws_obj, leading_ws_obj + strlen(leading_ws_obj), &v));
   json_free(&v);
 
   memset(&v, 0, sizeof(json_value));
-  ASSERT_FALSE(json_parse(trailing_ws_obj, strlen(trailing_ws_obj), &v));
+  ASSERT_FALSE(json_parse(trailing_ws_obj, trailing_ws_obj + strlen(trailing_ws_obj), &v));
   json_free(&v);
 
   END_TEST;
@@ -7904,7 +7943,7 @@ TEST(test_coverage_line_779_buffer_write_value) {
   for (i = 0; i < type_tests_size; i++) {
     json_value v;
     memset(&v, 0, sizeof(json_value));
-    ASSERT_TRUE(json_parse(type_tests[i], strlen(type_tests[i]), &v));
+    ASSERT_TRUE(json_parse(type_tests[i], type_tests[i] + strlen(type_tests[i]), &v));
 
     /* Test json_stringify to exercise buffer_write_value (line 779) */
     char *result = json_stringify(&v);
@@ -7927,7 +7966,7 @@ TEST(test_coverage_line_799_buffer_write) {
 
   /* Create a long string that requires buffer operations, wrapped in array */
   const char *long_string = "[\"This is a very long string that will definitely exercise the buffer_write function at line 799 and ensure proper coverage of the buffering mechanism in the JSON parser implementation\"]";
-  ASSERT_TRUE(json_parse(long_string, strlen(long_string), &v));
+  ASSERT_TRUE(json_parse(long_string, long_string + strlen(long_string), &v));
 
   /* Test json_stringify to exercise buffer_write (line 799) */
   char *result = json_stringify(&v);
@@ -7951,8 +7990,8 @@ TEST(test_coverage_lines_868_869_buffer_write_values) {
   /* Parse different arrays to exercise array comparison logic */
   const char *array1_source = "[1,2,3]";
   const char *array2_source = "[1,2,4]";
-  ASSERT_TRUE(json_parse_iterative(array1_source, strlen(array1_source), &array1));
-  ASSERT_TRUE(json_parse_iterative(array2_source, strlen(array2_source), &array2));
+  ASSERT_TRUE(json_parse_iterative(array1_source, array1_source + strlen(array1_source), &array1));
+  ASSERT_TRUE(json_parse_iterative(array2_source, array2_source + strlen(array2_source), &array2));
 
   /* Test using json_stringify to exercise buffer_write_values (lines 868-869) */
   char *result1 = json_stringify(&array1);
@@ -8000,7 +8039,7 @@ TEST(test_coverage_line_138_large_array) {
   strcat(large_array, "]");
 
   /* Test parsing large array to exercise memory allocation paths */
-  bool parse_result = json_parse(large_array, strlen(large_array), &v);
+  bool parse_result = json_parse(large_array, large_array + strlen(large_array), &v);
   ASSERT_TRUE(parse_result);
 
   /* Test stringifying to verify array was parsed correctly */
@@ -8367,17 +8406,22 @@ int main(int argc, char *argv[]) {
   RUN_TEST(test_case_iterative_invalid_char_69);
   RUN_TEST(test_case_iterative_invalid_char_70);
   RUN_TEST(test_case_iterative_truncated_input);
-  RUN_TEST(test_validate_no_data);
+  RUN_TEST(test_validate_invalid_json);
   RUN_TEST(test_validate_invalid_json_string);
-  RUN_TEST(test_validate_invalid_data);
+  RUN_TEST(test_validate_invalid_json_data);
   RUN_TEST(test_validate_invalid_json_number);
   RUN_TEST(test_validate_invalid_json_boolean);
   RUN_TEST(test_validate_invalid_json_value);
-  RUN_TEST(test_validate_invalid_json_data_error);
+  RUN_TEST(test_validate_invalid_json_error);
   RUN_TEST(test_validate_object_key);
+  RUN_TEST(test_validate_object_value);
   RUN_TEST(test_validate_mailformed_object);
   RUN_TEST(test_validate_expected_object_key);
   RUN_TEST(test_validate_array_mailformed_json);
+  RUN_TEST(test_validate_expected_number_1);
+  RUN_TEST(test_validate_expected_number_2);
+  RUN_TEST(test_validate_expected_number_3);
+  RUN_TEST(test_validate_expected_number);
   RUN_TEST(test_validate_expected_string);
   RUN_TEST(test_unicode_hex4_parsing_coverage);
   RUN_TEST(test_json_node_pool_allocation_coverage);

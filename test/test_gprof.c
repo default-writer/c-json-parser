@@ -11,7 +11,7 @@ TEST(test_json_parse) {
   unsigned long i;
   for (i = 0; i < TEST_COUNT; i++) {
     const size_t len = strlen(source);
-    if (!json_parse_iterative(source, len, &v)) {
+    if (!json_parse_iterative(source, source + len, &v)) {
       break;
     }
     json_reset();
@@ -22,7 +22,7 @@ TEST(test_json_parse) {
   /* parse into internal json_value* */
   const size_t len_source = strlen(source);
 
-  json_parse(source, len_source, &v);
+  json_parse(source, source + len_source, &v);
   ASSERT_PTR_NOT_NULL(&v);
 
   /* render json_value back to string */

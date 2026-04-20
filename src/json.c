@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   April 19, 2026 at 6:55:06 AM GMT+3
+ *   April 20, 2026 at 7:44:45 AM GMT+3
  *
  */
 /*
@@ -38,13 +38,15 @@
 
 #include "json.h"
 
+#define SSE2_CHUNK_SIZE 16
+
 extern bool whitespace_lookup[LOOKUP_TABLE_SIZE];
 extern const signed char hex_lookup[256];
 
 #define JSON_NULL_LEN 4
 #define JSON_TRUE_LEN 4
 #define JSON_FALSE_LEN 5
-#define HEX_OFFSET 10
+#define HEX_LOOKUP 5
 #define MIN_PRINTABLE_ASCII 0x20
 #define MAX_PRINTABLE_ASCII 0x80
 #ifndef _WIN32
@@ -52,8 +54,8 @@ extern const signed char hex_lookup[256];
 
 typedef struct {
   char *buf;
-  int cap;
-  int pos;
+  size_t cap;
+  size_t pos;
 } buffer;
 
 #ifndef USE_ALLOC
@@ -69,9 +71,9 @@ static json_value *json_object_get(const json_value *obj, const char *key, size_
 static bool skip_whitespace(const char **s, const char *end);
 static bool parse_number(const char **s, const char *end, json_value *v);
 static bool parse_string(const char **s, const char *end, json_value *v);
-static bool parse_array_value(const char **s, const char *end, json_value *v);
-static bool parse_object_value(const char **s, const char *end, json_value *v);
-static bool parse_value_build(const char **s, const char *end, json_value *v);
+static bool parse_array(const char **s, const char *end, json_value *v);
+static bool parse_object(const char **s, const char *end, json_value *v);
+static bool parse_json(const char **s, const char *end, json_value *v);
 
 static void print_indent(FILE *out, int indent);
 static void print_array_compact(const json_value *v, FILE *out);
@@ -87,7 +89,7 @@ static int buffer_write_object(buffer *b, const json_value *v);
 static int buffer_write_value_indent(buffer *b, const json_value *v, int indent);
 static int buffer_write_value(buffer *b, const json_value *v);
 
-static int buffer_write(buffer *b, const char *data, int len);
+static int buffer_write(buffer *b, const char *data, size_t len);
 static int buffer_putc(buffer *b, char c);
 
 static bool json_array_equal(const json_value *a, const json_value *b);
@@ -226,200 +228,69 @@ static bool parse_number(const char **s, const char *end, json_value *v) {
 static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end, json_value *v) {
   const char *p = *s + 1;
   v->u.string.ptr = p;
-  while (true) {
-    const size_t len = end - p;
-    size_t span = 0;
-#if defined(__AVX2__)
-    const size_t offset_2 = 32;
-    const size_t offset_4 = 64;
-    const __m256i quote_vec = _mm256_set1_epi8('\"');
-    const __m256i escape_vec = _mm256_set1_epi8('\\');
-    size_t i = 0;
-    /* Unrolled: process 64 bytes per iteration (2 AVX2 registers) */
-    for (; i + offset_4 <= len; i += offset_4) {
-      __m256i chunk1 = _mm256_loadu_si256((const __m256i *)(p + i));
-      __m256i chunk2 = _mm256_loadu_si256((const __m256i *)(p + i + offset_2));
-      __m256i match1 = _mm256_or_si256(_mm256_cmpeq_epi8(chunk1, quote_vec), _mm256_cmpeq_epi8(chunk1, escape_vec));
-      __m256i match2 = _mm256_or_si256(_mm256_cmpeq_epi8(chunk2, quote_vec), _mm256_cmpeq_epi8(chunk2, escape_vec));
-      int mask1 = _mm256_movemask_epi8(match1);
-      int mask2 = _mm256_movemask_epi8(match2);
-      if (mask1 != 0) {
-        span = i + __builtin_ctz(mask1);
-        goto found;
-      }
-      if (mask2 != 0) {
-        span = i + offset_2 + __builtin_ctz(mask2);
-        goto found;
-      }
-    }
-    /* Process remaining chunks of 32 bytes */
-    for (; i + offset_2 <= len; i += offset_2) {
-      __m256i chunk = _mm256_loadu_si256((const __m256i *)(p + i));
-      __m256i quote_match = _mm256_cmpeq_epi8(chunk, quote_vec);
-      __m256i escape_match = _mm256_cmpeq_epi8(chunk, escape_vec);
-      __m256i any_match = _mm256_or_si256(quote_match, escape_match);
-      int mask = _mm256_movemask_epi8(any_match);
-      if (mask != 0) {
-        span = i + __builtin_ctz(mask);
-        goto found;
-      }
-    }
-    for (; i < len; i++) {
-      if (p[i] == '\"' || p[i] == '\\') {
-        span = i;
-        goto found;
-      }
-    }
-    span = len;
-#elif defined(__SSE2__)
-    const size_t offset_1 = 16;
-    const size_t offset_2 = 32;
-    const size_t offset_3 = 48;
-    const size_t offset_4 = 64;
-    const __m128i quote_vec = _mm_set1_epi8('\"');
-    const __m128i escape_vec = _mm_set1_epi8('\\');
-    size_t i = 0;
-    /* Unrolled: process 64 bytes per iteration (4 SSE2 registers) */
-    for (; i + offset_4 <= len; i += offset_4) {
-      __m128i chunk1 = _mm_loadu_si128((const __m128i *)(p + i));
-      __m128i chunk2 = _mm_loadu_si128((const __m128i *)(p + i + offset_1));
-      __m128i chunk3 = _mm_loadu_si128((const __m128i *)(p + i + offset_2));
-      __m128i chunk4 = _mm_loadu_si128((const __m128i *)(p + i + offset_3));
-      __m128i match1 = _mm_or_si128(_mm_cmpeq_epi8(chunk1, quote_vec), _mm_cmpeq_epi8(chunk1, escape_vec));
-      __m128i match2 = _mm_or_si128(_mm_cmpeq_epi8(chunk2, quote_vec), _mm_cmpeq_epi8(chunk2, escape_vec));
-      __m128i match3 = _mm_or_si128(_mm_cmpeq_epi8(chunk3, quote_vec), _mm_cmpeq_epi8(chunk3, escape_vec));
-      __m128i match4 = _mm_or_si128(_mm_cmpeq_epi8(chunk4, quote_vec), _mm_cmpeq_epi8(chunk4, escape_vec));
-      int mask1 = _mm_movemask_epi8(match1);
-      int mask2 = _mm_movemask_epi8(match2);
-      int mask3 = _mm_movemask_epi8(match3);
-      int mask4 = _mm_movemask_epi8(match4);
-      if (mask1 != 0) {
-        span = i + __builtin_ctz(mask1);
-        goto found;
-      }
-      if (mask2 != 0) {
-        span = i + offset_1 + __builtin_ctz(mask2);
-        goto found;
-      }
-      if (mask3 != 0) {
-        span = i + offset_2 + __builtin_ctz(mask3);
-        goto found;
-      }
-      if (mask4 != 0) {
-        span = i + offset_3 + __builtin_ctz(mask4);
-        goto found;
-      }
-    }
-    /* Process remaining chunks of 16 bytes */
-    for (; i + offset_1 <= len; i += offset_1) {
-      __m128i chunk = _mm_loadu_si128((const __m128i *)(p + i));
-      __m128i quote_match = _mm_cmpeq_epi8(chunk, quote_vec);
-      __m128i escape_match = _mm_cmpeq_epi8(chunk, escape_vec);
-      __m128i any_match = _mm_or_si128(quote_match, escape_match);
-      int mask = _mm_movemask_epi8(any_match);
-      if (mask != 0) {
-        span = i + __builtin_ctz(mask);
-        goto found;
-      }
-    }
-    for (; i < len; i++) {
-      if (p[i] == '\"' || p[i] == '\\') {
-        span = i;
-        goto found;
-      }
-    }
-    span = len;
-#else
-    /* non-SSE2 fallback: simple byte scan */
-    size_t i = 0;
-    for (; i < len; i++) {
-      if (p[i] == '\"' || p[i] == '\\') {
-        span = i;
-        goto found;
-      }
-    }
-    span = len;
-#endif
 
-  found:
-    p += span;
-    if (p == end)
-      return false;
-    if (*p == '"') {
-      /* Inline SIMD validation for the parsed string span */
+#ifdef __SSE2__
+  const __m128i quote = _mm_set1_epi8('\"');
+  const __m128i backslash = _mm_set1_epi8('\\');
+
+  while (p + (SSE2_CHUNK_SIZE - 1) < end) {
+    __m128i chunk = _mm_loadu_si128((const __m128i *)p);
+    __m128i cmp_quote = _mm_cmpeq_epi8(chunk, quote);
+    __m128i cmp_backslash = _mm_cmpeq_epi8(chunk, backslash);
+    int mask = _mm_movemask_epi8(_mm_or_si128(cmp_quote, cmp_backslash));
+
+    if (mask != 0) {
+      int offset = __builtin_ctz(mask);
+      p += offset;
+      goto found;
+    }
+    p += SSE2_CHUNK_SIZE;
+  }
+#endif
+  while (p < end) {
+    if (*p == '\"' || *p == '\\') {
+      goto found;
+    }
+    p++;
+  }
+  return false;
+found:
+  if (*p == '"') {
 #if STRING_VALIDATION
-      const char *chk = v->u.string.ptr;
-      size_t chk_len = (size_t)(p - chk);
-      size_t ii = 0;
-#if defined(__AVX2__)
-      const size_t offset_4 = 64;
-      const size_t offset_avx = 32;
-      const __m256i limit_avx = _mm256_set1_epi8((char)MIN_PRINTABLE_ASCII);
-      const __m256i high_bit_avx = _mm256_set1_epi8((char)MAX_PRINTABLE_ASCII);
-      const __m256i limit_shifted_avx = _mm256_xor_si256(limit_avx, high_bit_avx);
-      for (; ii + offset_4 <= chk_len; ii += offset_4) {
-        __m256i c1 = _mm256_loadu_si256((const __m256i *)(chk + ii));
-        __m256i c2 = _mm256_loadu_si256((const __m256i *)(chk + ii + offset_avx));
-        __m256i c1s = _mm256_xor_si256(c1, high_bit_avx);
-        __m256i c2s = _mm256_xor_si256(c2, high_bit_avx);
-        __m256i rm1 = _mm256_cmpgt_epi8(limit_shifted_avx, c1s);
-        __m256i rm2 = _mm256_cmpgt_epi8(limit_shifted_avx, c2s);
-        if (_mm256_movemask_epi8(rm1) != 0 || _mm256_movemask_epi8(rm2) != 0)
-          return false;
-      }
-      for (; ii + offset_avx <= chk_len; ii += offset_avx) {
-        __m256i c = _mm256_loadu_si256((const __m256i *)(chk + ii));
-        __m256i cs = _mm256_xor_si256(c, high_bit_avx);
-        __m256i rm = _mm256_cmpgt_epi8(limit_shifted_avx, cs);
-        if (_mm256_movemask_epi8(rm) != 0)
-          return false;
-      }
-#elif defined(__SSE2__)
-      const size_t offset_sse = 16;
-      const size_t offset_2 = 16;
-      const size_t offset_3 = 32;
-      const size_t offset_4 = 64;
-      const __m128i limit_sse = _mm_set1_epi8((char)MIN_PRINTABLE_ASCII);
-      const __m128i high_bit_sse = _mm_set1_epi8((char)MAX_PRINTABLE_ASCII);
-      const __m128i limit_shifted_sse = _mm_xor_si128(limit_sse, high_bit_sse);
-      for (; ii + offset_4 <= chk_len; ii += offset_4) {
-        __m128i c1 = _mm_loadu_si128((const __m128i *)(chk + ii));
-        __m128i c2 = _mm_loadu_si128((const __m128i *)(chk + ii + offset_2));
-        __m128i c3 = _mm_loadu_si128((const __m128i *)(chk + ii + offset_3));
-        __m128i c4 = _mm_loadu_si128((const __m128i *)(chk + ii + offset_4));
-        __m128i c1s = _mm_xor_si128(c1, high_bit_sse);
-        __m128i c2s = _mm_xor_si128(c2, high_bit_sse);
-        __m128i c3s = _mm_xor_si128(c3, high_bit_sse);
-        __m128i c4s = _mm_xor_si128(c4, high_bit_sse);
-        __m128i rm1 = _mm_cmplt_epi8(c1s, limit_shifted_sse);
-        __m128i rm2 = _mm_cmplt_epi8(c2s, limit_shifted_sse);
-        __m128i rm3 = _mm_cmplt_epi8(c3s, limit_shifted_sse);
-        __m128i rm4 = _mm_cmplt_epi8(c4s, limit_shifted_sse);
-        if (_mm_movemask_epi8(rm1) != 0 || _mm_movemask_epi8(rm2) != 0 || _mm_movemask_epi8(rm3) != 0 || _mm_movemask_epi8(rm4) != 0)
-          return false;
-      }
-      for (; ii + offset_sse <= chk_len; ii += offset_sse) {
-        __m128i c = _mm_loadu_si128((const __m128i *)(chk + ii));
-        __m128i cs = _mm_xor_si128(c, high_bit_sse);
-        __m128i rm = _mm_cmplt_epi8(cs, limit_shifted_sse);
-        if (_mm_movemask_epi8(rm) != 0)
-          return false;
-      }
-#endif
-      for (; ii < chk_len; ii++) {
-        if ((unsigned char)chk[ii] < MIN_PRINTABLE_ASCII)
-          return false;
-      }
-#endif
-      /* scalar tail for any remaining bytes not covered by SIMD loops */
-      v->u.string.len = p - *s - 1;
-      *s = p + 1;
-      return true;
+    const char *chk = v->u.string.ptr;
+    size_t chk_len = (size_t)(p - chk);
+#ifdef __SSE2__
+    size_t i = 0;
+    const __m128i threshold = _mm_set1_epi8(MIN_PRINTABLE_ASCII);
+    const __m128i high_bit = _mm_set1_epi8(MAX_PRINTABLE_ASCII);
+    const __m128i zero = _mm_setzero_si128();
+    for (; i + 15 < chk_len; i += 16) {
+      __m128i chunk = _mm_loadu_si128((const __m128i *)(chk + i));
+      __m128i is_ascii = _mm_cmpeq_epi8(_mm_and_si128(chunk, high_bit), zero);
+      __m128i is_control = _mm_cmplt_epi8(chunk, threshold);
+      __m128i bad = _mm_and_si128(is_ascii, is_control);
+      if (_mm_movemask_epi8(bad) != 0)
+        return false;
     }
-    if (*p != '\\') {
-      return false;
+    for (; i < chk_len; ++i) {
+      if ((unsigned char)chk[i] < 0x20)
+        return false;
     }
-    if (++p == end)
+#else
+    size_t i;
+    for (i = 0; i < chk_len; ++i) {
+      if ((unsigned char)chk[i] < 0x20)
+        return false;
+    }
+#endif
+#endif
+    v->u.string.len = p - *s - 1;
+    *s = p + 1;
+    return true;
+  }
+  if (*p == '\\') {
+    p++;
+    if (p >= end)
       return false;
     switch (*p) {
     case '\"':
@@ -430,27 +301,51 @@ static INLINE bool INLINE_ATTRIBUTE parse_string(const char **s, const char *end
     case 'n':
     case 'r':
     case 't':
-      if (++p == end)
-        return false;
+      p++;
       break;
     case 'u':
-      if (++p == end)
+      if (p + (HEX_LOOKUP - 1) > end)
         return false;
-      if (p + 3 >= end)
+      if (hex_lookup[(unsigned char)p[1]] < 0 ||
+          hex_lookup[(unsigned char)p[2]] < 0 ||
+          hex_lookup[(unsigned char)p[3]] < 0 ||
+          hex_lookup[(unsigned char)p[4]] < 0)
         return false;
-      if (hex_lookup[(unsigned char)p[0]] < 0 || hex_lookup[(unsigned char)p[1]] < 0 || hex_lookup[(unsigned char)p[2]] < 0 || hex_lookup[(unsigned char)p[3]] < 0)
-        return false;
-      if (p + 4 < end && hex_lookup[(unsigned char)p[4]] >= 0)
-        return false;
-      p += 4;
+      p += HEX_LOOKUP;
       break;
     default:
       return false;
     }
+    goto continue_search;
   }
+
+  return false;
+
+continue_search:
+#ifdef __SSE2__
+  while (p + (SSE2_CHUNK_SIZE - 1) < end) {
+    __m128i chunk = _mm_loadu_si128((const __m128i *)p);
+    __m128i cmp_quote = _mm_cmpeq_epi8(chunk, quote);
+    __m128i cmp_backslash = _mm_cmpeq_epi8(chunk, backslash);
+    int mask = _mm_movemask_epi8(_mm_or_si128(cmp_quote, cmp_backslash));
+    if (mask != 0) {
+      int offset = __builtin_ctz(mask);
+      p += offset;
+      goto found;
+    }
+    p += SSE2_CHUNK_SIZE;
+  }
+#endif
+  while (p < end) {
+    if (*p == '\"' || *p == '\\') {
+      goto found;
+    }
+    p++;
+  }
+  return false;
 }
 
-static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, const char *end, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_array(const char **s, const char *end, json_value *v) {
   while (true) {
     if (!skip_whitespace(s, end))
       return false;
@@ -472,7 +367,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, const char
       v->u.array.last = array_node;
       last->next = array_node;
     } while (0);
-    if (!parse_value_build(s, end, &array_node->item)) {
+    if (!parse_json(s, end, &array_node->item)) {
       free_array_node(array_node);
       v->u.array.items = NULL;
       return false;
@@ -491,7 +386,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_array_value(const char **s, const char
   }
 }
 
-static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, const char *end, json_value *v) {
+static INLINE bool INLINE_ATTRIBUTE parse_object(const char **s, const char *end, json_value *v) {
   while (true) {
     if (!skip_whitespace(s, end))
       return false;
@@ -544,7 +439,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, const cha
     } else {
       object_node = object_items;
     }
-    if (!parse_value_build(s, end, &object_node->item.value)) {
+    if (!parse_json(s, end, &object_node->item.value)) {
       free_object_node(object_node);
       v->u.object.items = NULL;
       return false;
@@ -563,7 +458,7 @@ static INLINE bool INLINE_ATTRIBUTE parse_object_value(const char **s, const cha
   }
 }
 
-static bool parse_value_build(const char **s, const char *end, json_value *v) {
+static bool parse_json(const char **s, const char *end, json_value *v) {
   if (**s == '{') {
     v->type = J_OBJECT;
     v->u.object.items = NULL;
@@ -575,7 +470,7 @@ static bool parse_value_build(const char **s, const char *end, json_value *v) {
       (*s)++;
       return true;
     }
-    return parse_object_value(s, end, v);
+    return parse_object(s, end, v);
   }
   if (**s == '[') {
     v->type = J_ARRAY;
@@ -590,7 +485,7 @@ static bool parse_value_build(const char **s, const char *end, json_value *v) {
       (*s)++;
       return true;
     }
-    return parse_array_value(s, end, v);
+    return parse_array(s, end, v);
   }
   if (**s == '\"') {
     v->type = J_STRING;
@@ -861,11 +756,11 @@ static INLINE int buffer_write_value(buffer *b, const json_value *v) {
 
 /* --- buffer helpers --- */
 
-static INLINE int INLINE_ATTRIBUTE buffer_write(buffer *b, const char *data, int len) {
+static INLINE int INLINE_ATTRIBUTE buffer_write(buffer *b, const char *data, size_t len) {
   if (len <= 0)
     return 0;
   if (b->pos + len + 1 >= b->cap) {
-    int new_cap = b->cap ? b->cap : 1;
+    size_t new_cap = b->cap ? b->cap : 1;
     while (b->pos + len + 1 >= new_cap) {
       new_cap = new_cap * 2;
     }
@@ -974,92 +869,93 @@ static INLINE bool INLINE_ATTRIBUTE json_object_equal(const json_value *a, const
 
 /* --- public API --- */
 
-INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
-  if (**s == '\0')
-    return E_NO_DATA;
-  if (**s != '{' && **s != '[') {
+INLINE json_error INLINE_ATTRIBUTE json_validate(const char *s, const char *end) {
+  size_t len = end - s;
+  if (s == NULL || len == 0 || *s == '\0' || !(*s == '{' || *s == '[')) {
     return E_INVALID_JSON;
   }
-  const char *end = *s + len;
   json_value *stack[JSON_STACK_SIZE];
   json_value v;
   memset(&v, 0, sizeof(json_value));
   int top = -1;
   json_value *current = &v;
   while (true) {
-    if (*s == end)
+    if (s == end)
       break;
-    if (!skip_whitespace(s, end))
+    if (!skip_whitespace(&s, end))
       return E_INVALID_JSON;
     if (current) {
       do {
-        if (**s == '{') {
+        if (*s == '{') {
           current->type = J_OBJECT;
           current->u.object.items = NULL;
           current->u.object.last = NULL;
           if (++top >= JSON_STACK_SIZE)
-            return E_STACK_OVERFLOW_OBJECT;
-          (*s)++;
+            return E_NO_MEMORY_OBJECT;
+          s++;
           stack[top] = current;
           current = NULL;
           break;
         }
-        if (**s == '[') {
+        if (*s == '[') {
           current->type = J_ARRAY;
           current->u.array.items = NULL;
           current->u.array.last = NULL;
-          (*s)++;
+          s++;
           if (++top >= JSON_STACK_SIZE)
-            return E_STACK_OVERFLOW_ARRAY;
+            return E_NO_MEMORY_ARRAY;
           stack[top] = current;
           current = NULL;
           break;
         }
-        if (**s == '\"') {
+        if (*s == '\"') {
           current->type = J_STRING;
-          if (parse_string(s, end, current)) {
+          if (parse_string(&s, end, current)) {
             current = NULL;
             break;
           }
           return E_EXPECTED_STRING;
         }
-        if (**s == 't' && *s + 3 < end) {
-          if (*(*s + 1) == 'r' && *(*s + 2) == 'u' && *(*s + 3) == 'e') {
+        if (*s == 't') {
+          if (s + 3 < end && *(s + 1) == 'r' && *(s + 2) == 'u' && *(s + 3) == 'e') {
             current->type = J_BOOLEAN;
-            current->u.boolean.ptr = *s;
-            current->u.boolean.len = 4;
-            *s += 4;
+            current->u.boolean.ptr = s;
+            current->u.boolean.len = JSON_TRUE_LEN;
+            s += 4;
             current = NULL;
             break;
           }
-          return E_EXPECTED_BOOLEAN;
+          return E_EXPECTED_CONSTANT;
         }
-        if (**s == 'f' && *s + 4 < end) {
-          if (*(*s + 1) == 'a' && *(*s + 2) == 'l' && *(*s + 3) == 's' && *(*s + 4) == 'e') {
+        if (*s == 'f') {
+          if (s + 4 < end && *(s + 1) == 'a' && *(s + 2) == 'l' && *(s + 3) == 's' && *(s + 4) == 'e') {
             current->type = J_BOOLEAN;
-            current->u.boolean.ptr = *s;
+            current->u.boolean.ptr = s;
             current->u.boolean.len = JSON_FALSE_LEN;
-            *s += JSON_FALSE_LEN;
+            s += JSON_FALSE_LEN;
             current = NULL;
             break;
           }
-          return E_EXPECTED_BOOLEAN;
+          return E_EXPECTED_CONSTANT;
         }
-        if (**s == 'n' && *s + 3 < end) {
-          if (*(*s + 1) == 'u' && *(*s + 2) == 'l' && *(*s + 3) == 'l') {
+        if (*s == 'n') {
+          if (s + 3 < end && *(s + 1) == 'u' && *(s + 2) == 'l' && *(s + 3) == 'l') {
             current->type = J_NULL;
-            *s += 4;
+            s += 4;
             current = NULL;
             break;
           }
-          return E_EXPECTED_NULL;
+          return E_EXPECTED_CONSTANT;
         }
-        if (!parse_number(s, end, current)) {
-          return E_MAILFORMED_JSON;
+        if (*s == '-' || *s == '0' || (*s >= '1' && *s <= '9')) {
+          if (!parse_number(&s, end, current)) {
+            return E_EXPECTED_NUMBER;
+          }
+          current->type = J_NUMBER;
+          current = NULL;
+          break;
         }
-        current->type = J_NUMBER;
-        current = NULL;
-        break;
+        return E_INVALID_JSON;
       } while (0);
       if (!current) {
         continue;
@@ -1070,46 +966,46 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
     }
     current = stack[top];
     if (current->type == J_OBJECT) {
-      if (**s == '}') {
+      if (*s == '}') {
         top--;
-        (*s)++;
-        if (*s == end) {
+        s++;
+        if (s == end) {
           break;
         }
         current = NULL;
         continue;
       }
       if (current->u.object.items != NULL) {
-        if (**s != ',') {
+        if (*s != ',') {
           return E_EXPECTED_OBJECT;
         }
-        (*s)++;
-        if (!skip_whitespace(s, end)) {
+        s++;
+        if (!skip_whitespace(&s, end)) {
           return E_INVALID_JSON;
         }
-        if (**s == '}') {
+        if (*s == '}') {
           return E_EXPECTED_OBJECT_ELEMENT;
         }
       }
-      if (**s != '\"') {
-        return E_OBJECT_KEY;
+      if (*s != '\"') {
+        return E_EXPECTED_OBJECT_KEY;
       }
       json_value key;
-      if (!parse_string(s, end, &key))
+      if (!parse_string(&s, end, &key))
         return E_EXPECTED_OBJECT_KEY;
-      if (!skip_whitespace(s, end)) {
+      if (!skip_whitespace(&s, end)) {
         return E_INVALID_JSON;
       }
-      if (**s != ':') {
-        return E_OBJECT_VALUE;
+      if (*s != ':') {
+        return E_EXPECTED_OBJECT_VALUE;
       }
-      (*s)++;
-      if (!skip_whitespace(s, end)) {
+      s++;
+      if (!skip_whitespace(&s, end)) {
         return E_INVALID_JSON;
       }
       json_object_node *node = new_object_node();
       if (!node)
-        return E_STACK_OVERFLOW_OBJECT;
+        return E_NO_MEMORY_OBJECT;
       node->item.key = key.u.string;
       if (current->u.object.items == NULL) {
         current->u.object.items = node;
@@ -1121,30 +1017,30 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
       continue;
     }
     if (current->type == J_ARRAY) {
-      if (**s == ']') {
+      if (*s == ']') {
         top--;
-        (*s)++;
-        if (*s == end) {
+        s++;
+        if (s == end) {
           break;
         }
         current = NULL;
         continue;
       }
       if (current->u.array.items != NULL) {
-        if (**s != ',') {
+        if (*s != ',') {
           return E_EXPECTED_ARRAY;
         }
-        (*s)++;
-        if (!skip_whitespace(s, end)) {
+        s++;
+        if (!skip_whitespace(&s, end)) {
           return E_INVALID_JSON;
         }
-        if (**s == ']') {
+        if (*s == ']') {
           return E_EXPECTED_ARRAY_ELEMENT;
         }
       }
       json_array_node *node = new_array_node();
       if (!node)
-        return E_STACK_OVERFLOW_ARRAY;
+        return E_NO_MEMORY_ARRAY;
       if (current->u.array.items == NULL) {
         current->u.array.items = node;
       } else {
@@ -1155,30 +1051,27 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char **s, size_t len) {
       continue;
     }
     if (current) {
-      return E_UNKNOWN_ERROR;
+      return E_INVALID_JSON;
     }
   }
-  if (top == -1) {
-    if (*s == end)
-      return E_NO_ERROR;
-    else
-      return E_INVALID_DATA;
+  if (s == end && top == -1) {
+    return E_OK;
   }
-  return E_INVALID_JSON_DATA;
+  return E_INVALID_JSON;
 }
 
-INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, json_value *root) {
-  if (*s == '\0')
+INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, const char *end, json_value *root) {
+  size_t len = end - s;
+  if (s == NULL || len == 0 || *s == '\0')
     return false;
   if (*s != '{' && *s != '[') {
     return false;
   }
-  const char *end = s + len;
   json_value *stack[JSON_STACK_SIZE];
   int top = -1;
   json_value *current = root;
   while (true) {
-    if (*s == '\0')
+    if (s == end)
       break;
     if (!skip_whitespace(&s, end))
       return false;
@@ -1320,19 +1213,17 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, size_t len, jso
       current = &node->item;
     }
   }
-  return *s == '\0' && top == -1;
+  return s == end && top == -1;
 }
 
-INLINE bool INLINE_ATTRIBUTE json_parse(const char *s, size_t len, json_value *root) {
-  if (*s == '\0')
-    return false;
-  if (len == 0)
+INLINE bool INLINE_ATTRIBUTE json_parse(const char *s, const char *end, json_value *root) {
+  size_t len = end - s;
+  if (s == NULL || len == 0 || *s == '\0')
     return false;
   if (*s != '{' && *s != '[') {
     return false;
   }
-  const char *end = s + len;
-  return parse_value_build(&s, end, root) && *s == '\0';
+  return parse_json(&s, end, root) && s == end;
 }
 
 bool json_equal(const json_value *a, const json_value *b) {
@@ -1414,49 +1305,47 @@ INLINE void INLINE_ATTRIBUTE json_print(const json_value *v, FILE *out) {
 
 INLINE const char *INLINE_ATTRIBUTE json_error_string(json_error error) {
   switch (error) {
-  case E_NO_ERROR:
-    return "No error occurred";
-  case E_NO_DATA:
-    return "No data provided or empty input";
+  case E_OK:
+    return "OK";
   case E_INVALID_JSON:
-    return "Invalid JSON structure";
-  case E_INVALID_JSON_DATA:
-    return "Invalid data within JSON structure";
-  case E_STACK_OVERFLOW_OBJECT:
-    return "Stack overflow while parsing object";
-  case E_STACK_OVERFLOW_ARRAY:
-    return "Stack overflow while parsing array";
+    return "Invalid JSON";
   case E_OBJECT_KEY:
-    return "Invalid object key format";
+    return "Invalid object key";
   case E_OBJECT_VALUE:
     return "Invalid object value";
-  case E_EXPECTED_OBJECT:
-    return "Expected object but found different type";
-  case E_EXPECTED_ARRAY:
-    return "Expected array but found different type";
-  case E_EXPECTED_STRING:
-    return "Expected string but found different type";
-  case E_EXPECTED_BOOLEAN:
-    return "Expected boolean but found different type";
-  case E_EXPECTED_NULL:
-    return "Expected null but found different type";
-  case E_INVALID_DATA:
-    return "Invalid data format";
-  case E_MAILFORMED_JSON:
-    return "Malformed JSON structure";
-  case E_UNKNOWN_ERROR:
-    return "Unknown or unexpected error";
-  case E_NULL:
-    return "Null pointer encountered";
+  case E_OBJECT:
+    return "Invalid object";
+  case E_ARRAY:
+    return "Invalid array";
+  case E_STRING:
+    return "Invalid string";
+  case E_CONSTANT:
+    return "Invalid constant";
+  case E_NUMBER:
+    return "Invalid number";
   case E_EXPECTED_OBJECT_KEY:
-    return "Object key with null pointer";
+    return "Expected object key";
   case E_EXPECTED_OBJECT_VALUE:
-    return "Object value with null pointer";
-  case E_EXPECTED_ARRAY_ELEMENT:
-    return "Array element with null pointer";
+    return "Expected object value";
+  case E_EXPECTED_OBJECT:
+    return "Expected object element";
+  case E_EXPECTED_ARRAY:
+    return "Expected array";
+  case E_EXPECTED_STRING:
+    return "Expected string";
+  case E_EXPECTED_CONSTANT:
+    return "Expected constant (true/false/null)";
+  case E_EXPECTED_NUMBER:
+    return "Expected number";
   case E_EXPECTED_OBJECT_ELEMENT:
-    return "Object element with null pointer";
+    return "Expected object element";
+  case E_EXPECTED_ARRAY_ELEMENT:
+    return "Expected array element";
+  case E_NO_MEMORY_OBJECT:
+    return "Out of memory while parsing object";
+  case E_NO_MEMORY_ARRAY:
+    return "Out of memory while parsing parsing array";
   default:
-    return "Invalid error code";
+    return "Unknown error code";
   }
 }

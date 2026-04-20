@@ -14,7 +14,7 @@
 
 ## [data](data/test.json)
 
-- 2.8 nanoseconds (per run)
+- 2.78 ms
 - 3846 bytes in a test data
 
 ## badges

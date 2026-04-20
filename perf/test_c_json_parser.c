@@ -13,7 +13,7 @@ TEST(test_c_json_parser) {
   size_t len = strlen(json);
   for (i = 0; i < TEST_COUNT; i++) {
     memset(&v, 0, sizeof(json_value));
-    if (!json_parse_iterative(json, len, &v)) {
+    if (!json_parse_iterative(json, json + len, &v)) {
       break;
     }
     json_reset();

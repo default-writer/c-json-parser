@@ -140,7 +140,7 @@ typedef struct {
 **`json_value` (Tagged Union with Type Discriminator)**
 ```c
 typedef struct json_value {
-    json_type type;      // Enum: JSON_TYPE_NULL, JSON_TYPE_BOOLEAN, JSON_TYPE_NUMBER, 
+    json_type type;      // Enum: JSON_TYPE_CONSTANT, JSON_TYPE_BOOLEAN, JSON_TYPE_NUMBER, 
                          //       JSON_TYPE_STRING, JSON_TYPE_ARRAY, JSON_TYPE_OBJECT
     union {
         int boolean;                           // For JSON_TYPE_BOOLEAN (0 or 1)

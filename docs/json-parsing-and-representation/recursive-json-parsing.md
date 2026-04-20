@@ -7,10 +7,10 @@
 ## Core Functions
 
 - **`json_parse()`**: The entry point for the parsing process.
-- **`parse_value_build()`**: The dispatch function that determines the type of the value at the current position.
+- **`parse_json()`**: The dispatch function that determines the type of the value at the current position.
 - **`parse_string_value()`**: Parses strings, including escape sequences.
-- **`parse_array_value()`**: Parses arrays, recursively calling `parse_value_build()` for each element.
-- **`parse_object_value()`**: Parses objects, recursively calling `parse_value_build()` for each value.
+- **`parse_array()`**: Parses arrays, recursively calling `parse_json()` for each element.
+- **`parse_object()`**: Parses objects, recursively calling `parse_json()` for each value.
 
 ## Error Handling
 

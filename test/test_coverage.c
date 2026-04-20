@@ -196,7 +196,7 @@ TEST(test_memory_allocation_edge_cases) {
   test_string[MAX_STRING_SIZE - 1] = '\0';
 
   size_t test_string_len = strlen(test_string);
-  bool result = json_parse(test_string, test_string_len, &val);
+  bool result = json_parse(test_string, test_string + test_string_len, &val);
   ASSERT_TRUE(result);
   ASSERT_EQ(val.type, J_STRING);
 

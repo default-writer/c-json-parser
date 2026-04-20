@@ -18,10 +18,10 @@ The uncovered lines are primarily in error handling branches of the parsing func
 - **Line 212: `return false;`**
   - **Reason:** This is the `default` case in the escape sequence switch, which is triggered by an invalid escape sequence (e.g., `"\\z"`). This is not tested.
 
-### `parse_array_value`
+### `parse_array`
 
 - **Lines 261, 262: `free_array_node(array_node); v->u.array.items = NULL;`**
-  - **Reason:** This is an error path taken when `parse_value_build` fails while parsing an array element. It's a hard-to-reach case that would require a malformed value inside an array that does not trigger other error conditions first.
+  - **Reason:** This is an error path taken when `parse_json` fails while parsing an array element. It's a hard-to-reach case that would require a malformed value inside an array that does not trigger other error conditions first.
 - **Line 264: `if (*s == end) return false;`**
   - **Reason:** This checks for an unexpected end of input after an array element and a comma. The test suite does not seem to have a test case for this.
 - **Lines 267, 268: `return false;`**
@@ -29,21 +29,21 @@ The uncovered lines are primarily in error handling branches of the parsing func
 - **Lines 270, 271: `return false;`**
   - **Reason:** This is the final `return false;` of the function, and it is not clear how to reach this code path.
 
-### `parse_object_value`
+### `parse_object`
 
 - **Line 283: `if (*s == end) return false;`**
   - **Reason:** Unexpected end of input after a key-value pair and a comma in an object.
 - **Line 287: `return false;`**
   - **Reason:** After a value in an object, there is no `}` or `,`.
 
-### `parse_value_build`
+### `parse_json`
 
 - **Lines 324, 328: `return false;`**
   - **Reason:** These lines handle unexpected end of input after `[` and after whitespace.
 - **Line 340, 341: `return false;`**
   - **Reason:** Error in number parsing.
 - **Line 345: `return false;`**
-  - **Reason:** Default case in `parse_value_build`, when the character does not match any known value type.
+  - **Reason:** Default case in `parse_json`, when the character does not match any known value type.
 
 ### Printing Functions (`print_value_compact`, `print_value`, `buffer_write_indent`, `buffer_write_object_indent`, `buffer_write_value_indent`, `buffer_write_value`)
 
@@ -62,4 +62,4 @@ To improve code coverage, the following actions are recommended:
 1.  **Add tests for malformed JSON:** Create new test cases that specifically target the identified uncovered error-handling branches. This includes invalid numbers, invalid escape sequences, and truncated JSON structures.
 2.  **Test printing of all value types:** Ensure that the printing functions are tested with all possible JSON value types, including empty objects and arrays.
 3.  **Simulate allocation failures:** To test the error handling of `realloc` failures, it might be necessary to use a custom memory allocation function that can be configured to fail on demand. This is an advanced testing technique.
-4.  **Review complex logic:** The uncovered lines in `parse_array_value` and `parse_object_value` suggest that some complex parsing scenarios are not fully tested. A review of these functions and the creation of targeted tests would be beneficial.
+4.  **Review complex logic:** The uncovered lines in `parse_array` and `parse_object` suggest that some complex parsing scenarios are not fully tested. A review of these functions and the creation of targeted tests would be beneficial.

@@ -19,7 +19,7 @@ TEST(test_comprehensive_uncovered_lines) {
     sprintf(array_json, "[%d,%d,%d]", i, i + 1, i + 2);
 
     const size_t len_array_json = strlen(array_json);
-    bool result = json_parse(array_json, len_array_json, &pool_test);
+    bool result = json_parse(array_json, array_json + len_array_json, &pool_test);
     if (result) {
       json_free(&pool_test); /* This should trigger pool cleanup */
     }
@@ -33,7 +33,7 @@ TEST(test_comprehensive_uncovered_lines) {
   memset(&parse_test, 0, sizeof(json_value));
   const char *source1 = "[-123]";
   const size_t len1 = strlen(source1);
-  bool neg_result = json_parse(source1, len1, &parse_test);
+  bool neg_result = json_parse(source1, source1 + len1, &parse_test);
   if (neg_result) {
     ASSERT_EQ(parse_test.u.array.items->item.type, J_NUMBER);
     json_free(&parse_test);
@@ -43,7 +43,7 @@ TEST(test_comprehensive_uncovered_lines) {
   memset(&parse_test, 0, sizeof(json_value));
   const char *source2 = "[123.456]";
   const size_t len2 = strlen(source2);
-  bool dec_result = json_parse(source2, len2, &parse_test);
+  bool dec_result = json_parse(source2, source2 + len2, &parse_test);
   if (dec_result) {
     ASSERT_EQ(parse_test.u.array.items->item.type, J_NUMBER);
     json_free(&parse_test);
@@ -53,7 +53,7 @@ TEST(test_comprehensive_uncovered_lines) {
   memset(&parse_test, 0, sizeof(json_value));
   const char *source3 = "[1e+10]";
   const size_t len3 = strlen(source3);
-  bool exp_result = json_parse(source3, len3, &parse_test);
+  bool exp_result = json_parse(source3, source3 + len3, &parse_test);
   if (exp_result) {
     ASSERT_EQ(parse_test.u.array.items->item.type, J_NUMBER);
     json_free(&parse_test);
@@ -63,7 +63,7 @@ TEST(test_comprehensive_uncovered_lines) {
   memset(&parse_test, 0, sizeof(json_value));
   const char *source4 = "[\"\\u0041\"]";
   const size_t len4 = strlen(source4);
-  bool unicode_result = json_parse(source4, len4, &parse_test); /* Simple unicode */
+  bool unicode_result = json_parse(source4, source4 + len4, &parse_test); /* Simple unicode */
   if (unicode_result) {
     ASSERT_EQ(parse_test.u.array.items->item.type, J_STRING);
     json_free(&parse_test);
@@ -74,7 +74,7 @@ TEST(test_comprehensive_uncovered_lines) {
   memset(&parse_test, 0, sizeof(json_value));
   const char *source5 = "[\"\\\\\"]";
   const size_t len5 = strlen(source5);
-  bool escape_result = json_parse(source5, len5, &parse_test); /* Backslash and quote */
+  bool escape_result = json_parse(source5, source5 + len5, &parse_test); /* Backslash and quote */
   if (escape_result) {
     ASSERT_EQ(parse_test.u.array.items->item.type, J_STRING);
     char *escape_output = json_stringify(&parse_test);
@@ -88,7 +88,7 @@ TEST(test_comprehensive_uncovered_lines) {
   memset(&all_types_test, 0, sizeof(json_value));
   const char *simple_json = "{\"null\":null,\"bool\":true,\"num\":42}";
   const size_t len_simple_json = strlen(simple_json);
-  bool mixed_result = json_parse(simple_json, len_simple_json, &all_types_test);
+  bool mixed_result = json_parse(simple_json, simple_json + len_simple_json, &all_types_test);
   if (mixed_result) {
     char *mixed_output = json_stringify(&all_types_test);
     if (mixed_output)

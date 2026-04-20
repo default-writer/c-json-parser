@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   February 1, 2026 at 8:37:56 PM UTC
+ *   April 20, 2026 at 7:45:45 AM GMT+3
  *
  */
 /*
@@ -70,30 +70,29 @@ extern "C" {
  *
  * Error codes indicate specific parsing failures during JSON processing.
  * Values 0-15 are primary error types, while values 16-31 are
- * extended error codes with E_NULL bit set for null pointer scenarios.
+ * extended error codes with 0x10 bit set for null pointer scenarios.
  */
 typedef enum : uint8_t {
-  E_NO_ERROR = 0,                                         /* No error occurred */
-  E_NO_DATA = 1,                                          /* No data provided or empty input */
-  E_INVALID_JSON = 2,                                     /* Invalid JSON structure */
-  E_INVALID_JSON_DATA = 3,                                /* Invalid data within JSON structure */
-  E_STACK_OVERFLOW_OBJECT = 4,                            /* Stack overflow while parsing object */
-  E_STACK_OVERFLOW_ARRAY = 5,                             /* Stack overflow while parsing array */
-  E_OBJECT_KEY = 6,                                       /* Invalid object key format */
-  E_OBJECT_VALUE = 7,                                     /* Invalid object value */
-  E_EXPECTED_OBJECT = 8,                                  /* Expected object but found different type */
-  E_EXPECTED_ARRAY = 9,                                   /* Expected array but found different type */
-  E_EXPECTED_STRING = 10,                                 /* Expected string but found different type */
-  E_EXPECTED_BOOLEAN = 11,                                /* Expected boolean but found different type */
-  E_EXPECTED_NULL = 12,                                   /* Expected null but found different type */
-  E_INVALID_DATA = 13,                                    /* Invalid data format */
-  E_MAILFORMED_JSON = 14,                                 /* Malformed JSON structure (typo: should be E_MALFORMED_JSON) */
-  E_UNKNOWN_ERROR = 15,                                   /* Unknown or unexpected error */
-  E_NULL = 0x10,                                          /* Null pointer encountered flag */
-  E_EXPECTED_OBJECT_KEY = E_OBJECT_KEY | E_NULL,          /* Object key with null pointer */
-  E_EXPECTED_OBJECT_VALUE = E_OBJECT_VALUE | E_NULL,      /* Object value with null pointer */
-  E_EXPECTED_ARRAY_ELEMENT = E_EXPECTED_ARRAY | E_NULL,   /* Array element with null pointer */
-  E_EXPECTED_OBJECT_ELEMENT = E_EXPECTED_OBJECT | E_NULL, /* Object element with null pointer */
+  E_OK = 0x00,                                     /* OK */
+  E_INVALID_JSON = 0xFF,                           /* Invalid JSON */
+  E_OBJECT_KEY = 0x01,                             /* Invalid object key */
+  E_OBJECT_VALUE = 0x02,                           /* Invalid object value */
+  E_OBJECT = 0x03,                                 /* Invalid object */
+  E_ARRAY = 0x04,                                  /* Invalid array */
+  E_STRING = 0x05,                                 /* Invalid string */
+  E_CONSTANT = 0x06,                               /* Invalid constant */
+  E_NUMBER = 0x07,                                 /* Invalid number */
+  E_EXPECTED_OBJECT_KEY = E_OBJECT_KEY | 0x10,     /* Expected object key */
+  E_EXPECTED_OBJECT_VALUE = E_OBJECT_VALUE | 0x10, /* Expected object value */
+  E_EXPECTED_OBJECT = E_OBJECT | 0x10,             /* Expected object element */
+  E_EXPECTED_ARRAY = E_ARRAY | 0x10,               /* Expected array */
+  E_EXPECTED_STRING = E_STRING | 0x10,             /* Expected string */
+  E_EXPECTED_CONSTANT = E_CONSTANT | 0x10,         /* Expected constant (true/false/null) */
+  E_EXPECTED_NUMBER = E_NUMBER | 0x10,             /* Expected number */
+  E_EXPECTED_OBJECT_ELEMENT = E_OBJECT | 0x20,     /* Expected object element */
+  E_EXPECTED_ARRAY_ELEMENT = E_ARRAY | 0x20,       /* Expected array element */
+  E_NO_MEMORY_OBJECT = E_OBJECT | 0x40,            /* Out of memory while parsing object */
+  E_NO_MEMORY_ARRAY = E_ARRAY | 0x40,              /* Out of memory while parsing parsing array */
 } json_error;
 
 /**
@@ -150,7 +149,7 @@ typedef struct json_value {
     struct {
       json_object_node_type *last;  /* Pointer to last object element (for O(1) append) */
       json_object_node_type *items; /* Pointer to first object element (head of linked list) */
-    } object;                       /* Object value (valid when type == J_OBJECT) */
+    } object;                       /* Expected object value (valid when type == J_OBJECT) */
   } u;                              /* Union holding value data based on type */
 } json_value;
 
@@ -162,7 +161,7 @@ typedef struct json_value {
  */
 typedef struct json_object {
   reference key;         /* Object key as reference to original input string */
-  json_value_type value; /* Object value (can be any JSON type) */
+  json_value_type value; /* Expected object value (can be any JSON type) */
 } json_object;
 
 /**
@@ -199,7 +198,7 @@ typedef struct json_array_node {
  * @param root A pointer to root `json_value` where parsed JSON will be stored
  * @return `true` if JSON was successfully parsed, `false` otherwise
  */
-bool json_parse(const char *s, size_t len, json_value *root);
+bool json_parse(const char *s, const char *end, json_value *root);
 
 /**
  * @brief Parses a JSON string iteratively and creates a tree of `json_value` objects.
@@ -213,7 +212,7 @@ bool json_parse(const char *s, size_t len, json_value *root);
  * @param root A pointer to root `json_value` where parsed JSON will be stored
  * @return `true` if JSON was successfully parsed, `false` otherwise
  */
-bool json_parse_iterative(const char *s, size_t len, json_value *root);
+bool json_parse_iterative(const char *s, const char *end, json_value *root);
 
 /**
  * @brief Validates a JSON string without allocating memory for parsed tree.
@@ -225,10 +224,10 @@ bool json_parse_iterative(const char *s, size_t len, json_value *root);
  * @param s A pointer to const char* pointer representing JSON string to validate.
  *            The pointer may be advanced during validation (pass by pointer to pointer).
  * @param len The length of JSON string in bytes
- * @return E_NO_ERROR if string is valid JSON, non-zero error code otherwise.
+ * @return E_OK if string is valid JSON, non-zero error code otherwise.
  *         The error code indicates the type of validation failure.
  */
-json_error json_validate(const char **s, size_t len);
+json_error json_validate(const char *s, const char *end);
 
 /**
  * @brief Compares two JSON values for structural and value equality.
