@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   April 20, 2026 at 9:25:19 AM GMT+3
+ *   April 20, 2026 at 9:28:47 AM GMT+3
  *
  */
 /*
@@ -888,8 +888,8 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char *s, const char *end)
   json_value *stack[JSON_STACK_SIZE];
   json_value v;
   int top = -1;
-  /* memset(&v, 0, sizeof(json_value)); */
 #ifdef ZERO_MEMORY
+  /* memset(&v, 0, sizeof(json_value)); */
   json_value_zero(&v);
 #endif
   json_value *current = &v;
