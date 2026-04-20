@@ -208,8 +208,10 @@ typedef enum {
 # Reduces memory footprint for single-parse scenarios but adds allocation overhead
 -DUSE_ALLOC
 
+# Cleas up memory before use
+-DZERO_MEMORY
+
 # CPU feature detection (automatic with -march=native, can be explicit)
--D__AVX2__        # Enable AVX2 SIMD (256-bit registers)
 -D__SSE2__        # Enable SSE2 SIMD (128-bit registers)
 # If neither defined, scalar C implementation used
 ```

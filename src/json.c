@@ -5,7 +5,7 @@
  * Created:
  *   April 12, 1961 at 09:07:34 PM GMT+3
  * Modified:
- *   April 20, 2026 at 7:44:45 AM GMT+3
+ *   April 20, 2026 at 9:25:19 AM GMT+3
  *
  */
 /*
@@ -95,10 +95,64 @@ static int buffer_putc(buffer *b, char c);
 static bool json_array_equal(const json_value *a, const json_value *b);
 static bool json_object_equal(const json_value *a, const json_value *b);
 
-static json_array_node *new_array_node();
-static json_object_node *new_object_node();
+#ifdef ZERO_MEMORY
+
 static bool free_array_node(json_array_node *array_node);
 static bool free_object_node(json_object_node *object_node);
+
+static INLINE json_value *INLINE_ATTRIBUTE json_value_zero(json_value *v) {
+  union {
+    json_value val;
+    unsigned char bytes[sizeof(json_value)];
+  } zeroed = {.bytes = {0}};
+  *v = zeroed.val;
+  return v;
+}
+
+static INLINE json_array_node *INLINE_ATTRIBUTE json_array_node_zero(json_array_node *v) {
+  union {
+    json_array_node val;
+    unsigned char bytes[sizeof(json_array_node)];
+  } zeroed = {.bytes = {0}};
+  *v = zeroed.val;
+  return v;
+}
+
+static INLINE json_object_node *INLINE_ATTRIBUTE json_object_node_zero(json_object_node *v) {
+  union {
+    json_object_node val;
+    unsigned char bytes[sizeof(json_object_node)];
+  } zeroed = {.bytes = {0}};
+  *v = zeroed.val;
+  return v;
+}
+#endif
+
+#ifdef USE_ALLOC
+
+static INLINE bool INLINE_ATTRIBUTE free_array_node(json_array_node *array_node) {
+#ifdef ZERO_MEMORY
+  /* memset(array_node, 0, sizeof(json_array_node)); */
+  json_array_node_zero(array_node);
+  return true;
+#else
+  free(array_node);
+  return true;
+#endif
+}
+
+static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_node) {
+#ifdef ZERO_MEMORY
+  /* memset(object_node, 0, sizeof(json_object_node)); */
+  json_object_node_zero(object_node);
+  return true;
+#else
+  free(object_node);
+  return true;
+#endif
+}
+
+#endif
 
 static INLINE json_value INLINE_ATTRIBUTE *json_object_get(const json_value *obj, const char *key, size_t len) {
   if (!obj || obj->type != J_OBJECT || !key)
@@ -111,53 +165,6 @@ static INLINE json_value INLINE_ATTRIBUTE *json_object_get(const json_value *obj
     object_items = next;
   }
   return NULL;
-}
-
-static INLINE json_array_node *INLINE_ATTRIBUTE new_array_node() {
-#ifdef USE_ALLOC
-  return (json_array_node *)calloc(1, sizeof(json_array_node));
-#else
-  if (next_array_index < JSON_VALUE_POOL_SIZE) {
-    json_array_node *node = &json_array_node_pool[next_array_index++];
-    memset(node, 0, sizeof(json_array_node)); /* Ensure node is zeroed */
-    return node;
-  }
-  return NULL;
-#endif
-}
-
-static INLINE bool INLINE_ATTRIBUTE free_array_node(json_array_node *array_node) {
-#ifdef USE_ALLOC
-  free(array_node);
-  return true;
-#else
-  memset(array_node, 0, sizeof(json_array_node));
-  return true;
-#endif
-}
-
-static INLINE json_object_node *INLINE_ATTRIBUTE new_object_node() {
-#ifdef USE_ALLOC
-  json_object_node *node = (json_object_node *)calloc(1, sizeof(json_object_node));
-  return node;
-#else
-  if (next_object_index < JSON_VALUE_POOL_SIZE) {
-    json_object_node *node = &json_object_node_pool[next_object_index++];
-    memset(node, 0, sizeof(json_object_node)); /* Ensure node is zeroed */
-    return node;
-  }
-  return NULL;
-#endif
-}
-
-static INLINE bool INLINE_ATTRIBUTE free_object_node(json_object_node *object_node) {
-#ifdef USE_ALLOC
-  free(object_node);
-  return true;
-#else
-  memset(object_node, 0, sizeof(json_object_node));
-  return true;
-#endif
 }
 
 static INLINE bool INLINE_ATTRIBUTE skip_whitespace(const char **s, const char *end) {
@@ -349,10 +356,10 @@ static INLINE bool INLINE_ATTRIBUTE parse_array(const char **s, const char *end,
   while (true) {
     if (!skip_whitespace(s, end))
       return false;
-    json_array_node *array_node = new_array_node();
-    if (array_node == NULL) {
+    if (next_array_index == JSON_VALUE_POOL_SIZE) {
       return false;
     }
+    json_array_node *array_node = &json_array_node_pool[next_array_index++];
     do {
       if (v->u.array.items == NULL) {
         v->u.array.items = array_node;
@@ -368,7 +375,9 @@ static INLINE bool INLINE_ATTRIBUTE parse_array(const char **s, const char *end,
       last->next = array_node;
     } while (0);
     if (!parse_json(s, end, &array_node->item)) {
+#ifdef USE_ALLOC
       free_array_node(array_node);
+#endif
       v->u.array.items = NULL;
       return false;
     }
@@ -416,10 +425,10 @@ static INLINE bool INLINE_ATTRIBUTE parse_object(const char **s, const char *end
       object_items = next;
     }
     if (object_items == NULL) {
-      object_node = new_object_node();
-      if (object_node == NULL) {
+      if (next_object_index == JSON_VALUE_POOL_SIZE) {
         return false;
       }
+      object_node = &json_object_node_pool[next_object_index++];
       object_node->item.key.ptr = key.u.string.ptr;
       object_node->item.key.len = key.u.string.len;
       do {
@@ -440,7 +449,9 @@ static INLINE bool INLINE_ATTRIBUTE parse_object(const char **s, const char *end
       object_node = object_items;
     }
     if (!parse_json(s, end, &object_node->item.value)) {
+#ifdef USE_ALLOC
       free_object_node(object_node);
+#endif
       v->u.object.items = NULL;
       return false;
     }
@@ -876,8 +887,11 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char *s, const char *end)
   }
   json_value *stack[JSON_STACK_SIZE];
   json_value v;
-  memset(&v, 0, sizeof(json_value));
   int top = -1;
+  /* memset(&v, 0, sizeof(json_value)); */
+#ifdef ZERO_MEMORY
+  json_value_zero(&v);
+#endif
   json_value *current = &v;
   while (true) {
     if (s == end)
@@ -1003,9 +1017,10 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char *s, const char *end)
       if (!skip_whitespace(&s, end)) {
         return E_INVALID_JSON;
       }
-      json_object_node *node = new_object_node();
-      if (!node)
+      if (next_object_index == JSON_VALUE_POOL_SIZE) {
         return E_NO_MEMORY_OBJECT;
+      }
+      json_object_node *node = &json_object_node_pool[next_object_index++];
       node->item.key = key.u.string;
       if (current->u.object.items == NULL) {
         current->u.object.items = node;
@@ -1038,9 +1053,10 @@ INLINE json_error INLINE_ATTRIBUTE json_validate(const char *s, const char *end)
           return E_EXPECTED_ARRAY_ELEMENT;
         }
       }
-      json_array_node *node = new_array_node();
-      if (!node)
+      if (next_array_index == JSON_VALUE_POOL_SIZE) {
         return E_NO_MEMORY_ARRAY;
+      }
+      json_array_node *node = &json_array_node_pool[next_array_index++];
       if (current->u.array.items == NULL) {
         current->u.array.items = node;
       } else {
@@ -1176,9 +1192,10 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, const char *end
       if (*s != ':')
         return false;
       s++;
-      json_object_node *node = new_object_node();
-      if (!node)
+      if (next_object_index == JSON_VALUE_POOL_SIZE) {
         return false;
+      }
+      json_object_node *node = &json_object_node_pool[next_object_index++];
       node->item.key = key.u.string;
       if (current->u.object.items == NULL) {
         current->u.object.items = node;
@@ -1201,9 +1218,10 @@ INLINE bool INLINE_ATTRIBUTE json_parse_iterative(const char *s, const char *end
           return false;
         }
       }
-      json_array_node *node = new_array_node();
-      if (!node)
-        return false;
+      if (next_array_index == JSON_VALUE_POOL_SIZE) {
+        return E_NO_MEMORY_ARRAY;
+      }
+      json_array_node *node = &json_array_node_pool[next_array_index++];
       if (current->u.array.items == NULL) {
         current->u.array.items = node;
       } else {
@@ -1274,7 +1292,9 @@ void json_free(json_value *v) {
     while (array_node) {
       json_array_node *next = array_node->next;
       json_free(&array_node->item);
+#ifdef USE_ALLOC
       free_array_node(array_node);
+#endif
       array_node = next;
     }
     v->u.array.items = NULL;
@@ -1284,7 +1304,9 @@ void json_free(json_value *v) {
     while (object_node) {
       json_object_node *next = object_node->next;
       json_free(&object_node->item.value);
+#ifdef USE_ALLOC
       free_object_node(object_node);
+#endif
       object_node = next;
     }
     v->u.object.items = NULL;
